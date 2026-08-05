@@ -133,7 +133,7 @@ export default function App() {
   const [newPassword, setNewPassword] = useState('');
 
   const [cart, setCart] = useState<Game[]>([]);
-  // ⭕ 대여 기간 설정 State (기본값 7일)
+  // 대여 기간 설정 State (기본값 7일)
   const [rentalDays, setRentalDays] = useState<number>(7);
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'gameAdmin' | 'rentalAdmin' | 'userAdmin'>('games');
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -464,7 +464,6 @@ export default function App() {
     setCart(cart.filter((item) => item.gameId !== gameId));
   };
 
-  // ⭕ 대여 기간(`rentalDays`)을 반영한 신청 처리
   const processCheckout = async () => {
     if (!currentUser) return;
 
@@ -707,7 +706,6 @@ export default function App() {
       return b.rentalId - a.rentalId;
     });
 
-  // ⭕ 선택한 대여 기간(`rentalDays`) 기반 반납 예정일 계산 함수
   const calculatedCalculatedEndDate = () => {
     const d = new Date();
     d.setDate(d.getDate() + rentalDays);
@@ -1013,7 +1011,7 @@ export default function App() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-[#FEE500] text-slate-900 py-3 rounded-xl font-bold hover:bg-amber-400 transition"
+                    className="flex-1 bg-[#FEE500] text-[#0f172a] py-3 rounded-xl font-bold hover:bg-amber-400 transition"
                   >
                     재설정 메일 발송
                   </button>
@@ -1071,7 +1069,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더: 사용자 ID(currentUser.userId) 표시 */}
+        {/* 고정 상단 헤더 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className="fixed top-0 left-0 right-0 max-w-md mx-auto bg-[#FEE500] px-4 pb-3 z-30 shadow-sm flex justify-between items-center border-b border-amber-300/40"
@@ -1116,13 +1114,13 @@ export default function App() {
           </button>
         </header>
 
-        {/* ⭕ 메인 스크롤 영역: 상단 헤더와의 답답한 여백 해소를 위해 pt-[96px] 보정 및 mt-2 적용 */}
+        {/* ⭕ 메인 스크롤 영역: pt-[86px] 보정 및 mt-0.5로 헤더와의 간격을 슬림하게 조정 */}
         <main 
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 96px)' }} 
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 86px)' }} 
           className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
         >
           {activeTab === 'games' && (
-            <div className="space-y-4 mt-2">
+            <div className="space-y-4 mt-0.5">
               <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
                 <Info size={16} className="text-[#FEE500] flex-shrink-0" />
                 <span className="leading-tight">1인당 최대 <strong className="text-[#FEE500] font-bold">3개</strong>까지 대여하실 수 있습니다.</span>
@@ -1237,7 +1235,7 @@ export default function App() {
           )}
 
           {activeTab === 'returns' && (
-            <div className="space-y-5 mt-2">
+            <div className="space-y-5 mt-0.5">
               <div className="bg-slate-900 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
                 <div className="flex items-center justify-between w-full">
                   <span className="text-[11px] text-slate-400 font-medium">현재 대여 중인 게임</span>
@@ -1338,7 +1336,7 @@ export default function App() {
 
           {/* [운영자] 1. 게임 등록 및 관리 */}
           {activeTab === 'gameAdmin' && isAdmin && (
-            <div className="space-y-4 mt-2">
+            <div className="space-y-4 mt-0.5">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
                 <div>
                   <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
@@ -1452,7 +1450,7 @@ export default function App() {
 
           {/* [운영자] 2. 대여 및 연체 현황 */}
           {activeTab === 'rentalAdmin' && isAdmin && (
-            <div className="space-y-4 mt-2">
+            <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
                 <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
                   <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
@@ -1495,7 +1493,7 @@ export default function App() {
 
           {/* [운영자] 3. 회원 관리 */}
           {activeTab === 'userAdmin' && isAdmin && (
-            <div className="space-y-4 mt-2">
+            <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
                 <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
                   <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
@@ -1633,7 +1631,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 장바구니 Drawer 모달 (대여 기간 선택 UI 최소 1일 ~ 최대 14일 수평 스크롤 반영) */}
+        {/* 장바구니 Drawer 모달 */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className="w-full max-w-xs bg-white h-full flex flex-col shadow-2xl">
@@ -1642,7 +1640,7 @@ export default function App() {
                 <button onClick={() => setIsCartOpen(false)}><X size={18} /></button>
               </div>
 
-              {/* ⭕ 대여 기간 설정 선택 영역 (최소 1일 ~ 최대 14일 가로 스크롤 칩) */}
+              {/* 대여 기간 설정 선택 영역 */}
               <div className="p-4 bg-slate-50 border-b border-slate-200/80 space-y-2">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-900">
                   <span className="flex items-center gap-1.5">
