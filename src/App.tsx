@@ -721,7 +721,6 @@ export default function App() {
 
     return (
       <div className="min-h-screen bg-slate-50 flex justify-center items-center p-4">
-        {/* -mt-12 클래스를 적용하여 모바일 하단 브라우저 창과 로그인 버튼 사이의 공간을 확보했습니다. */}
         <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200/80 -mt-12">
           
           <div className="bg-[#FEE500] px-6 py-8 text-center border-b border-amber-300/40 flex items-center justify-center">
@@ -1058,14 +1057,13 @@ export default function App() {
   // [B] 메인 서비스 화면
   // -------------------------------------------------------------
   return (
-    // ⭕ 배경색을 bg-slate-100 대신 bg-[#FEE500]으로 지정하여 노치 및 상단 튕김 영역까지 노란색으로 처리
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
-      <div className="w-full max-w-md bg-white h-[100dvh] flex flex-col shadow-xl relative overflow-hidden border-x border-slate-200/60">
+      <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더: 아이폰 노치/상단바 침범 방지를 위해 상단 여백 보정 적용 */}
+        {/* 📌 상단 고정 헤더: fixed 구문 적용으로 터치 스크롤에 흔들리지 않음 */}
         <header 
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 40px)' }} 
-          className="bg-[#FEE500] px-4 pb-3 flex-shrink-0 z-20 shadow-sm flex justify-between items-center border-b border-amber-300/40"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
+          className="fixed top-0 left-0 right-0 max-w-md mx-auto bg-[#FEE500] px-4 pb-3 z-30 shadow-sm flex justify-between items-center border-b border-amber-300/40"
         >
           <div>
             <img 
@@ -1109,8 +1107,11 @@ export default function App() {
           </button>
         </header>
 
-        {/* 독립 스크롤 영역 */}
-        <main className="flex-1 p-4 overflow-y-auto relative pb-8 bg-white">
+        {/* 📌 메인 스크롤 영역: 헤더/네비게이션 높이만큼 pt, pb 여백 적용하여 가운데만 깔끔 스크롤 */}
+        <main 
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 82px)' }} 
+          className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
+        >
           {activeTab === 'games' && (
             <div className="space-y-4">
               <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
@@ -1579,8 +1580,8 @@ export default function App() {
           )}
         </main>
 
-        {/* 플로팅 장바구니 버튼 */}
-        <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-20">
+        {/* 📌 플로팅 장바구니 버튼: fixed 네비게이션 위에 안착하도록 위치 보정 */}
+        <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
           <button
             onClick={() => setIsCartOpen(true)}
             className="pointer-events-auto relative p-3.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 active:scale-95 transition-all shadow-xl border border-slate-700/50 flex items-center justify-center"
@@ -1595,8 +1596,8 @@ export default function App() {
           </button>
         </div>
 
-        {/* 고정 하단 네비게이션 */}
-        <nav className="bg-white border-t border-slate-200 flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+24px)] flex-shrink-0 z-20 shadow-md">
+        {/* 📌 고정 하단 네비게이션: fixed 구문 적용으로 터치 스크롤에 전혀 밀리지 않음 */}
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg">
           <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'games' ? 'text-slate-900' : 'text-slate-400'}`}>
             <Gamepad2 size={20} />
             <span className="mt-1">게임목록</span>
