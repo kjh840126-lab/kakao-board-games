@@ -137,7 +137,7 @@ export default function App() {
   const [rentalDays, setRentalDays] = useState<number>(7);
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'gameAdmin' | 'rentalAdmin' | 'userAdmin'>('games');
   
-  // ⭕ 운영자 대여/연체 관리 서브 탭 State ('active': 대여중, 'completed': 반납완료)
+  // 운영자 대여/연체 관리 서브 탭 State ('active': 대여중, 'completed': 반납완료)
   const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -710,7 +710,7 @@ export default function App() {
       return b.rentalId - a.rentalId;
     });
 
-  // ⭕ 운영자용 전체 회원 반납 완료 히스토리 리스트
+  // 운영자용 전체 회원 반납 완료 히스토리 리스트
   const allReturnedRentalsAdminList = rentals
     .filter((r) => r.status === '반납완료')
     .sort((a, b) => {
@@ -1477,7 +1477,7 @@ export default function App() {
                 </p>
               </div>
 
-              {/* ⭕ 운영자 서브 탭 2개 (대여중 / 반납완료) */}
+              {/* 운영자 서브 탭 2개 (대여중 / 반납완료) */}
               <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
                 <button
                   onClick={() => setAdminRentalTab('active')}
@@ -1539,7 +1539,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 2) 반납완료 서브 탭 내용 (동일 양식 적용, 반납예정일 대신 '반납일' 노출) */}
+              {/* 2) 반납완료 서브 탭 내용 */}
               {adminRentalTab === 'completed' && (
                 <div className="space-y-2.5">
                   {allReturnedRentalsAdminList.length === 0 ? (
@@ -1781,13 +1781,18 @@ export default function App() {
                 )}
               </div>
 
-              {cart.length > 0 && (
-                <div className="p-4 bg-slate-50 border-t border-slate-200">
+              {/* ⭕ 하단 버튼 영역: 장바구니에 아이템이 있을 때는 대여하기, 없을 때는 닫기 버튼 노출 */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200">
+                {cart.length > 0 ? (
                   <button onClick={processCheckout} className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold text-xs hover:bg-slate-800 transition shadow-sm">
                     선택한 게임 {rentalDays}일간 대여하기
                   </button>
-                </div>
-              )}
+                ) : (
+                  <button onClick={() => setIsCartOpen(false)} className="w-full bg-slate-200 text-slate-700 py-3.5 rounded-xl font-bold text-xs hover:bg-slate-300 transition shadow-sm">
+                    닫기
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
