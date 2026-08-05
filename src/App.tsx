@@ -137,7 +137,7 @@ export default function App() {
   const [rentalDays, setRentalDays] = useState<number>(7);
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'gameAdmin' | 'rentalAdmin' | 'userAdmin'>('games');
   
-  // 운영자 대여/연체 관리 서브 탭 State ('active': 대여중, 'completed': 반납완료)
+  // 운영자 대여/반납 관리 서브 탭 State ('active': 대여중, 'completed': 반납완료)
   const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -272,7 +272,7 @@ export default function App() {
       }
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
-    } finally {
+    } fontically {
       setLoading(false);
     }
   };
@@ -1099,7 +1099,6 @@ export default function App() {
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            {/* ⭕ 역할 표시 제거: 오직 사용자 ID만 표시 */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" style={{ color: '#0f172a' }}>
               <div className="flex items-center gap-1">
                 <UserCheck size={14} style={{ color: '#0f172a' }} />
@@ -1464,13 +1463,14 @@ export default function App() {
             </div>
           )}
 
-          {/* [운영자] 2. 대여 및 연체 현황 (서브 탭 적용: 대여중 / 반납완료) */}
+          {/* [운영자] 2. 대여 및 반납 현황 (타이틀 변경) */}
           {activeTab === 'rentalAdmin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
+                {/* ⭕ 타이틀 변경: 대여 및 반납 현황 */}
                 <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
                   <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
-                  대여 및 연체 현황
+                  대여 및 반납 현황
                 </h2>
                 <p style={{ color: '#64748b', fontSize: '11px', fontWeight: 500 }} className="mt-0.5">
                   현재 진행 중인 대여 목록과 연체 내역 및 반납 이력을 확인합니다.
@@ -1710,9 +1710,10 @@ export default function App() {
                 <Settings size={20} />
                 <span className="mt-1">게임관리</span>
               </button>
+              {/* ⭕ 하단 네비게이션 메뉴명 변경: 대여/반납 */}
               <button onClick={() => setActiveTab('rentalAdmin')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'rentalAdmin' ? 'text-slate-900' : 'text-slate-400'}`}>
                 <ClipboardList size={20} />
-                <span className="mt-1">대여/연체</span>
+                <span className="mt-1">대여/반납</span>
               </button>
               <button onClick={() => setActiveTab('userAdmin')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'userAdmin' ? 'text-slate-900' : 'text-slate-400'}`}>
                 <Users size={20} />
