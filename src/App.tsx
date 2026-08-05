@@ -136,6 +136,10 @@ export default function App() {
   // 대여 기간 설정 State (기본값 7일)
   const [rentalDays, setRentalDays] = useState<number>(7);
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'gameAdmin' | 'rentalAdmin' | 'userAdmin'>('games');
+  
+  // ⭕ 운영자 대여/연체 관리 서브 탭 State ('active': 대여중, 'completed': 반납완료)
+  const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   
   const [editingGame, setEditingGame] = useState<Game | null>(null);
@@ -706,6 +710,18 @@ export default function App() {
       return b.rentalId - a.rentalId;
     });
 
+  // ⭕ 운영자용 전체 회원 반납 완료 히스토리 리스트
+  const allReturnedRentalsAdminList = rentals
+    .filter((r) => r.status === '반납완료')
+    .sort((a, b) => {
+      const dateA = a.returnedAt || a.startDate;
+      const dateB = b.returnedAt || b.startDate;
+      if (dateB !== dateA) {
+        return dateB.localeCompare(dateA);
+      }
+      return b.rentalId - a.rentalId;
+    });
+
   const calculatedCalculatedEndDate = () => {
     const d = new Date();
     d.setDate(d.getDate() + rentalDays);
@@ -1011,7 +1027,7 @@ export default function App() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-[#FEE500] text-[#0f172a] py-3 rounded-xl font-bold hover:bg-amber-400 transition"
+                    className="flex-1 bg-[#FEE500] text-slate-900 py-3 rounded-xl font-bold hover:bg-amber-400 transition"
                   >
                     재설정 메일 발송
                   </button>
@@ -1114,7 +1130,7 @@ export default function App() {
           </button>
         </header>
 
-        {/* ⭕ 메인 스크롤 영역: pt-[86px] 보정 및 mt-0.5로 헤더와의 간격을 슬림하게 조정 */}
+        {/* 메인 스크롤 영역 */}
         <main 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 86px)' }} 
           className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
@@ -1448,7 +1464,7 @@ export default function App() {
             </div>
           )}
 
-          {/* [운영자] 2. 대여 및 연체 현황 */}
+          {/* [운영자] 2. 대여 및 연체 현황 (서브 탭 적용: 대여중 / 반납완료) */}
           {activeTab === 'rentalAdmin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
@@ -1457,37 +1473,112 @@ export default function App() {
                   대여 및 연체 현황
                 </h2>
                 <p style={{ color: '#64748b', fontSize: '11px', fontWeight: 500 }} className="mt-0.5">
-                  현재 진행 중인 대여 목록과 연체 내역을 확인합니다.
+                  현재 진행 중인 대여 목록과 연체 내역 및 반납 이력을 확인합니다.
                 </p>
               </div>
 
-              <div className="space-y-2.5">
-                {rentals.filter((r) => r.status === '대여중').map((rental) => {
-                  const isOverdue = today > rental.endDate;
-                  const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
-
-                  return (
-                    <div key={rental.rentalId} className={`p-3.5 rounded-2xl border ${isOverdue ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200/80 bg-white'}`}>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-mono block">대여회원: {rental.userId}</span>
-                          <h3 className="font-bold text-slate-900 text-xs mt-0.5">
-                            {rental.gameTitle} <span className="text-slate-400 font-mono text-[10px]">({rental.gameId})</span>
-                          </h3>
-                        </div>
-                        {isOverdue && (
-                          <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <AlertTriangle size={10} /> 연체 ({overdueDays}일)
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-600">
-                        <span>대여일: {rental.startDate} | 반납예정일: {rental.endDate}</span>
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* ⭕ 운영자 서브 탭 2개 (대여중 / 반납완료) */}
+              <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                <button
+                  onClick={() => setAdminRentalTab('active')}
+                  className={`flex-1 py-2 rounded-lg transition ${
+                    adminRentalTab === 'active'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  대여중 ({rentals.filter((r) => r.status === '대여중').length})
+                </button>
+                <button
+                  onClick={() => setAdminRentalTab('completed')}
+                  className={`flex-1 py-2 rounded-lg transition ${
+                    adminRentalTab === 'completed'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  반납완료 ({allReturnedRentalsAdminList.length})
+                </button>
               </div>
+
+              {/* 1) 대여중 서브 탭 내용 */}
+              {adminRentalTab === 'active' && (
+                <div className="space-y-2.5">
+                  {rentals.filter((r) => r.status === '대여중').length === 0 ? (
+                    <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
+                      현재 대여 중인 보드게임이 없습니다.
+                    </div>
+                  ) : (
+                    rentals.filter((r) => r.status === '대여중').map((rental) => {
+                      const isOverdue = today > rental.endDate;
+                      const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
+
+                      return (
+                        <div key={rental.rentalId} className={`p-3.5 rounded-2xl border ${isOverdue ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200/80 bg-white shadow-sm'}`}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="text-[10px] text-slate-500 font-mono block">대여회원: {rental.userId}</span>
+                              <h3 className="font-bold text-slate-900 text-xs mt-0.5">
+                                {rental.gameTitle} <span className="text-slate-400 font-mono text-[10px]">({rental.gameId})</span>
+                              </h3>
+                            </div>
+                            {isOverdue && (
+                              <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <AlertTriangle size={10} /> 연체 ({overdueDays}일)
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-600 flex justify-between">
+                            <span>대여일: {rental.startDate}</span>
+                            <span>반납예정일: <strong className={isOverdue ? 'text-rose-600 font-bold' : 'text-slate-900'}>{rental.endDate}</strong></span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* ⭕ 2) 반납완료 서브 탭 내용 (동일 양식 적용, 반납예정일 대신 '반납일' 노출) */}
+              {adminRentalTab === 'completed' && (
+                <div className="space-y-2.5">
+                  {allReturnedRentalsAdminList.length === 0 ? (
+                    <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
+                      반납 완료된 이력이 없습니다.
+                    </div>
+                  ) : (
+                    allReturnedRentalsAdminList.map((rental) => {
+                      const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
+                      const isLateReturn = returnedDate > rental.endDate;
+                      const overdueDays = isLateReturn ? getDaysDifference(returnedDate, rental.endDate) : 0;
+
+                      return (
+                        <div key={rental.rentalId} className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-sm space-y-1.5">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="text-[10px] text-slate-500 font-mono block">대여회원: {rental.userId}</span>
+                              <h3 className="font-bold text-slate-900 text-xs mt-0.5 flex items-center gap-1.5">
+                                <CheckCircle2 size={13} className="text-emerald-600 flex-shrink-0" />
+                                {rental.gameTitle} <span className="text-slate-400 font-mono text-[10px]">({rental.gameId})</span>
+                              </h3>
+                            </div>
+                            {isLateReturn && (
+                              <span className="bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                연체 반납 ({overdueDays}일)
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600 flex justify-between">
+                            <span>대여일: {rental.startDate}</span>
+                            <span>반납일: <strong className="text-emerald-700 font-bold">{returnedDate}</strong></span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
             </div>
           )}
 
