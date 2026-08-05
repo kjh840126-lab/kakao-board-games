@@ -1,5 +1,4 @@
-import React from 'react';
-import { Game } from '../types';
+import type { Game } from '../types';
 import { X, Trash2, ShoppingBag } from 'lucide-react';
 
 interface CartDrawerProps {

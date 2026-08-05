@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Game, Rental } from '../types';
+import type { User, Game, Rental } from '../types';
 
 // 초기 목업 데이터
 const INITIAL_USERS: User[] = [
@@ -214,7 +214,6 @@ export function useRentalApp() {
   };
 
   // 5. 연체 패널티 산정 로직 (운영자 기능)
-  // 규칙: 초과 연체 1일당 1점 / 3개 대여 후 1일 연체 시 3점 (1점당 1일 대여금지)
   const applyOverduePenalty = (userId: string, overdueDays: number, overdueItemCount: number) => {
     const addedPoints = overdueDays * overdueItemCount; // 연체일수 * 연체게임수
     const today = new Date();

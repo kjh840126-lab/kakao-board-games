@@ -1,5 +1,4 @@
-import React from 'react';
-import { Rental } from '../types';
+import type { Rental } from '../types';
 import { RotateCcw, CheckCircle2 } from 'lucide-react';
 
 export function ReturnPage({ app }: { app: any }) {

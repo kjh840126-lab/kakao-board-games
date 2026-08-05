@@ -1,5 +1,4 @@
-import React from 'react';
-import { Game } from '../types';
+import type { Game } from '../types';
 import { Users, Clock, Star } from 'lucide-react';
 
 export function GameListPage({ app }: { app: any }) {

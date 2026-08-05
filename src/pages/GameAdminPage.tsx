@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Game } from '../types';
+import { useState } from 'react';
+import type { Game } from '../types';
 import { Plus, Edit, Eye, EyeOff } from 'lucide-react';
 
 export function GameAdminPage({ app }: { app: any }) {

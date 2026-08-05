@@ -1,5 +1,4 @@
-import React from 'react';
-import { User } from '../types';
+import type { User } from '../types';
 import { User as UserIcon, ShieldAlert } from 'lucide-react';
 
 export function UserAdminPage({ app }: { app: any }) {

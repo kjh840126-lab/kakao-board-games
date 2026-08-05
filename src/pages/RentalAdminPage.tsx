@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Rental } from '../types';
+import { useState } from 'react';
+import type { Rental } from '../types';
 import { AlertTriangle, Clock } from 'lucide-react';
 
 export function RentalAdminPage({ app }: { app: any }) {
