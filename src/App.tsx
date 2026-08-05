@@ -32,7 +32,8 @@ import {
   Search,
   AlertCircle,
   UserX,
-  UserCheck as UserCheckIcon
+  UserCheck as UserCheckIcon,
+  Calendar
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -91,7 +92,7 @@ const ALLOWED_EMAIL_DOMAINS = [
   'kakaoent.com',
 ];
 
-// ⭕ 날짜 차이 계산 함수 (당일 포함 +1)
+// 날짜 차이 계산 함수 (당일 포함 +1)
 const getDaysDifference = (dateStr1: string, dateStr2: string) => {
   const d1 = new Date(dateStr1);
   const d2 = new Date(dateStr2);
@@ -132,6 +133,8 @@ export default function App() {
   const [newPassword, setNewPassword] = useState('');
 
   const [cart, setCart] = useState<Game[]>([]);
+  // ⭕ 대여 기간 설정 State (기본값 7일)
+  const [rentalDays, setRentalDays] = useState<number>(7);
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'gameAdmin' | 'rentalAdmin' | 'userAdmin'>('games');
   const [isCartOpen, setIsCartOpen] = useState(false);
   
@@ -174,7 +177,6 @@ export default function App() {
             let currentPenaltyEndDate = u.penalty_end_date || null;
 
             if (currentPenaltyEndDate) {
-              // ⭕ 패널티 종료일이 오늘보다 이전(어제 또는 그 전)이면 패널티 리셋
               if (currentPenaltyEndDate < today) {
                 currentPenaltyPoints = 0;
                 currentPenaltyEndDate = null;
@@ -184,7 +186,6 @@ export default function App() {
                   penalty_end_date: null
                 }).eq('user_id', u.user_id);
               } else {
-                // 오늘 및 미래까지 유효한 패널티 남은 일수 계산
                 const remainingDays = getDaysDifference(currentPenaltyEndDate, today);
                 if (remainingDays !== currentPenaltyPoints) {
                   currentPenaltyPoints = remainingDays;
@@ -463,6 +464,7 @@ export default function App() {
     setCart(cart.filter((item) => item.gameId !== gameId));
   };
 
+  // ⭕ 대여 기간(`rentalDays`)을 반영한 신청 처리
   const processCheckout = async () => {
     if (!currentUser) return;
 
@@ -477,7 +479,7 @@ export default function App() {
     }
 
     const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 3);
+    endDate.setDate(endDate.getDate() + rentalDays);
     const endDateStr = endDate.toISOString().split('T')[0];
 
     const newRentals = cart.map((game) => ({
@@ -498,7 +500,7 @@ export default function App() {
     const rentedGameIds = cart.map((g) => g.gameId);
     await supabase.from('games').update({ status: '대여중' }).in('game_id', rentedGameIds);
 
-    alert('대여가 완료되었습니다.');
+    alert(`보드게임 ${cart.length}건이 ${rentalDays}일간 대여되었습니다. (~${endDateStr} 반납)`);
     await fetchInitialData();
     setCart([]);
     setIsCartOpen(false);
@@ -704,6 +706,13 @@ export default function App() {
       }
       return b.rentalId - a.rentalId;
     });
+
+  // ⭕ 선택한 대여 기간(`rentalDays`) 기반 반납 예정일 계산 함수
+  const calculatedCalculatedEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + rentalDays);
+    return d.toISOString().split('T')[0];
+  };
 
   if (loading) {
     return (
@@ -1076,7 +1085,7 @@ export default function App() {
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            {/* ⭕ 상단 헤더 패널티 노출 로직 정밀 보정 (오늘 날짜 포함 대여불가 정밀 판별) */}
+            {/* 사용자 ID(currentUser.userId) 노출 */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" style={{ color: '#0f172a' }}>
               <div className="flex items-center gap-1">
                 <UserCheck size={14} style={{ color: '#0f172a' }} />
@@ -1107,13 +1116,13 @@ export default function App() {
           </button>
         </header>
 
-        {/* 메인 스크롤 영역 */}
+        {/* ⭕ 메인 스크롤 영역: 상단 헤더와의 답답한 여백 해소를 위해 pt-[96px] 보정 및 mt-2 적용 */}
         <main 
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 82px)' }} 
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 96px)' }} 
           className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
         >
           {activeTab === 'games' && (
-            <div className="space-y-4">
+            <div className="space-y-4 mt-2">
               <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
                 <Info size={16} className="text-[#FEE500] flex-shrink-0" />
                 <span className="leading-tight">1인당 최대 <strong className="text-[#FEE500] font-bold">3개</strong>까지 대여하실 수 있습니다.</span>
@@ -1228,7 +1237,7 @@ export default function App() {
           )}
 
           {activeTab === 'returns' && (
-            <div className="space-y-5">
+            <div className="space-y-5 mt-2">
               <div className="bg-slate-900 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
                 <div className="flex items-center justify-between w-full">
                   <span className="text-[11px] text-slate-400 font-medium">현재 대여 중인 게임</span>
@@ -1329,7 +1338,7 @@ export default function App() {
 
           {/* [운영자] 1. 게임 등록 및 관리 */}
           {activeTab === 'gameAdmin' && isAdmin && (
-            <div className="space-y-4">
+            <div className="space-y-4 mt-2">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
                 <div>
                   <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
@@ -1443,7 +1452,7 @@ export default function App() {
 
           {/* [운영자] 2. 대여 및 연체 현황 */}
           {activeTab === 'rentalAdmin' && isAdmin && (
-            <div className="space-y-4">
+            <div className="space-y-4 mt-2">
               <div className="pb-2 border-b border-slate-200/80">
                 <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
                   <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
@@ -1486,7 +1495,7 @@ export default function App() {
 
           {/* [운영자] 3. 회원 관리 */}
           {activeTab === 'userAdmin' && isAdmin && (
-            <div className="space-y-4">
+            <div className="space-y-4 mt-2">
               <div className="pb-2 border-b border-slate-200/80">
                 <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
                   <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
@@ -1624,7 +1633,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 장바구니 Drawer 모달 */}
+        {/* ⭕ 장바구니 Drawer 모달 (대여 기간 선택 UI 최소 1일 ~ 최대 14일 수평 스크롤 반영) */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className="w-full max-w-xs bg-white h-full flex flex-col shadow-2xl">
@@ -1632,6 +1641,41 @@ export default function App() {
                 <span>장바구니 ({cart.length} / 3)</span>
                 <button onClick={() => setIsCartOpen(false)}><X size={18} /></button>
               </div>
+
+              {/* ⭕ 대여 기간 설정 선택 영역 (최소 1일 ~ 최대 14일 가로 스크롤 칩) */}
+              <div className="p-4 bg-slate-50 border-b border-slate-200/80 space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-900">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar size={14} className="text-slate-700" /> 대여 기간 설정
+                  </span>
+                  <span className="text-[#0f172a] font-extrabold bg-amber-300/60 px-2 py-0.5 rounded-md text-[11px]">
+                    {rentalDays}일 선택
+                  </span>
+                </div>
+                
+                {/* 1일 ~ 14일 수평 스크롤 칩 버튼 목록 */}
+                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+                  {Array.from({ length: 14 }, (_, i) => i + 1).map((days) => (
+                    <button
+                      key={days}
+                      onClick={() => setRentalDays(days)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                        rentalDays === days
+                          ? 'bg-slate-900 text-white shadow-sm scale-105'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {days}일
+                    </button>
+                  ))}
+                </div>
+
+                <div className="text-[11px] text-slate-500 font-medium flex justify-between items-center pt-0.5">
+                  <span>반납 예정일:</span>
+                  <strong className="text-slate-900 font-extrabold">{calculatedCalculatedEndDate()}</strong>
+                </div>
+              </div>
+
               <div className="flex-1 p-4 overflow-y-auto space-y-2">
                 {cart.length === 0 ? (
                   <div className="text-center py-16 text-xs text-slate-400 font-medium">담긴 게임이 없습니다.</div>
@@ -1647,10 +1691,11 @@ export default function App() {
                   ))
                 )}
               </div>
+
               {cart.length > 0 && (
                 <div className="p-4 bg-slate-50 border-t border-slate-200">
-                  <button onClick={processCheckout} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs hover:bg-slate-800 transition shadow-sm">
-                    선택한 게임 대여하기
+                  <button onClick={processCheckout} className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold text-xs hover:bg-slate-800 transition shadow-sm">
+                    선택한 게임 {rentalDays}일간 대여하기
                   </button>
                 </div>
               )}
