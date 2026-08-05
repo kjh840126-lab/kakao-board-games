@@ -1061,10 +1061,10 @@ export default function App() {
     <div className="min-h-screen bg-slate-100 flex justify-center">
       <div className="w-full max-w-md bg-white h-[100dvh] flex flex-col shadow-xl relative overflow-hidden border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더 */}
+        {/* 고정 상단 헤더: 아이폰 노치/상단바 침범 방지를 위해 상단 여백 보정 적용 */}
         <header 
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-          className="bg-[#FEE500] px-4 pb-4 flex-shrink-0 z-20 shadow-sm flex justify-between items-center border-b border-amber-300/40"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 40px)' }} 
+          className="bg-[#FEE500] px-4 pb-3 flex-shrink-0 z-20 shadow-sm flex justify-between items-center border-b border-amber-300/40"
         >
           <div>
             <img 
