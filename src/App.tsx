@@ -1060,7 +1060,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더: 사용자 ID(currentUser.userId) 표시로 변경 */}
+        {/* 고정 상단 헤더: 사용자 ID(currentUser.userId) 표시 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className="fixed top-0 left-0 right-0 max-w-md mx-auto bg-[#FEE500] px-4 pb-3 z-30 shadow-sm flex justify-between items-center border-b border-amber-300/40"
@@ -1074,7 +1074,7 @@ export default function App() {
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            {/* ⭕ 사용자 이름 대신 사용자 ID(currentUser.userId)를 노출하도록 수정 */}
+            {/* 사용자 ID(currentUser.userId) 노출 */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" style={{ color: '#0f172a' }}>
               <div className="flex items-center gap-1">
                 <UserCheck size={14} style={{ color: '#0f172a' }} />
@@ -1530,8 +1530,9 @@ export default function App() {
                       <div key={user.userId} className={`border p-3.5 rounded-2xl space-y-2 shadow-sm ${isWithdrawn ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200/80'}`}>
                         <div className="flex justify-between items-start">
                           <div>
+                            {/* ⭕ 회원 카드에서 아이디를 강조해서 먼저 보여주고, 이름을 부차적으로 배치 */}
                             <div className="flex items-center gap-1.5">
-                              <h3 className={`font-bold text-xs ${isWithdrawn ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{user.name}</h3>
+                              <h3 className={`font-bold text-xs font-mono ${isWithdrawn ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{user.userId}</h3>
                               <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
                                 user.role === '운영자' 
                                   ? 'bg-amber-100 text-amber-800' 
@@ -1542,7 +1543,7 @@ export default function App() {
                                 {user.role}
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-500 font-mono mt-0.5">{user.userId} | {user.email}</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">{user.name} | {user.email}</p>
                           </div>
 
                           {/* 탈퇴 / 복구 버튼 */}
