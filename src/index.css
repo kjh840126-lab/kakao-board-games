@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* 1. 내 서버(public/fonts)에서 직접 불러오는 카카오 폰트 로컬 정의 */
+@font-face {
+  font-family: "Kakao";
+  src: url("/fonts/KakaoRegular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "KakaoBold";
+  src: url("/fonts/KakaoBold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Pretendard 가독성 백업 폰트 */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+
+  --sans: "Kakao", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --heading: "KakaoBold", "Kakao", "Pretendard Variable", Pretendard, -apple-system, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+  }
+}
+
+/* 2. 전역 및 모바일 사파리 폰트 강제 설정 */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "Kakao", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+}
+
+/* 모든 폼 입력 요소 및 버튼에 카카오체 강제 지정 */
+input,
+select,
+textarea,
+button {
+  font-family: "Kakao", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+}
+
+/* 제목/강조 문구에 카카오볼드 적용 */
+h1, h2, h3, h4, h5, h6, b, strong, .font-bold, .font-extrabold {
+  font-family: "KakaoBold", "Kakao", "Pretendard Variable", Pretendard, -apple-system, sans-serif !important;
+}
+
+#root {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+/* 3. 모바일 클릭 시 화면 자동 확대 방지 (기본 폰트 16px 보장) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* 💥 4. 예시 문구(플레이스홀더) 및 입력창 서식 미세 조정 (글자 안잘리게 수정) */
+::placeholder {
+  font-size: 13px !important;
+  opacity: 0.6;
+}
+
+/* 도메인 선택 박스(Select) 크기 조절 */
+select {
+  font-size: 11px !important;
+  padding-left: 6px !important;
+  padding-right: 18px !important;
+}
+
+/* 입력창 세로 여백 보장 */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
