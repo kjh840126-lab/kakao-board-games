@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Gamepad2, 
@@ -63,7 +63,7 @@ export interface Game {
   description: string;
   isVisible: 'Y' | 'N';
   genres: string[];
-  createdAt: string; // 생성일 속성
+  createdAt: string;
 }
 
 export interface Rental {
@@ -382,7 +382,7 @@ export default function App() {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(cleanForgotEmail, {
-      redirectTo: 'http://localhost:5173',
+      redirectTo: 'https://kakao-board-games.vercel.app',
     });
 
     if (error) {
@@ -667,7 +667,6 @@ export default function App() {
     }
   };
 
-  // 💥 [최근 생성/등록된 날짜(createdAt) 순으로 최상단 정렬 반영]
   const filteredGameList = [...games]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .filter((g) => g.isVisible === 'Y')
@@ -722,7 +721,8 @@ export default function App() {
 
     return (
       <div className="min-h-screen bg-slate-50 flex justify-center items-center p-4">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200/80">
+        {/* -mt-12 클래스를 적용하여 모바일 하단 브라우저 창과 로그인 버튼 사이의 공간을 확보했습니다. */}
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200/80 -mt-12">
           
           <div className="bg-[#FEE500] px-6 py-8 text-center border-b border-amber-300/40 flex items-center justify-center">
             <img 
@@ -1178,7 +1178,7 @@ export default function App() {
 
                           {/* 장르 태그 고정 영역 + 버튼 가변 구조 */}
                           <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100">
-                            {/* 장르 태그 영역 (고정 영역, 넘치면 가로 스크롤) */}
+                            {/* 장르 태그 영역 */}
                             <div className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
                               {game.genres.map((genre) => (
                                 <span key={genre} className="text-[9px] bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md font-bold whitespace-nowrap flex-shrink-0">
@@ -1187,7 +1187,7 @@ export default function App() {
                               ))}
                             </div>
 
-                            {/* 버튼 영역 (가변 크기 유지) */}
+                            {/* 버튼 영역 */}
                             <div className="flex-shrink-0">
                               {isAvailable ? (
                                 <button
@@ -1227,7 +1227,6 @@ export default function App() {
 
           {activeTab === 'returns' && (
             <div className="space-y-5">
-              {/* 현재 대여 중인 게임 수 한 줄 레이아웃 카드 */}
               <div className="bg-slate-900 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
                 <div className="flex items-center justify-between w-full">
                   <span className="text-[11px] text-slate-400 font-medium">현재 대여 중인 게임</span>
@@ -1243,7 +1242,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* 현재 대여 중인 게임 목록 */}
               <section className="space-y-2.5">
                 <h3 style={{ color: '#0f172a', fontWeight: 800, fontSize: '14px' }} className="tracking-tight flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-slate-900 rounded-full inline-block"></span>
@@ -1288,7 +1286,6 @@ export default function App() {
                 )}
               </section>
 
-              {/* 대여 및 반납 이력 */}
               <section className="space-y-2.5">
                 <h3 style={{ color: '#0f172a', fontWeight: 800, fontSize: '14px' }} className="tracking-tight flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-slate-400 rounded-full inline-block"></span>
@@ -1581,7 +1578,7 @@ export default function App() {
           )}
         </main>
 
-        {/* iOS Safe Area 높이를 보정한 플로팅 장바구니 버튼 위치 */}
+        {/* 플로팅 장바구니 버튼 */}
         <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-20">
           <button
             onClick={() => setIsCartOpen(true)}
@@ -1597,7 +1594,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* 고정 하단 네비게이션: 사파리 주소창 위로 들어올리는 패딩 보정 적용 */}
+        {/* 고정 하단 네비게이션 */}
         <nav className="bg-white border-t border-slate-200 flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+24px)] flex-shrink-0 z-20 shadow-md">
           <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'games' ? 'text-slate-900' : 'text-slate-400'}`}>
             <Gamepad2 size={20} />
