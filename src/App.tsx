@@ -1058,7 +1058,8 @@ export default function App() {
   // [B] 메인 서비스 화면
   // -------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-slate-100 flex justify-center">
+    // ⭕ 배경색을 bg-slate-100 대신 bg-[#FEE500]으로 지정하여 노치 및 상단 튕김 영역까지 노란색으로 처리
+    <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white h-[100dvh] flex flex-col shadow-xl relative overflow-hidden border-x border-slate-200/60">
         
         {/* 고정 상단 헤더: 아이폰 노치/상단바 침범 방지를 위해 상단 여백 보정 적용 */}
@@ -1109,7 +1110,7 @@ export default function App() {
         </header>
 
         {/* 독립 스크롤 영역 */}
-        <main className="flex-1 p-4 overflow-y-auto relative pb-8">
+        <main className="flex-1 p-4 overflow-y-auto relative pb-8 bg-white">
           {activeTab === 'games' && (
             <div className="space-y-4">
               <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
