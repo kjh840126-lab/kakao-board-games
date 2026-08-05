@@ -1060,7 +1060,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 📌 상단 고정 헤더: fixed 구문 적용으로 터치 스크롤에 흔들리지 않음 */}
+        {/* 고정 상단 헤더: 사용자 ID(currentUser.userId) 표시로 변경 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className="fixed top-0 left-0 right-0 max-w-md mx-auto bg-[#FEE500] px-4 pb-3 z-30 shadow-sm flex justify-between items-center border-b border-amber-300/40"
@@ -1074,11 +1074,11 @@ export default function App() {
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            {/* 사용자 이름 및 패널티 정보 안내 영역 */}
+            {/* ⭕ 사용자 이름 대신 사용자 ID(currentUser.userId)를 노출하도록 수정 */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" style={{ color: '#0f172a' }}>
               <div className="flex items-center gap-1">
                 <UserCheck size={14} style={{ color: '#0f172a' }} />
-                <span>{currentUser.name} ({currentUser.role})</span>
+                <span>{currentUser.userId} ({currentUser.role})</span>
               </div>
 
               {currentUser.penaltyPoints > 0 && (
@@ -1107,7 +1107,7 @@ export default function App() {
           </button>
         </header>
 
-        {/* 📌 메인 스크롤 영역: 헤더/네비게이션 높이만큼 pt, pb 여백 적용하여 가운데만 깔끔 스크롤 */}
+        {/* 메인 스크롤 영역 */}
         <main 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 82px)' }} 
           className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
@@ -1580,7 +1580,7 @@ export default function App() {
           )}
         </main>
 
-        {/* 📌 플로팅 장바구니 버튼: fixed 네비게이션 위에 안착하도록 위치 보정 */}
+        {/* 플로팅 장바구니 버튼 */}
         <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
           <button
             onClick={() => setIsCartOpen(true)}
@@ -1596,7 +1596,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* 📌 고정 하단 네비게이션: fixed 구문 적용으로 터치 스크롤에 전혀 밀리지 않음 */}
+        {/* 고정 하단 네비게이션 */}
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg">
           <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'games' ? 'text-slate-900' : 'text-slate-400'}`}>
             <Gamepad2 size={20} />
