@@ -272,7 +272,7 @@ export default function App() {
       }
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
-    } finally { // ⭕ 오타(fontically) 수정 완료
+    } finally {
       setLoading(false);
     }
   };
@@ -1350,19 +1350,21 @@ export default function App() {
             </div>
           )}
 
-          {/* [운영자] 1. 게임 등록 및 관리 */}
+          {/* [운영자] 1. 게임 등록 및 수정 */}
           {activeTab === 'gameAdmin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
                 <div>
                   <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
                     <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
-                    게임 등록 및 관리
+                    게임 등록 및 수정
                   </h2>
+                  {/* ⭕ 1. 하단 설명 변경: 보드게임을 추가하거나 수정 및 삭제합니다. */}
                   <p style={{ color: '#64748b', fontSize: '11px', fontWeight: 500 }} className="mt-0.5">
-                    보드게임 목록을 추가하거나 수정/삭제합니다.
+                    보드게임을 추가하거나 수정 및 삭제합니다.
                   </p>
                 </div>
+                {/* ⭕ 2. 버튼명 변경: 게임 등록 */}
                 <button
                   onClick={() => {
                     setIsEditingMode(false);
@@ -1384,7 +1386,7 @@ export default function App() {
                   }}
                   className="bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
                 >
-                  <Plus size={14} /> 게임 추가
+                  <Plus size={14} /> 게임 등록
                 </button>
               </div>
 
@@ -1710,7 +1712,6 @@ export default function App() {
                 <Settings size={20} />
                 <span className="mt-1">게임관리</span>
               </button>
-              {/* 하단 네비게이션 메뉴명: 대여/반납 */}
               <button onClick={() => setActiveTab('rentalAdmin')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'rentalAdmin' ? 'text-slate-900' : 'text-slate-400'}`}>
                 <ClipboardList size={20} />
                 <span className="mt-1">대여/반납</span>
