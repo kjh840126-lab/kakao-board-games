@@ -91,12 +91,12 @@ const ALLOWED_EMAIL_DOMAINS = [
   'kakaoent.com',
 ];
 
-// 날짜 차이 계산 함수 (일 단위)
+// ⭕ 날짜 차이 계산 함수 보정 (오늘과 종료일이 같으면 1일로 계산되도록 +1 반영)
 const getDaysDifference = (dateStr1: string, dateStr2: string) => {
   const d1 = new Date(dateStr1);
   const d2 = new Date(dateStr2);
   const diffTime = d1.getTime() - d2.getTime();
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 };
 
 export default function App() {
@@ -174,6 +174,7 @@ export default function App() {
             let currentPenaltyEndDate = u.penalty_end_date || null;
 
             if (currentPenaltyEndDate) {
+              // ⭕ 종료일이 오늘보다 엄격히 이전(어제 또는 그 전)일 때만 패널티 해제 (오늘까진 유효)
               if (currentPenaltyEndDate < today) {
                 currentPenaltyPoints = 0;
                 currentPenaltyEndDate = null;
@@ -183,6 +184,7 @@ export default function App() {
                   penalty_end_date: null
                 }).eq('user_id', u.user_id);
               } else {
+                // 종료일이 오늘이거나 미래인 경우 남은 일수(당일 포함) 계산
                 const remainingDays = getDaysDifference(currentPenaltyEndDate, today);
                 if (remainingDays !== currentPenaltyPoints) {
                   currentPenaltyPoints = remainingDays;
@@ -514,11 +516,13 @@ export default function App() {
 
     const isOverdue = today > targetRental.endDate;
     if (isOverdue) {
+      // ⭕ 연체일수 계산 시 당일 포함 보정
       const overdueDays = getDaysDifference(today, targetRental.endDate);
       const newPoints = currentUser.penaltyPoints + overdueDays;
 
       const penaltyEnd = new Date();
-      penaltyEnd.setDate(penaltyEnd.getDate() + newPoints);
+      // 패널티 부여 일수만큼 종료일 계산 (오늘 기준 + newPoints - 1)
+      penaltyEnd.setDate(penaltyEnd.getDate() + newPoints - 1);
       const penaltyEndStr = penaltyEnd.toISOString().split('T')[0];
 
       await supabase.from('users').update({ 
@@ -557,7 +561,7 @@ export default function App() {
       const newPoints = currentUser.penaltyPoints + totalOverdueDays;
 
       const penaltyEnd = new Date();
-      penaltyEnd.setDate(penaltyEnd.getDate() + totalOverdueDays);
+      penaltyEnd.setDate(penaltyEnd.getDate() + totalOverdueDays - 1);
       const penaltyEndStr = penaltyEnd.toISOString().split('T')[0];
 
       await supabase.from('users').update({ 
@@ -1060,7 +1064,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더: 사용자 ID(currentUser.userId) 표시 */}
+        {/* 고정 상단 헤더 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className="fixed top-0 left-0 right-0 max-w-md mx-auto bg-[#FEE500] px-4 pb-3 z-30 shadow-sm flex justify-between items-center border-b border-amber-300/40"
@@ -1492,7 +1496,7 @@ export default function App() {
                   <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
                   회원 관리
                 </h2>
-                <p style={{ color: '#64748b', fontSize: '11px', fontWeight: 500 }} className="mt-0.5">
+                <p style={{ color: '#64748b', fontSize: '11px', fontWeight 500 }} className="mt-0.5">
                   등록된 회원 목록 및 패널티 현황을 조회하고 회원 상태를 관리합니다.
                 </p>
               </div>
@@ -1530,7 +1534,7 @@ export default function App() {
                       <div key={user.userId} className={`border p-3.5 rounded-2xl space-y-2 shadow-sm ${isWithdrawn ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200/80'}`}>
                         <div className="flex justify-between items-start">
                           <div>
-                            {/* ⭕ 회원 카드에서 아이디를 강조해서 먼저 보여주고, 이름을 부차적으로 배치 */}
+                            {/* ⭕ 회원 카드에서 아이디를 먼저 보여주고, 이름을 부차적으로 배치 */}
                             <div className="flex items-center gap-1.5">
                               <h3 className={`font-bold text-xs font-mono ${isWithdrawn ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{user.userId}</h3>
                               <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
