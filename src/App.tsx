@@ -1099,11 +1099,11 @@ export default function App() {
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            {/* 사용자 ID(currentUser.userId) 노출 */}
+            {/* ⭕ 역할 표시 제거: 오직 사용자 ID만 표시 */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" style={{ color: '#0f172a' }}>
               <div className="flex items-center gap-1">
                 <UserCheck size={14} style={{ color: '#0f172a' }} />
-                <span>{currentUser.userId} ({currentUser.role})</span>
+                <span>{currentUser.userId}</span>
               </div>
 
               {currentUser.penaltyEndDate && currentUser.penaltyEndDate >= today && (
@@ -1781,7 +1781,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* ⭕ 하단 버튼 영역: 장바구니에 아이템이 있을 때는 대여하기, 없을 때는 닫기 버튼 노출 */}
+              {/* 하단 버튼 영역 */}
               <div className="p-4 bg-slate-50 border-t border-slate-200">
                 {cart.length > 0 ? (
                   <button onClick={processCheckout} className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold text-xs hover:bg-slate-800 transition shadow-sm">
