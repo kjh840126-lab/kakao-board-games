@@ -39,7 +39,9 @@ import {
   ShieldCheck,
   Bell,
   Send,
-  CalendarDays
+  CalendarDays,
+  Flame,
+  Award
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -74,6 +76,7 @@ export interface Game {
   releaseYear: number;
   bggRating: number;
   rentalCount?: number;
+  recentRentalCount?: number;
 }
 
 export interface Rental {
@@ -146,10 +149,11 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
-  // 메인 네비게이션 탭 ('games': 대여, 'returns': 반납, 'ranking': 랭킹, 'report': 신고, 'admin': 관리자)
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'report' | 'admin'>('games');
   
-  // 관리자 모드 내부 서브 탭 ('gameAdmin', 'rentalAdmin', 'userAdmin', 'noticeAdmin')
+  // ⭕ 랭킹 서브 탭 State ('hot': 요즘 핫한 게임, 'hall': 명예의 전당)
+  const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
+
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin'>('gameAdmin');
   const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
 
@@ -160,19 +164,21 @@ export default function App() {
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [customGenreInput, setCustomGenreInput] = useState('');
 
-  // 공지사항 작성/수정 모달 State
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
 
-  // 신고하기 State
   const [reportForm, setReportForm] = useState({ title: '', content: '', category: '불량 보드게임' });
 
-  // 검색어 State
   const [gameListSearch, setGameListSearch] = useState('');
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
 
   const today = new Date().toISOString().split('T')[0];
+
+  // 최근 30일 이전 날짜 계산
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
   useEffect(() => {
     fetchInitialData();
@@ -192,7 +198,6 @@ export default function App() {
 
   const fetchInitialData = async () => {
     try {
-      // 1. 유저 데이터 및 패널티 리셋 처리
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
         const mappedUsers: User[] = await Promise.all(
@@ -200,7 +205,6 @@ export default function App() {
             let currentPenaltyPoints = u.penalty_count || 0;
             let currentPenaltyEndDate = u.penalty_end_date || null;
 
-            // 패널티 정지일이 지났다면(오늘보다 엄격히 작으면) 0점으로 리셋
             if (currentPenaltyEndDate) {
               if (currentPenaltyEndDate < today) {
                 currentPenaltyPoints = 0;
@@ -251,7 +255,6 @@ export default function App() {
         }
       }
 
-      // 2. 대여 데이터 로드
       const { data: rentalsData } = await supabase.from('rentals').select('*');
       let rentalList: Rental[] = [];
       if (rentalsData) {
@@ -268,7 +271,6 @@ export default function App() {
         setRentals(rentalList);
       }
 
-      // 3. 게임 데이터 로드
       const { data: gamesData } = await supabase.from('games').select('*');
       if (gamesData) {
         setGames(gamesData.map(g => {
@@ -279,7 +281,11 @@ export default function App() {
             parsedGenres = g.genres.split(',').map((s: string) => s.trim());
           }
 
-          const gameRentalCount = rentalList.filter(r => r.gameId === g.game_id).length;
+          const gameRentalList = rentalList.filter(r => r.gameId === g.game_id);
+          const totalRentalCount = gameRentalList.length;
+          
+          // ⭕ 최근 30일 이내 대여 건수 계산
+          const recentRentalCount = gameRentalList.filter(r => r.startDate >= thirtyDaysAgoStr).length;
 
           return {
             gameId: g.game_id,
@@ -296,12 +302,12 @@ export default function App() {
             createdAt: g.created_at || new Date().toISOString(),
             releaseYear: Number(g.release_year) || currentYear,
             bggRating: Number(g.bgg_rating) || 7.0,
-            rentalCount: gameRentalCount
+            rentalCount: totalRentalCount,
+            recentRentalCount: recentRentalCount
           };
         }));
       }
 
-      // 4. 공지사항 데이터 로드
       const { data: noticeData } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
       if (noticeData) {
         setNoticeList(noticeData.map(n => ({
@@ -710,7 +716,6 @@ export default function App() {
     }
   };
 
-  // 공지사항 저장
   const saveNotice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingNotice.title.trim() || !editingNotice.content.trim()) {
@@ -749,7 +754,6 @@ export default function App() {
     }
   };
 
-  // 신고 접수
   const handleSendReport = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reportForm.title.trim() || !reportForm.content.trim()) {
@@ -760,7 +764,6 @@ export default function App() {
     setReportForm({ title: '', content: '', category: '불량 보드게임' });
   };
 
-  // 랭킹 산출 계산 로직 (대여 1회당 0.1점 + 출시년도 가산점 + BGG 평점)
   const getReleaseBonus = (year: number) => {
     const diff = currentYear - year;
     if (diff === 0) return 3;
@@ -769,15 +772,26 @@ export default function App() {
     return 0;
   };
 
-  const rankedGamesList = [...games]
+  // ⭕ 1) 🔥 요즘 핫한 게임 랭킹 (최근 30일 대여 횟수 가중치 0.5 + 신작 가산점 + BGG 평점)
+  const hotRankedGamesList = [...games]
     .map(game => {
-      const rentalScore = (game.rentalCount || 0) * 0.1;
+      const recentScore = (game.recentRentalCount || 0) * 0.5;
       const releaseBonus = getReleaseBonus(game.releaseYear);
-      const totalScore = Number((rentalScore + releaseBonus + game.bggRating).toFixed(2));
-      return { ...game, totalScore, rentalScore, releaseBonus };
+      const totalScore = Number((recentScore + releaseBonus + game.bggRating).toFixed(2));
+      return { ...game, totalScore, recentScore, releaseBonus };
     })
     .sort((a, b) => b.totalScore - a.totalScore)
-    .slice(0, 30); // 상위 30개만 노출
+    .slice(0, 30);
+
+  // ⭕ 2) 🏆 명예의 전당 랭킹 (전체 누적 대여 횟수 0.1 + BGG 평점)
+  const hallOfFameRankedGamesList = [...games]
+    .map(game => {
+      const rentalScore = (game.rentalCount || 0) * 0.1;
+      const totalScore = Number((rentalScore + game.bggRating).toFixed(2));
+      return { ...game, totalScore, rentalScore };
+    })
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .slice(0, 30);
 
   const filteredGameList = [...games]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -859,9 +873,7 @@ export default function App() {
               src={LOGIN_LOGO_URL} 
               alt="KAKAO BOARD GAMES" 
               className="h-48 w-auto object-contain drop-shadow-sm" 
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
+              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
             />
           </div>
 
@@ -1141,7 +1153,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더 (관리자 페이지 모드일 경우 하늘색 bg-sky-400 테마 적용) */}
+        {/* 고정 상단 헤더 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-3 z-30 shadow-sm flex justify-between items-center transition-colors ${
@@ -1202,7 +1214,6 @@ export default function App() {
           {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
-              {/* ⭕ 공지사항이 있을 경우 최신 공지사항을 안내문구 영역에 노출 */}
               <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-start gap-2.5 shadow-sm">
                 <Bell size={16} className="text-[#FEE500] flex-shrink-0 mt-0.5" />
                 <div className="leading-tight">
@@ -1217,7 +1228,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 검색창 */}
               <div className="relative">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -1417,7 +1427,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ⭕ 3. 신규 메뉴: 랭킹 탭 */}
+          {/* ⭕ 3. 랭킹 탭 (서브 탭 적용: 🔥 요즘 핫한 게임 vs 🏆 명예의 전당) */}
           {activeTab === 'ranking' && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80 flex justify-between items-end">
@@ -1426,55 +1436,124 @@ export default function App() {
                     <Trophy size={18} className="text-amber-500 fill-amber-400" />
                     보드게임 랭킹 Top 30
                   </h2>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    대여 횟수 + 출시년도 가산점 + BGG 평점 합산 순위
-                  </p>
                 </div>
               </div>
 
-              <div className="space-y-2.5">
-                {rankedGamesList.map((game, index) => {
-                  const rank = index + 1;
-                  return (
-                    <div key={game.gameId} className="border border-slate-200/80 p-3.5 rounded-2xl flex items-center gap-3.5 bg-white shadow-sm">
-                      <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center flex-shrink-0 ${
-                        rank === 1 ? 'bg-amber-400 text-slate-900 shadow-md' :
-                        rank === 2 ? 'bg-slate-300 text-slate-900' :
-                        rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {rank}
-                      </div>
+              {/* 랭킹 서브 탭 버튼 2개 */}
+              <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                <button
+                  onClick={() => setRankingTab('hot')}
+                  className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                    rankingTab === 'hot' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Flame size={14} className="text-rose-500 fill-rose-500" /> 요즘 핫한 게임
+                </button>
+                <button
+                  onClick={() => setRankingTab('hall')}
+                  className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                    rankingTab === 'hall' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Award size={14} className="text-amber-500" /> 명예의 전당
+                </button>
+              </div>
 
-                      <img 
-                        src={game.imageUrl} 
-                        alt={game.title} 
-                        className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-100 flex-shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
-                      />
+              {/* 1) 🔥 요즘 핫한 게임 (최근 30일 대여 중심) */}
+              {rankingTab === 'hot' && (
+                <div className="space-y-2.5">
+                  <p className="text-[11px] text-slate-500 font-medium px-1">
+                    * 최근 30일 대여 횟수 + 신작 가산점 + BGG 평점 기준
+                  </p>
+                  {hotRankedGamesList.map((game, index) => {
+                    const rank = index + 1;
+                    return (
+                      <div key={game.gameId} className="border border-slate-200/80 p-3.5 rounded-2xl flex items-center gap-3.5 bg-white shadow-sm">
+                        <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center flex-shrink-0 ${
+                          rank === 1 ? 'bg-amber-400 text-slate-900 shadow-md' :
+                          rank === 2 ? 'bg-slate-300 text-slate-900' :
+                          rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {rank}
+                        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-slate-900 text-xs truncate">{game.title}</h3>
-                        <div className="text-[10px] text-slate-500 mt-1 space-y-0.5">
-                          <div className="flex gap-2">
-                            <span>대여: {game.rentalCount || 0}회 (+{game.rentalScore?.toFixed(1)}점)</span>
-                            <span>출시: {game.releaseYear}년 (+{game.releaseBonus}점)</span>
+                        <img 
+                          src={game.imageUrl} 
+                          alt={game.title} 
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-100 flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-slate-900 text-xs truncate">{game.title}</h3>
+                          <div className="text-[10px] text-slate-500 mt-1 space-y-0.5">
+                            <div className="flex gap-2">
+                              <span>최근 30일 대여: <strong className="text-rose-600">{game.recentRentalCount || 0}회</strong></span>
+                              <span>출시: {game.releaseYear}년 (+{game.releaseBonus}점)</span>
+                            </div>
+                            <div>BGG 평점: {game.bggRating}점</div>
                           </div>
-                          <div>BGG 평점: <strong className="text-amber-600">{game.bggRating}점</strong></div>
+                        </div>
+
+                        <div className="text-right flex-shrink-0">
+                          <span className="text-[10px] text-slate-400 font-medium block">트렌드점수</span>
+                          <span className="font-black text-rose-600 text-sm">{game.totalScore}점</span>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-[10px] text-slate-400 font-medium block">총점</span>
-                        <span className="font-black text-slate-900 text-sm">{game.totalScore}점</span>
+              {/* 2) 🏆 명예의 전당 (누적 대여 + BGG 평점) */}
+              {rankingTab === 'hall' && (
+                <div className="space-y-2.5">
+                  <p className="text-[11px] text-slate-500 font-medium px-1">
+                    * 전체 누적 대여 횟수 + BGG 평점 기준 (스테디셀러)
+                  </p>
+                  {hallOfFameRankedGamesList.map((game, index) => {
+                    const rank = index + 1;
+                    return (
+                      <div key={game.gameId} className="border border-slate-200/80 p-3.5 rounded-2xl flex items-center gap-3.5 bg-white shadow-sm">
+                        <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center flex-shrink-0 ${
+                          rank === 1 ? 'bg-amber-400 text-slate-900 shadow-md' :
+                          rank === 2 ? 'bg-slate-300 text-slate-900' :
+                          rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {rank}
+                        </div>
+
+                        <img 
+                          src={game.imageUrl} 
+                          alt={game.title} 
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-100 flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-slate-900 text-xs truncate">{game.title}</h3>
+                          <div className="text-[10px] text-slate-500 mt-1 space-y-0.5">
+                            <div className="flex gap-2">
+                              <span>총 누적 대여: <strong className="text-amber-600">{game.rentalCount || 0}회</strong></span>
+                              <span>출시: {game.releaseYear}년</span>
+                            </div>
+                            <div>BGG 평점: {game.bggRating}점</div>
+                          </div>
+                        </div>
+
+                        <div className="text-right flex-shrink-0">
+                          <span className="text-[10px] text-slate-400 font-medium block">누적점수</span>
+                          <span className="font-black text-slate-900 text-sm">{game.totalScore}점</span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
-          {/* ⭕ 4. 신규 메뉴: 신고 탭 */}
+          {/* 4. 신고 탭 */}
           {activeTab === 'report' && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
@@ -1535,10 +1614,9 @@ export default function App() {
             </div>
           )}
 
-          {/* ⭕ 5. 관리자 메뉴 통합 관리 페이지 */}
+          {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
-              {/* 관리자 서브 메뉴 네비게이션 칩 */}
               <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-bold">
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
@@ -1566,7 +1644,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* A. 게임 등록 및 수정 */}
               {adminSubTab === 'gameAdmin' && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
@@ -1670,7 +1747,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* B. 대여 및 반납 현황 */}
               {adminSubTab === 'rentalAdmin' && (
                 <div className="space-y-4">
                   <div className="pb-2 border-b border-slate-200/80">
@@ -1728,7 +1804,6 @@ export default function App() {
                     <div className="space-y-2.5">
                       {allReturnedRentalsAdminList.map((rental) => {
                         const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
-                        const isLateReturn = returnedDate > rental.endDate;
 
                         return (
                           <div key={rental.rentalId} className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-sm space-y-1.5">
@@ -1753,7 +1828,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* C. 회원 관리 */}
               {adminSubTab === 'userAdmin' && (
                 <div className="space-y-4">
                   <div className="pb-2 border-b border-slate-200/80">
@@ -1830,7 +1904,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* D. 공지사항 관리 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
@@ -1855,38 +1928,32 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {notices.length === 0 ? (
-                      <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
-                        등록된 공지사항이 없습니다.
-                      </div>
-                    ) : (
-                      notices.map((n) => (
-                        <div key={n.noticeId} className="border border-slate-200/80 p-3.5 rounded-2xl bg-white shadow-sm space-y-1.5">
-                          <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-slate-900 text-xs">{n.title}</h3>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => {
-                                  setEditingNotice({ id: n.noticeId, title: n.title, content: n.content });
-                                  setIsNoticeModalOpen(true);
-                                }}
-                                className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition"
-                              >
-                                <Edit size={14} />
-                              </button>
-                              <button
-                                onClick={() => deleteNotice(n.noticeId)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
+                    {notices.map((n) => (
+                      <div key={n.noticeId} className="border border-slate-200/80 p-3.5 rounded-2xl bg-white shadow-sm space-y-1.5">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-slate-900 text-xs">{n.title}</h3>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingNotice({ id: n.noticeId, title: n.title, content: n.content });
+                                setIsNoticeModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={() => deleteNotice(n.noticeId)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
-                          <p className="text-[11px] text-slate-600 whitespace-pre-wrap">{n.content}</p>
-                          <span className="text-[10px] text-slate-400 block pt-1">{n.createdAt} 작성</span>
                         </div>
-                      ))
-                    )}
+                        <p className="text-[11px] text-slate-600 whitespace-pre-wrap">{n.content}</p>
+                        <span className="text-[10px] text-slate-400 block pt-1">{n.createdAt} 작성</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1895,7 +1962,6 @@ export default function App() {
           )}
         </main>
 
-        {/* 플로팅 장바구니 버튼 (게임목록 탭에서만 활성화) */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
@@ -1913,7 +1979,6 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 고정 하단 네비게이션 메인 메뉴 바 */}
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg">
           <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'games' ? 'text-slate-900' : 'text-slate-400'}`}>
             <Gamepad2 size={20} />
@@ -1939,7 +2004,6 @@ export default function App() {
           )}
         </nav>
 
-        {/* 장바구니 Drawer 모달 */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className="w-full max-w-xs bg-white h-full flex flex-col shadow-2xl">
@@ -2011,7 +2075,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 게임 등록/수정 모달 (출시년도 및 BGG 평점 항목 포함) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3.5 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
@@ -2065,7 +2128,6 @@ export default function App() {
                   />
                 </div>
 
-                {/* ⭕ 신규 추가: 출시년도 및 보드게임긱(BGG) 평점 */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="font-bold block mb-1.5 text-slate-900 flex items-center gap-1">
@@ -2098,7 +2160,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 장르 선택 (최대 3개) */}
                 <div>
                   <label className="font-bold block mb-1.5 text-slate-900 flex items-center justify-between">
                     <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 3개)</span>
@@ -2221,7 +2282,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 공지사항 작성/수정 모달 */}
         {isNoticeModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border border-slate-100">
