@@ -330,6 +330,12 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
+    // html 태그에 dark 클래스 토글로 전역 배경 동기화
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [themeMode]);
 
   useEffect(() => {
@@ -1609,6 +1615,7 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
+    // ⭕ 최외곽 wrapper 배경을 테마(다크/라이트)에 완벽 동기화하여 당김 시 흰 화면 발생 차단
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
@@ -1960,7 +1967,7 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
-                            {/* ⭕ 대여가능 버튼: 다크모드일 때 세련된 다크 테마 시인성 지원 (dark:bg-sky-500 dark:text-slate-950) */}
+                            {/* ⭕ 라이트모드 대여버튼: 카카오 옐로우(#FEE500) 원복 / 다크모드: 스카이 블루(dark:bg-sky-400) 적용 */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
