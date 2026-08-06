@@ -235,7 +235,6 @@ export default function App() {
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
 
-  // ⭕ 2. 각 탭별 스크롤 위치 보존을 위한 Ref 및 스크롤 영역 메인 Ref
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
   const tabScrollPositions = useRef<{ [key: string]: number }>({
     games: 0,
@@ -274,7 +273,6 @@ export default function App() {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
   }, [fontSize]);
 
-  // ⭕ 탭 전환 시 각 탭별 스크롤 위치 복원 / 전환 전 위치 저장
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'admin') => {
     if (mainScrollRef.current) {
       tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
@@ -433,6 +431,7 @@ export default function App() {
         })));
       }
 
+      // ⭕ DB의 is_read 컬럼값을 isRead로 매핑하여 불러옴
       const { data: reportsData } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
       if (reportsData) {
         setReportList(reportsData.map(r => ({
@@ -442,7 +441,7 @@ export default function App() {
           title: r.title,
           content: r.content,
           createdAt: r.created_at?.replace('T', ' ').substring(0, 16) || today,
-          isRead: !!r.is_read
+          isRead: !!r.is_read // boolean 타입 보장
         })));
       }
 
@@ -649,20 +648,24 @@ export default function App() {
     }
   };
 
+  // ⭕ 읽음 상태 DB 처리 및 로컬 state 동기화
   const handleMarkReportAsRead = async (report: ReportData) => {
     setSelectedReport(report);
     if (!report.isRead) {
-      await supabase.from('reports').update({ is_read: true }).eq('report_id', report.reportId);
+      // 로컬 state 즉시 업데이트
       setReportList(prev => prev.map(r => r.reportId === report.reportId ? { ...r, isRead: true } : r));
+      // DB 스네이크 케이스 is_read 컬럼 업데이트
+      await supabase.from('reports').update({ is_read: true }).eq('report_id', report.reportId);
     }
   };
 
+  // ⭕ 모두 읽음 일괄 처리
   const handleMarkAllReportsAsRead = async () => {
     const unreadIds = reports.filter(r => !r.isRead).map(r => r.reportId);
     if (unreadIds.length === 0) return;
 
-    await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
     setReportList(prev => prev.map(r => ({ ...r, isRead: true })));
+    await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
   };
 
   const activeRentalsCount = currentUser 
@@ -1052,11 +1055,9 @@ export default function App() {
     return d.toISOString().split('T')[0];
   };
 
-  // ⭕ 3. 감각적인 보드게임 카드 섞기 CSS 애니메이션 로딩 화면
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
-        {/* CSS 카드 섞기 애니메이션 */}
         <div className="relative w-16 h-20 mb-6 flex items-center justify-center">
           <div className="absolute w-12 h-16 bg-[#FEE500] rounded-xl border-2 border-amber-300 shadow-lg animate-[ping_1.8s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30"></div>
           <div className="absolute w-12 h-16 bg-sky-400 rounded-xl border-2 border-sky-300 shadow-md animate-bounce -translate-x-3 -rotate-12"></div>
@@ -1433,7 +1434,7 @@ export default function App() {
           )}
         </header>
 
-        {/* ⭕ 메인 스크롤 영역 (Ref 할당하여 탭별 스크롤 독립 분리) */}
+        {/* 메인 스크롤 영역 */}
         <main 
           ref={mainScrollRef}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
@@ -1443,7 +1444,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* 공지사항 배너 */}
+              {/* 수직 롤링 공지사항 배너 */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -2188,7 +2189,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 공지사항 작성 버튼명 원복('공지 작성') 및 서브 타이틀 설명 제거 완료 */}
+              {/* 공지사항 관리 페이지 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2268,7 +2269,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2. 하단 네비게이션 탭별 스크롤 분리용 함수(handleTabChange) 적용 */}
+        {/* 하단 네비게이션 아이콘 */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2697,7 +2698,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. 장바구니 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
+        {/* 장바구니 Drawer 모달 */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsCartOpen(false)}>
             <div 
@@ -2776,7 +2777,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. 공지사항 우측 슬라이딩 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
+        {/* 공지사항 우측 슬라이딩 Drawer 모달 */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
