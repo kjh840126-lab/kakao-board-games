@@ -46,7 +46,9 @@ import {
   Medal,
   Users as PlayerIcon,
   RotateCcw,
-  Loader2
+  Loader2,
+  Globe,
+  ExternalLink
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -112,6 +114,15 @@ export interface ReportData {
   isRead: boolean;
 }
 
+export interface BoardSite {
+  siteId: number;
+  name: string;
+  url: string;
+  bannerUrl: string;
+  description: string;
+  isVisible: 'Y' | 'N';
+}
+
 const PRESET_GENRES = ['전략게임', '파티게임', '추상전략', '타일 놓기', '카드게임', '가족게임', '협동게임', '마피아'];
 const LOGIN_LOGO_URL = '/logo.png'; 
 const ALLOWED_EMAIL_DOMAINS = [
@@ -120,6 +131,41 @@ const ALLOWED_EMAIL_DOMAINS = [
   'kakaomobility.com',
   'kakaopaycorp.com',
   'kakaoent.com',
+];
+
+const DEFAULT_SITES: BoardSite[] = [
+  {
+    siteId: 1,
+    name: '보드라이프 (BoardLife)',
+    url: 'https://boardlife.co.kr',
+    bannerUrl: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600',
+    description: '국내 최대 보드게임 커뮤니티, 리뷰 및 커스텀 한글화 자료실',
+    isVisible: 'Y'
+  },
+  {
+    siteId: 2,
+    name: '보드게임긱 (BoardGameGeek)',
+    url: 'https://boardgamegeek.com',
+    bannerUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600',
+    description: '전 세계 보드게이머들의 글로벌 1위 랭킹 및 데이터베이스',
+    isVisible: 'Y'
+  },
+  {
+    siteId: 3,
+    name: '팝콘에듀 (Popcorn Edu)',
+    url: 'https://www.popcornedu.co.kr',
+    bannerUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600',
+    description: '보드게임 프로텍터, 수납 슬리브 및 한국어판 게임 쇼핑몰',
+    isVisible: 'Y'
+  },
+  {
+    siteId: 4,
+    name: '코리아보드게임즈 (Korea Boardgames)',
+    url: 'https://koreaboardgames.com',
+    bannerUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600',
+    description: '루미큐브, 할리갈리 등 대표 보드게임 퍼블리셔 공식 스토어',
+    isVisible: 'Y'
+  }
 ];
 
 const currentYear = new Date().getFullYear();
@@ -151,6 +197,7 @@ export default function App() {
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [reports, setReportList] = useState<ReportData[]>([]);
+  const [sites, setSiteList] = useState<BoardSite[]>(DEFAULT_SITES);
   const [loading, setLoading] = useState(true);
 
   // 설정 관련 State (LocalStorage 연동)
@@ -209,10 +256,12 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
-  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'admin'>('games');
+  // ⭕ 3. 하단 네비게이션 'sites' 탭 신규 추가
+  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'sites' | 'admin'>('games');
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
-  const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin'>('gameAdmin');
+  // ⭕ 4. 관리자 서브탭 'siteAdmin' 추가
+  const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>('gameAdmin');
   const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -224,6 +273,17 @@ export default function App() {
 
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
+
+  // ⭕ 관리자 사이트 등록/수정 모달 State
+  const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
+  const [editingSite, setEditingSite] = useState<BoardSite>({
+    siteId: 0,
+    name: '',
+    url: '',
+    bannerUrl: '',
+    description: '',
+    isVisible: 'Y'
+  });
 
   const [reportForm, setReportForm] = useState({ 
     title: '', 
@@ -240,6 +300,7 @@ export default function App() {
     games: 0,
     returns: 0,
     ranking: 0,
+    sites: 0,
     admin: 0
   });
 
@@ -273,7 +334,7 @@ export default function App() {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
   }, [fontSize]);
 
-  const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'admin') => {
+  const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     if (mainScrollRef.current) {
       tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
     }
@@ -431,7 +492,6 @@ export default function App() {
         })));
       }
 
-      // ⭕ DB의 is_read 컬럼값을 isRead로 매핑하여 불러옴
       const { data: reportsData } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
       if (reportsData) {
         setReportList(reportsData.map(r => ({
@@ -441,7 +501,20 @@ export default function App() {
           title: r.title,
           content: r.content,
           createdAt: r.created_at?.replace('T', ' ').substring(0, 16) || today,
-          isRead: !!r.is_read // boolean 타입 보장
+          isRead: !!r.is_read
+        })));
+      }
+
+      // ⭕ 추천 사이트 데이터 조회 (DB 조회가 없으면 기본 데이터 유지)
+      const { data: sitesData } = await supabase.from('sites').select('*').order('site_id', { ascending: true });
+      if (sitesData && sitesData.length > 0) {
+        setSiteList(sitesData.map(s => ({
+          siteId: s.site_id,
+          name: s.name,
+          url: s.url,
+          bannerUrl: s.banner_url || 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600',
+          description: s.description || '',
+          isVisible: s.is_visible || 'Y'
         })));
       }
 
@@ -648,24 +721,79 @@ export default function App() {
     }
   };
 
-  // ⭕ 읽음 상태 DB 처리 및 로컬 state 동기화
   const handleMarkReportAsRead = async (report: ReportData) => {
     setSelectedReport(report);
     if (!report.isRead) {
-      // 로컬 state 즉시 업데이트
       setReportList(prev => prev.map(r => r.reportId === report.reportId ? { ...r, isRead: true } : r));
-      // DB 스네이크 케이스 is_read 컬럼 업데이트
       await supabase.from('reports').update({ is_read: true }).eq('report_id', report.reportId);
     }
   };
 
-  // ⭕ 모두 읽음 일괄 처리
   const handleMarkAllReportsAsRead = async () => {
     const unreadIds = reports.filter(r => !r.isRead).map(r => r.reportId);
     if (unreadIds.length === 0) return;
 
     setReportList(prev => prev.map(r => ({ ...r, isRead: true })));
     await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
+  };
+
+  // ⭕ 사이트 저장 (등록/수정)
+  const saveSite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSite.name.trim() || !editingSite.url.trim()) {
+      alert('사이트명과 URL을 입력해 주세요.');
+      return;
+    }
+
+    if (editingSite.siteId > 0) {
+      const { error } = await supabase.from('sites').update({
+        name: editingSite.name,
+        url: editingSite.url,
+        banner_url: editingSite.bannerUrl,
+        description: editingSite.description,
+        is_visible: editingSite.isVisible
+      }).eq('site_id', editingSite.siteId);
+
+      if (error) {
+        setSiteList(prev => prev.map(s => s.siteId === editingSite.siteId ? editingSite : s));
+      } else {
+        alert('사이트 정보가 수정되었습니다.');
+      }
+    } else {
+      const newId = Date.now();
+      const newSite: BoardSite = { ...editingSite, siteId: newId };
+
+      const { error } = await supabase.from('sites').insert([{
+        site_id: newId,
+        name: editingSite.name,
+        url: editingSite.url,
+        banner_url: editingSite.bannerUrl,
+        description: editingSite.description,
+        is_visible: editingSite.isVisible
+      }]);
+
+      if (error) {
+        setSiteList(prev => [...prev, newSite]);
+      } else {
+        alert('새 사이트가 추가되었습니다.');
+      }
+    }
+
+    await fetchInitialData();
+    setIsSiteModalOpen(false);
+  };
+
+  // ⭕ 사이트 삭제
+  const deleteSite = async (siteId: number, name: string) => {
+    if (window.confirm(`'${name}' 사이트를 삭제하시겠습니까?`)) {
+      const { error } = await supabase.from('sites').delete().eq('site_id', siteId);
+      if (error) {
+        setSiteList(prev => prev.filter(s => s.siteId !== siteId));
+      } else {
+        alert('사이트가 삭제되었습니다.');
+      }
+      await fetchInitialData();
+    }
   };
 
   const activeRentalsCount = currentUser 
@@ -1048,6 +1176,8 @@ export default function App() {
       }
       return b.rentalId - a.rentalId;
     });
+
+  const visibleSitesList = sites.filter(s => s.isVisible === 'Y');
 
   const calculatedCalculatedEndDate = () => {
     const d = new Date();
@@ -1444,7 +1574,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* 수직 롤링 공지사항 배너 */}
+              {/* 공지사항 배너 */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -1873,47 +2003,106 @@ export default function App() {
             </div>
           )}
 
+          {/* ⭕ 3. 신규 보드게임 사이트 모음 탭 */}
+          {activeTab === 'sites' && (
+            <div className="space-y-4 mt-0.5">
+              <div className={`pb-2 border-b flex justify-between items-end ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                <div>
+                  <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                    <Globe size={18} className="text-sky-500" />
+                    추천 보드게임 사이트
+                  </h2>
+                  <p className="text-slate-400 font-medium mt-0.5">
+                    커뮤니티, 데이터베이스, 온라인 스토어 추천 모음
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3.5">
+                {visibleSitesList.map((site) => (
+                  <a
+                    key={site.siteId}
+                    href={site.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`border rounded-2xl overflow-hidden block shadow-sm transition hover:scale-[1.01] ${
+                      isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="h-28 bg-slate-200 relative overflow-hidden">
+                      <img 
+                        src={site.bannerUrl} 
+                        alt={site.name} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600'; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-3">
+                        <span className="text-white font-extrabold text-sm drop-shadow-sm flex items-center gap-1.5">
+                          {site.name} <ExternalLink size={13} className="text-sky-400" />
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-3">
+                      <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        {site.description}
+                      </p>
+                      <span className="text-[10px] text-sky-500 font-mono font-semibold block mt-1.5 truncate">
+                        {site.url}
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
-              <div className={`grid grid-cols-4 gap-1 p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'gameAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'gameAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   게임관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('rentalAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'rentalAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'rentalAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   대여/반납
                 </button>
                 <button
                   onClick={() => setAdminSubTab('userAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'userAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'userAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   회원관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('noticeAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'noticeAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'noticeAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   공지사항
+                </button>
+                {/* ⭕ 4. 관리자 서브탭 '사이트' 관리 추가 */}
+                <button
+                  onClick={() => setAdminSubTab('siteAdmin')}
+                  className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  사이트
                 </button>
               </div>
 
               {adminSubTab === 'gameAdmin' && (
                 <div className="space-y-4">
+                  {/* ⭕ 1. 관리자 게임관리 하단 설명 텍스트 제거 */}
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                         게임 등록 및 수정
                       </h2>
-                      <p className="text-slate-400 font-medium mt-0.5">
-                        보드게임을 추가하거나 수정 및 삭제합니다.
-                      </p>
                     </div>
                     <button
                       onClick={() => {
@@ -2243,11 +2432,80 @@ export default function App() {
                 </div>
               )}
 
+              {/* ⭕ 4. 관리자 추천 사이트 관리 서브페이지 */}
+              {adminSubTab === 'siteAdmin' && (
+                <div className="space-y-4">
+                  <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                    <div>
+                      <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                        <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
+                        추천 사이트 관리
+                      </h2>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditingSite({
+                          siteId: 0,
+                          name: '',
+                          url: '',
+                          bannerUrl: '',
+                          description: '',
+                          isVisible: 'Y'
+                        });
+                        setIsSiteModalOpen(true);
+                      }}
+                      className="bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                    >
+                      <Plus size={14} /> 사이트 추가
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {sites.map((s) => (
+                      <div key={s.siteId} className={`border p-3.5 rounded-2xl shadow-sm space-y-2 ${
+                        isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
+                      }`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <h3 className={`font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{s.name}</h3>
+                            {s.isVisible === 'Y' ? (
+                              <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><Eye size={11} /> 노출</span>
+                            ) : (
+                              <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><EyeOff size={11} /> 숨김</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingSite(s);
+                                setIsSiteModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:bg-slate-700/50 rounded-lg transition"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={() => deleteSite(s.siteId, s.name)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50/10 rounded-lg transition"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <p className="text-slate-400 text-[11px] truncate font-mono">{s.url}</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{s.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
         </main>
 
-        {/* ⭕ 1. 장바구니 플로팅 버튼 테마별 차별화 (라이트: 검은색, 다크: 노란색) */}
+        {/* 장바구니 플로팅 버튼 테마별 차별화 */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
@@ -2269,7 +2527,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 하단 네비게이션 아이콘 */}
+        {/* ⭕ 3. 하단 네비게이션 개편 (대여 / 반납 / 랭킹 / 사이트 / 관리자) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2285,6 +2543,10 @@ export default function App() {
             <Trophy size={20} />
             <span className="mt-1">랭킹</span>
           </button>
+          <button onClick={() => handleTabChange('sites')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'sites' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+            <Globe size={20} />
+            <span className="mt-1">사이트</span>
+          </button>
           {isAdmin && (
             <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
               <ShieldCheck size={20} />
@@ -2293,7 +2555,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 (왼쪽 오버레이 클릭 닫기 적용) */}
+        {/* ⭕ 2. 설정 드로어 (로그아웃 버튼 위치 및 가독성 개선, 닫기 버튼 배치) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -2408,15 +2670,31 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* ⭕ 2. 로그아웃 버튼 (평범한 스타일로 상단 배치) */}
+                <div className="pt-2 border-t border-slate-200/20">
+                  <button
+                    onClick={handleLogout}
+                    className={`w-full py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border ${
+                      isDarkMode 
+                        ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' 
+                        : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <LogOut size={16} /> 로그아웃
+                  </button>
+                </div>
+
               </div>
 
-              {/* 로그아웃 버튼 (최하단에 배치) */}
+              {/* ⭕ 2. 최하단 닫기 버튼 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
-                  onClick={handleLogout}
-                  className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-sm hover:bg-rose-700"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className={`w-full py-3 rounded-xl font-bold text-xs transition shadow-sm ${
+                    isDarkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'
+                  }`}
                 >
-                  <LogOut size={16} /> 로그아웃
+                  닫기
                 </button>
               </div>
             </div>
@@ -2847,6 +3125,91 @@ export default function App() {
                   닫기
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⭕ 4. 관리자용 추천 사이트 등록/수정 모달 */}
+        {isSiteModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
+              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+              <h3 className="font-extrabold text-base">{editingSite.siteId > 0 ? '추천 사이트 수정' : '추천 사이트 등록'}</h3>
+              <form onSubmit={saveSite} className="space-y-3">
+                <div>
+                  <label className="font-bold block mb-1">사이트명</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="예: 보드라이프"
+                    value={editingSite.name}
+                    onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold block mb-1">사이트 URL</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://boardlife.co.kr"
+                    value={editingSite.url}
+                    onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })}
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold block mb-1">배너 이미지 URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://example.com/banner.jpg"
+                    value={editingSite.bannerUrl}
+                    onChange={(e) => setEditingSite({ ...editingSite, bannerUrl: e.target.value })}
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold block mb-1">사이트 설명</label>
+                  <textarea
+                    rows={3}
+                    placeholder="사이트에 대한 간단한 설명을 입력하세요"
+                    value={editingSite.description}
+                    onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label className="font-bold block mb-1">노출 여부</label>
+                  <select
+                    value={editingSite.isVisible}
+                    onChange={(e) => setEditingSite({ ...editingSite, isVisible: e.target.value as 'Y' | 'N' })}
+                    className={`w-full border p-2.5 rounded-xl ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    <option value="Y">노출 (Y)</option>
+                    <option value="N">숨김 (N)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition">취소</button>
+                  <button type="submit" className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">저장</button>
+                </div>
+              </form>
             </div>
           </div>
         )}
