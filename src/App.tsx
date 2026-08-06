@@ -1960,13 +1960,14 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
+                            {/* ⭕ 대여가능 버튼: 다크모드일 때 세련된 다크 테마 시인성 지원 (dark:bg-sky-500 dark:text-slate-950) */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
                                 className={`w-auto px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
                                   isSelectedInCart
-                                    ? 'bg-slate-900 text-white hover:bg-slate-800'
-                                    : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400'
+                                    ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800'
+                                    : 'bg-[#FEE500] text-slate-900 dark:bg-sky-400 dark:text-slate-950 hover:bg-amber-400 dark:hover:bg-sky-300'
                                 }`}
                               >
                                 {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
@@ -2005,12 +2006,12 @@ export default function App() {
               }`}>
                 <div className="flex items-center justify-between w-full">
                   <span className="text-slate-300 font-medium">현재 대여 중인 게임</span>
-                  <span className="text-lg font-black text-[#FEE500]">{activeRentalsCount} / 3 개</span>
+                  <span className="text-lg font-black text-[#FEE500] dark:text-sky-400">{activeRentalsCount} / 3 개</span>
                 </div>
                 {activeRentalsCount > 0 && (
                   <button
                     onClick={returnAllGames}
-                    className="bg-[#FEE500] text-slate-900 font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-amber-400 transition ml-3 flex-shrink-0"
+                    className="bg-[#FEE500] dark:bg-sky-400 text-slate-900 font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-amber-400 dark:hover:bg-sky-300 transition ml-3 flex-shrink-0"
                   >
                     <RotateCcw size={14} /> 일괄 반납
                   </button>
@@ -2019,7 +2020,7 @@ export default function App() {
 
               <section className="space-y-2.5 w-full">
                 <h3 className={`font-extrabold tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                  <span className="w-1.5 h-3.5 bg-slate-900 rounded-full inline-block"></span>
+                  <span className="w-1.5 h-3.5 bg-slate-900 dark:bg-sky-400 rounded-full inline-block"></span>
                   대여중인 게임
                 </h3>
                 {rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').length === 0 ? (
@@ -2060,7 +2061,7 @@ export default function App() {
                         </div>
                         <button
                           onClick={() => returnGame(rental.rentalId, rental.gameId)}
-                          className="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-xl hover:bg-slate-800 transition"
+                          className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold px-3 py-1.5 rounded-xl hover:bg-slate-800 transition"
                         >
                           반납
                         </button>
@@ -2178,7 +2179,7 @@ export default function App() {
                               <span className="absolute top-[9px] font-black text-[11px] text-white">{rank}</span>
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center bg-slate-100 text-slate-600">
+                            <div className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                               {rank}
                             </div>
                           )}
@@ -2244,7 +2245,7 @@ export default function App() {
                               <span className="absolute top-[9px] font-black text-[11px] text-white">{rank}</span>
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center bg-slate-100 text-slate-600">
+                            <div className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                               {rank}
                             </div>
                           )}
@@ -2404,7 +2405,7 @@ export default function App() {
                         });
                         setIsGameModalOpen(true);
                       }}
-                      className="bg-slate-900 text-white font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                      className="bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
                     >
                       <Plus size={14} /> 게임 등록
                     </button>
@@ -2604,7 +2605,7 @@ export default function App() {
                         });
                         setIsSiteModalOpen(true);
                       }}
-                      className="bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                      className="bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
                     >
                       <Plus size={14} /> 사이트 추가
                     </button>
@@ -2749,7 +2750,7 @@ export default function App() {
                         setEditingNotice({ title: '', content: '' });
                         setIsNoticeModalOpen(true);
                       }}
-                      className="bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                      className="bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
                     >
                       <Plus size={14} /> 공지 작성
                     </button>
@@ -2799,12 +2800,12 @@ export default function App() {
               onClick={() => setIsCartOpen(true)}
               className={`pointer-events-auto relative p-3.5 rounded-full active:scale-95 transition-all shadow-xl flex items-center justify-center ${
                 isDarkMode 
-                  ? 'bg-[#FEE500] text-slate-900 border border-amber-300 hover:bg-amber-400' 
+                  ? 'bg-sky-400 text-slate-950 border border-sky-300 hover:bg-sky-300' 
                   : 'bg-slate-900 text-white border border-slate-700 hover:bg-slate-800'
               }`}
               title="장바구니 열기"
             >
-              <ShoppingCart size={20} className={isDarkMode ? 'text-slate-900' : 'text-white'} />
+              <ShoppingCart size={20} className={isDarkMode ? 'text-slate-950' : 'text-white'} />
               {cart.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm text-[10px]">
                   {cart.length}
@@ -3032,7 +3033,7 @@ export default function App() {
           } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
             <div 
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-              className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm"
+              className="p-4 bg-[#FEE500] dark:bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-sm"
             >
               <span>장바구니 ({cart.length} / 3)</span>
               <button onClick={() => setIsCartOpen(false)} className="p-1"><X size={18} /></button>
@@ -3043,7 +3044,7 @@ export default function App() {
                 <span className="flex items-center gap-1.5">
                   <Calendar size={14} /> 대여 기간 설정
                 </span>
-                <span className="font-extrabold bg-amber-300/60 text-slate-900 px-2 py-0.5 rounded-md text-[11px]">
+                <span className="font-extrabold bg-amber-300/60 dark:bg-sky-300/60 text-slate-900 px-2 py-0.5 rounded-md text-[11px]">
                   {rentalDays}일 선택
                 </span>
               </div>
@@ -3055,7 +3056,7 @@ export default function App() {
                     onClick={() => setRentalDays(days)}
                     className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex-shrink-0 ${
                       rentalDays === days
-                        ? 'bg-slate-900 text-white shadow-sm scale-105'
+                        ? 'bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 shadow-sm scale-105'
                         : isDarkMode
                         ? 'bg-slate-800 text-slate-300 border border-slate-700'
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
@@ -3095,11 +3096,11 @@ export default function App() {
               className={`p-4 border-t ${isDarkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
             >
               {cart.length > 0 ? (
-                <button onClick={processCheckout} className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm">
+                <button onClick={processCheckout} className="w-full bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 py-3.5 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-sky-300 transition shadow-sm">
                   선택한 게임 {rentalDays}일간 대여하기
                 </button>
               ) : (
-                <button onClick={() => setIsCartOpen(false)} className="w-full bg-slate-200 text-slate-700 py-3.5 rounded-xl font-bold hover:bg-slate-300 transition shadow-sm">
+                <button onClick={() => setIsCartOpen(false)} className="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3.5 rounded-xl font-bold hover:bg-slate-300 transition shadow-sm">
                   닫기
                 </button>
               )}
@@ -3120,7 +3121,7 @@ export default function App() {
               className="p-4 bg-slate-900 flex justify-between items-center font-bold text-white text-sm"
             >
               <span className="flex items-center gap-2">
-                <Bell size={16} className="text-[#FEE500]" /> 공지사항 목록
+                <Bell size={16} className="text-[#FEE500] dark:text-sky-400" /> 공지사항 목록
               </span>
               <button onClick={() => setIsNoticeDrawerOpen(false)} className="text-slate-300 hover:text-white p-1"><X size={18} /></button>
             </div>
@@ -3136,7 +3137,7 @@ export default function App() {
                     className={`rounded-2xl border transition overflow-hidden max-w-full ${
                       isExpanded
                         ? isDarkMode 
-                          ? 'border-amber-500/80 bg-slate-800' 
+                          ? 'border-sky-500/80 bg-slate-800' 
                           : 'border-amber-400 bg-amber-50/60'
                         : isDarkMode
                         ? 'border-slate-800 bg-slate-800/60 hover:border-slate-700'
@@ -3149,7 +3150,7 @@ export default function App() {
                     >
                       <div className="flex-1 min-w-0 pr-1">
                         <h3 className={`font-bold leading-snug break-all text-xs ${
-                          isExpanded ? (isDarkMode ? 'text-amber-300' : 'text-slate-900') : ''
+                          isExpanded ? (isDarkMode ? 'text-sky-300' : 'text-slate-900') : ''
                         }`}>
                           {notice.title}
                         </h3>
@@ -3160,7 +3161,7 @@ export default function App() {
                       <ChevronDown 
                         size={16} 
                         className={`text-slate-400 flex-shrink-0 transition-transform duration-300 mt-0.5 ${
-                          isExpanded ? 'rotate-180 text-amber-500' : ''
+                          isExpanded ? 'rotate-180 text-amber-500 dark:text-sky-400' : ''
                         }`} 
                       />
                     </div>
@@ -3183,7 +3184,7 @@ export default function App() {
             >
               <button
                 onClick={() => setIsNoticeDrawerOpen(false)}
-                className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition"
+                className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 py-3 rounded-xl font-bold hover:bg-slate-800 transition"
               >
                 닫기
               </button>
@@ -3356,7 +3357,7 @@ export default function App() {
               <div className="pt-2 border-t border-slate-200/20">
                 <button
                   onClick={() => setIsFavoritesModalOpen(false)}
-                  className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
+                  className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
                 >
                   닫기
                 </button>
