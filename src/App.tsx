@@ -54,7 +54,8 @@ import {
   Star
 } from 'lucide-react';
 
-export type Role = '일반회원' | '운영자' | '탈퇴회원';
+// ⭕ 4. Role 권한명 '운영자' -> '관리자'로 변경
+export type Role = '일반회원' | '관리자' | '탈퇴회원';
 export type GameStatus = '대여가능' | '대여중' | '대여불가';
 export type RentalStatus = '대여중' | '반납완료';
 
@@ -230,6 +231,8 @@ export default function App() {
 
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+
+  const noticeDrawerScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserData | null>(() => {
     const savedUser = localStorage.getItem('kakao_boardgame_user');
@@ -754,7 +757,6 @@ export default function App() {
     await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
   };
 
-  // ⭕ 2. 로그인 시 아이디 소문자 변환
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetId = loginId.trim().toLowerCase();
@@ -786,7 +788,6 @@ export default function App() {
     setActiveTab('games');
   };
 
-  // ⭕ 2, 3. 이메일 중복 확인 시 아이디 및 이메일 소문자 변환
   const handleCheckEmailDuplicate = () => {
     const prefix = signupForm.emailPrefix.trim().toLowerCase();
     if (!prefix) {
@@ -806,7 +807,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 2, 3. 회원가입 제출 시 아이디 및 이메일 주소 무조건 소문자로 변환하여 저장
   const handleFinalSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -1164,9 +1164,15 @@ export default function App() {
     }
   };
 
+  // ⭕ 2. 공지사항 선택 시 최상단으로 스크롤 자동 이동
   const handleNoticeClick = (notice: Notice) => {
     setSelectedNotice(notice);
     setIsNoticeDrawerOpen(true);
+    setTimeout(() => {
+      if (noticeDrawerScrollRef.current) {
+        noticeDrawerScrollRef.current.scrollTop = 0;
+      }
+    }, 50);
   };
 
   const getReleaseBonus = (year: number) => {
@@ -1289,7 +1295,8 @@ export default function App() {
     ? rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').length 
     : 0;
 
-  const isAdmin = currentUser?.role === '운영자';
+  // ⭕ 4. 관리자 접근 권한 '관리자' 변경
+  const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
   if (loading) {
@@ -1358,7 +1365,6 @@ export default function App() {
           )}
 
           <div className="p-6">
-            {/* ⭕ 2. 로그인 창 아이디 소문자 입력 변환 */}
             {authMode === 'login' && (
               <form onSubmit={handleLogin} className="space-y-4 text-xs">
                 <div>
@@ -1407,7 +1413,6 @@ export default function App() {
               </form>
             )}
 
-            {/* ⭕ 2, 3. 회원가입 창 아이디/이메일 소문자 변환 */}
             {authMode === 'signup' && (
               <form onSubmit={handleFinalSignup} className="space-y-3.5 text-xs">
                 <div>
@@ -1889,7 +1894,7 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
-                          {/* ⭕ 1. 라이트 모드 이미지 외곽선 옅은 회색 적용 (border-slate-200/50) */}
+                          {/* 1. 라이트 모드 이미지 외곽선 옅은 회색 보정 (border-slate-200/50) */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2188,7 +2193,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* ⭕ 1. 이미지 테두리 라이트/다크 보정 */}
+                        {/* 1. 이미지 테두리 라이트/다크 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2255,7 +2260,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* ⭕ 1. 이미지 테두리 라이트/다크 보정 */}
+                        {/* 1. 이미지 테두리 라이트/다크 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2441,7 +2446,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {/* ⭕ 1. 이미지 테두리 라이트/다크 보정 */}
+                          {/* 1. 이미지 테두리 라이트/다크 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2705,7 +2710,7 @@ export default function App() {
                               <div className="flex items-center gap-1.5">
                                 <h3 className={`font-bold font-mono ${isWithdrawn ? 'text-slate-400 line-through' : isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{user.userId}</h3>
                                 <span className={`px-2 py-0.5 rounded-md font-semibold ${
-                                  user.role === '운영자' ? 'bg-amber-100 text-amber-800' : isWithdrawn ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
+                                  user.role === '관리자' ? 'bg-amber-100 text-amber-800' : isWithdrawn ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
                                 }`}>
                                   {user.role}
                                 </span>
@@ -2745,7 +2750,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* E. 공지사항 관리 */}
+              {/* ⭕ 3. 관리자 > 공지사항 관리: 타이틀 및 내용 자동 줄바꿈(break-keep) 적용 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2771,9 +2776,10 @@ export default function App() {
                       <div key={n.noticeId} className={`border p-3.5 rounded-2xl shadow-sm space-y-1.5 ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
-                        <div className="flex justify-between items-start">
-                          <h3 className={`font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
-                          <div className="flex items-center gap-1">
+                        <div className="flex justify-between items-start gap-2">
+                          {/* 3. 공지사항 타이틀 줄바꿈 처리 */}
+                          <h3 className={`font-bold break-keep leading-snug ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
+                          <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               onClick={() => {
                                 setEditingNotice({ id: n.noticeId, title: n.title, content: n.content });
@@ -2791,8 +2797,9 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                        <p className={`whitespace-pre-wrap ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
-                        <span className="text-slate-400 block pt-1">{n.createdAt} 작성</span>
+                        {/* 3. 공지사항 내용 줄바꿈 처리 */}
+                        <p className={`whitespace-pre-wrap break-keep leading-relaxed text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
+                        <span className="text-slate-400 block pt-1 text-[11px]">{n.createdAt} 작성</span>
                       </div>
                     ))}
                   </div>
@@ -3058,7 +3065,7 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {/* 5. 이미지 테두리 보정 */}
+                        {/* 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -3132,7 +3139,7 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
-                        {/* 5. 내 평점 모달 이미지 테두리 보정 */}
+                        {/* 내 평점 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -3607,7 +3614,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 공지사항 우측 슬라이딩 Drawer 모달 */}
+        {/* ⭕ 1, 2. 공지사항 우측 슬라이딩 Drawer 모달 (타이틀/내용 줄바꿈 & 선택 시 스크롤 최상단 이동) */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
@@ -3623,7 +3630,7 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              <div ref={noticeDrawerScrollRef} className="flex-1 p-4 overflow-y-auto space-y-4">
                 {selectedNotice && (
                   <div className={`p-4 rounded-2xl space-y-2 border shadow-sm ${
                     isDarkMode ? 'bg-slate-800 border-amber-500/40' : 'bg-amber-50/80 border-amber-300/80'
@@ -3631,13 +3638,15 @@ export default function App() {
                     <span className="text-amber-800 font-extrabold bg-amber-200/80 px-2 py-0.5 rounded-md inline-block">
                       선택한 공지사항
                     </span>
-                    <h3 className={`font-extrabold leading-snug ${isDarkMode ? 'text-amber-300' : 'text-slate-900'}`}>{selectedNotice.title}</h3>
-                    <p className={`whitespace-pre-wrap leading-relaxed pt-1 border-t ${
+                    {/* 1. 공지사항 타이틀 줄바꿈 처리 */}
+                    <h3 className={`font-extrabold leading-snug break-keep ${isDarkMode ? 'text-amber-300' : 'text-slate-900'}`}>{selectedNotice.title}</h3>
+                    {/* 1. 공지사항 내용 줄바꿈 처리 */}
+                    <p className={`whitespace-pre-wrap break-keep leading-relaxed pt-1 border-t text-xs ${
                       isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-amber-200/60'
                     }`}>
                       {selectedNotice.content}
                     </p>
-                    <span className="text-slate-400 block text-right pt-0.5">{selectedNotice.createdAt}</span>
+                    <span className="text-slate-400 block text-right pt-0.5 text-[11px]">{selectedNotice.createdAt}</span>
                   </div>
                 )}
 
@@ -3648,7 +3657,7 @@ export default function App() {
                     return (
                       <div
                         key={notice.noticeId}
-                        onClick={() => setSelectedNotice(notice)}
+                        onClick={() => handleNoticeClick(notice)}
                         className={`p-3 rounded-xl border cursor-pointer transition ${
                           isSelected
                             ? 'border-slate-900 bg-slate-900 text-white font-bold shadow-sm'
@@ -3657,9 +3666,10 @@ export default function App() {
                             : 'border-slate-200/80 bg-white text-slate-800 hover:border-slate-300'
                         }`}
                       >
-                        <div className="flex justify-between items-start">
-                          <span className="truncate pr-2 font-semibold">{notice.title}</span>
-                          <span className={`font-mono flex-shrink-0 ${isSelected ? 'text-amber-300' : 'text-slate-400'}`}>
+                        <div className="flex justify-between items-start gap-2">
+                          {/* 1. 공지사항 리스트 제목 줄바꿈 처리 */}
+                          <span className="break-keep font-semibold text-xs leading-snug">{notice.title}</span>
+                          <span className={`font-mono flex-shrink-0 text-[10px] ${isSelected ? 'text-amber-300' : 'text-slate-400'}`}>
                             {notice.createdAt.substring(5)}
                           </span>
                         </div>
@@ -3806,7 +3816,7 @@ export default function App() {
                       <img 
                         src={editingGame.imageUrl} 
                         alt="미리보기" 
-                        className="w-12 h-12 object-cover rounded-lg bg-white border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
+                        className="w-12 h-12 object-cover rounded-lg bg-white border border-slate-300 dark:border-slate-700 flex-shrink-0"
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                       />
                       <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">이미지 미리보기</span>
