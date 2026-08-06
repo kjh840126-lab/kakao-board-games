@@ -1610,8 +1610,9 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    <div className={`min-h-screen flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#FEE500]'}`}>
-      <div className={`w-full max-w-md min-h-screen flex flex-col relative border-x transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/60'}`}>
+    // ⭕ 1. 최외곽 배경 테마에 따른 배경색 일치 지정 (흰색 여백 방지)
+    <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#FEE500]'}`}>
+      <div className={`w-full max-w-md min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
         <header 
@@ -1890,7 +1891,6 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
-                          {/* 라이트 모드 이미지 외곽선 옅은 회색 보정 (border-slate-200/50) */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2804,7 +2804,7 @@ export default function App() {
           )}
         </main>
 
-        {/* ⭕ 장바구니 플로팅 버튼 (Safe Area 및 하단 네비게이션 높이 자동 반영 계산) */}
+        {/* 장바구니 플로팅 버튼 (Safe Area 및 하단 네비게이션 높이 자동 반영 계산) */}
         {activeTab === 'games' && (
           <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] max-w-md mx-auto right-4 pointer-events-none z-30 transition-all">
             <button
@@ -3239,7 +3239,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (화면 잘림 완벽 해결) */}
+        {/* 관리자용 신고/건의 내역 우측 슬라이딩 Drawer */}
         {isAdminReportDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
             <div 
