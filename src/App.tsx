@@ -124,16 +124,16 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ⭕ 설정 관련 State (테마: 라이트/다크, 폰트크기: 보통/크게, 드로어 열림 여부)
+  // 설정 관련 State
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
   const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // 공지사항 롤링 인덱스 State
+  // 공지사항 롤링 State
   const [noticeIndex, setNoticeIndex] = useState(0);
   const [isNoticeTransition, setIsNoticeTransition] = useState(true);
 
-  // 공지사항 우측 드로어 모달 State & 클릭한 공지사항 State
+  // 공지사항 우측 드로어 State
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
@@ -1212,15 +1212,11 @@ export default function App() {
     <div className={`min-h-screen flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#FEE500]'}`}>
       <div className={`w-full max-w-md min-h-screen flex flex-col relative border-x transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/60'}`}>
         
-        {/* 고정 상단 헤더 */}
+        {/* ⭕ 고정 상단 헤더 (다크모드를 해도 색상이 변하지 않도록 bg-[#FEE500] 고정) */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
-            isHeaderAdminTheme 
-              ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' 
-              : isDarkMode 
-              ? 'bg-slate-900 border-b border-slate-800 text-white' 
-              : 'bg-[#FEE500] border-b border-amber-300/40'
+            isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
           }`}
         >
           <div>
@@ -1233,9 +1229,9 @@ export default function App() {
               />
             </div>
 
-            <div className={`flex flex-wrap items-center gap-1.5 text-xs font-bold ${isDarkMode && !isHeaderAdminTheme ? 'text-slate-200' : 'text-slate-900'}`}>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-900">
               <div className="flex items-center gap-1">
-                <UserCheck size={14} />
+                <UserCheck size={14} className="text-slate-900" />
                 <span>{currentUser.userId}</span>
               </div>
 
@@ -1252,15 +1248,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* ⭕ 기존 로그아웃 위치 ➔ 설정(아이콘) 버튼으로 변경 */}
           <button
             onClick={() => setIsSettingsOpen(true)}
             title="설정"
             className={`p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm ${
               isHeaderAdminTheme 
                 ? 'bg-sky-300 hover:bg-sky-200 text-slate-900' 
-                : isDarkMode 
-                ? 'bg-slate-800 hover:bg-slate-700 text-slate-200' 
                 : 'bg-amber-400/80 hover:bg-amber-400 text-slate-900'
             }`}
           >
@@ -1268,7 +1261,7 @@ export default function App() {
           </button>
         </header>
 
-        {/* ⭕ 메인 스크롤 영역 (폰트 크기 변경 클래스 적용) */}
+        {/* 메인 스크롤 영역 */}
         <main 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
@@ -1375,10 +1368,12 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className={`flex items-center justify-between gap-2 mt-3 pt-2.5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                            <div className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+                          {/* ⭕ 개편된 레이아웃: 장르 태그(상단 행)와 대여 버튼(하단 행)을 분리하여 짤림 현상 방지 */}
+                          <div className={`mt-3 pt-2.5 border-t space-y-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                            {/* 1) 장르 태그 행 */}
+                            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
                               {game.genres.map((genre) => (
-                                <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap flex-shrink-0 ${
+                                <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
                                   isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-800'
                                 }`}>
                                   {genre}
@@ -1386,11 +1381,12 @@ export default function App() {
                               ))}
                             </div>
 
-                            <div className="flex-shrink-0">
+                            {/* 2) 대여 버튼 행 */}
+                            <div className="flex justify-end">
                               {isAvailable ? (
                                 <button
                                   onClick={() => toggleCartItem(game)}
-                                  className={`px-3 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition ${
+                                  className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
                                     isSelectedInCart
                                       ? 'bg-slate-900 text-white hover:bg-slate-800'
                                       : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400'
@@ -1399,13 +1395,13 @@ export default function App() {
                                   {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
                                 </button>
                               ) : (
-                                <div>
+                                <div className="w-full text-right">
                                   {isOverdue ? (
-                                    <span className="px-2.5 py-1 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block">
+                                    <span className="w-full text-center px-2.5 py-1.5 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block text-xs">
                                       대여중 (연체 {overdueDays}일)
                                     </span>
                                   ) : (
-                                    <span className={`px-2.5 py-1 rounded-xl font-bold border inline-block ${
+                                    <span className={`w-full text-center px-2.5 py-1.5 rounded-xl font-bold border inline-block text-xs ${
                                       isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-slate-100 text-slate-600 border-slate-200'
                                     }`}>
                                       대여중 ({activeRental?.endDate?.substring(5)} 반납예정)
@@ -2141,7 +2137,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 고정 하단 네비게이션 */}
+        {/* ⭕ 고정 하단 네비게이션 (다크모드 영향 없이 백그라운드 깨끗하게 유지) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2169,7 +2165,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 1. 설정 우측 슬라이딩 Drawer 모달 */}
+        {/* 설정 우측 슬라이딩 Drawer 모달 */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
