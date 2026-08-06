@@ -43,7 +43,8 @@ import {
   Type,
   User,
   Brain,
-  Medal
+  Medal,
+  Users as PlayerIcon
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -111,7 +112,7 @@ const ALLOWED_EMAIL_DOMAINS = [
 
 const currentYear = new Date().getFullYear();
 
-// ⭕ BGG 커스텀 아이콘 Component (첨부 이미지 형태 반영)
+// BGG 커스텀 아이콘 Component
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
   <svg 
     width={size} 
@@ -154,7 +155,7 @@ export default function App() {
   const [changePassword, setNewPasswordInput] = useState('');
   const [changePasswordConfirm, setNewPasswordConfirmInput] = useState('');
 
-  // ⭕ 신고 및 건의하기 팝업(모달) State
+  // 신고 및 건의하기 팝업(모달) State
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // 공지사항 롤링 State
@@ -796,7 +797,7 @@ export default function App() {
         status: '대여가능',
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
-        play_time: editingGame.playTime,
+        playTime: editingGame.playTime,
         difficulty: formattedDifficulty,
         description: '',
         is_visible: editingGame.isVisible,
@@ -1343,7 +1344,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* ⭕ 7. 다크모드 공지사항 시인성 개선 (테두리 및 배경 고대비 처리) */}
+              {/* 7. 다크모드 공지사항 시인성 개선 */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -1428,7 +1429,6 @@ export default function App() {
                         />
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div>
-                            {/* 3. 게임명 뒤에 (2026년) 출시년도 노출 */}
                             <div className="flex justify-between items-start">
                               <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                 <span>{game.title}</span>
@@ -1437,13 +1437,11 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
-                            {/* ⭕ 4. 메타 순서: 인원수 ➔ 플레이시간 ➔ 난이도 ➔ BGG 평점 순서 및 5,6 번 항목 보정 */}
+                            {/* ⭕ 4, 5, 6. 메타 순서(인원/시간/난이도/BGG평점) 및 난이도 색상 통일, BGG 커스텀 아이콘 반영 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
-                              {/* 5. 난이도 아이콘 & 폰트색 통일 */}
                               <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
-                              {/* 6. BGG 커스텀 아이콘 및 평점 노출 */}
                               <span className="flex items-center gap-0.5"><BggIcon size={11} className="text-slate-400" /> BGG {game.bggRating}</span>
                             </div>
                           </div>
@@ -2155,7 +2153,7 @@ export default function App() {
           )}
         </main>
 
-        {/* ⭕ 7. 다크모드 시 장바구니 플로팅 버튼 시인성 상향 ([#FEE500] 노란색 카카오 테마로 고대비 처리) */}
+        {/* ⭕ 7. 다크모드 시 장바구니 플로팅 버튼 시인성 상향 ([#FEE500] 노란색 카카오 테마 적용) */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
@@ -2173,7 +2171,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 하단 네비게이션 개편 (설정 탭 삭제 ➔ 대여/반납/랭킹/관리자 3~4개 메뉴 구성) */}
+        {/* ⭕ 1. 하단 네비게이션 개편 (설정 탭 삭제) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2197,7 +2195,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 2, 3. 설정 우측 슬라이딩 Drawer 모달 (로그아웃 버튼을 닫기 위치로 이동) */}
+        {/* ⭕ 3. 설정 우측 슬라이딩 Drawer 모달 (로그아웃 버튼을 최하단으로 이동) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
@@ -2233,7 +2231,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* B. 2. 신고 및 건의하기 (클릭 시 독립 팝업 모달 오픈) */}
+                {/* B. 2. 신고 및 건의하기 (독립 팝업 모달로 열림) */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Siren size={14} /> 고객지원
@@ -2309,7 +2307,7 @@ export default function App() {
 
               </div>
 
-              {/* ⭕ 3. 로그아웃 버튼을 닫기 위치(최하단)로 이동 배치 */}
+              {/* ⭕ 3. 로그아웃 버튼 위치를 최하단(닫기 버튼 위치)으로 이동 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={handleLogout}
@@ -2322,7 +2320,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2. 신고 및 건의하기 독립 팝업(모달) */}
+        {/* ⭕ 2. 신고 및 건의하기 독립 팝업 모달 */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
