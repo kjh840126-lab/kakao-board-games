@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -45,7 +45,8 @@ import {
   Brain,
   Medal,
   Users as PlayerIcon,
-  RotateCcw
+  RotateCcw,
+  Loader2
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -152,7 +153,7 @@ export default function App() {
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 설정 관련 State
+  // 설정 관련 State (LocalStorage 연동)
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
   });
@@ -234,6 +235,15 @@ export default function App() {
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
 
+  // ⭕ 2. 각 탭별 스크롤 위치 보존을 위한 Ref 및 스크롤 영역 메인 Ref
+  const mainScrollRef = useRef<HTMLDivElement | null>(null);
+  const tabScrollPositions = useRef<{ [key: string]: number }>({
+    games: 0,
+    returns: 0,
+    ranking: 0,
+    admin: 0
+  });
+
   const today = new Date().toISOString().split('T')[0];
 
   const thirtyDaysAgo = new Date();
@@ -263,6 +273,19 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
   }, [fontSize]);
+
+  // ⭕ 탭 전환 시 각 탭별 스크롤 위치 복원 / 전환 전 위치 저장
+  const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'admin') => {
+    if (mainScrollRef.current) {
+      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
+    }
+    setActiveTab(newTab);
+    setTimeout(() => {
+      if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTop = tabScrollPositions.current[newTab] || 0;
+      }
+    }, 0);
+  };
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -1029,10 +1052,23 @@ export default function App() {
     return d.toISOString().split('T')[0];
   };
 
+  // ⭕ 3. 감각적인 보드게임 카드 섞기 CSS 애니메이션 로딩 화면
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 font-semibold text-xs tracking-tight">
-        데이터베이스 연결 중...
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+        {/* CSS 카드 섞기 애니메이션 */}
+        <div className="relative w-16 h-20 mb-6 flex items-center justify-center">
+          <div className="absolute w-12 h-16 bg-[#FEE500] rounded-xl border-2 border-amber-300 shadow-lg animate-[ping_1.8s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30"></div>
+          <div className="absolute w-12 h-16 bg-sky-400 rounded-xl border-2 border-sky-300 shadow-md animate-bounce -translate-x-3 -rotate-12"></div>
+          <div className="absolute w-12 h-16 bg-rose-500 rounded-xl border-2 border-rose-300 shadow-md animate-bounce delay-150 translate-x-3 rotate-12"></div>
+          <div className="absolute w-12 h-16 bg-[#FEE500] rounded-xl border-2 border-amber-300 shadow-xl flex items-center justify-center text-slate-900 font-extrabold text-sm z-10">
+            <Loader2 size={22} className="animate-spin text-slate-900" />
+          </div>
+        </div>
+
+        <p className="text-slate-300 text-xs font-bold tracking-tight animate-pulse flex items-center gap-1.5">
+          <span>데이터베이스 연결 중...</span>
+        </p>
       </div>
     );
   }
@@ -1372,7 +1408,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* ⭕ 1, 4, 5. 관리자 페이지 진입 시 신고 아이콘으로 변경 & 신규 글 있을 경우 N 뱃지 표시 */}
+          {/* 관리자 페이지 진입 시 신고 아이콘으로 변경 & 신규 글 있을 경우 N 뱃지 표시 */}
           {isHeaderAdminTheme ? (
             <button
               onClick={() => setIsAdminReportDrawerOpen(true)}
@@ -1397,8 +1433,9 @@ export default function App() {
           )}
         </header>
 
-        {/* 메인 스크롤 영역 */}
+        {/* ⭕ 메인 스크롤 영역 (Ref 할당하여 탭별 스크롤 독립 분리) */}
         <main 
+          ref={mainScrollRef}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
         >
@@ -1406,7 +1443,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* 7. 다크모드 공지사항 시인성 개선 */}
+              {/* 공지사항 배너 */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -1499,7 +1536,6 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
-                            {/* 메타 순서: 인원수 ➔ 플레이시간 ➔ 난이도 ➔ BGG 평점 순서 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
@@ -1561,7 +1597,6 @@ export default function App() {
           {/* 2. 반납/히스토리 탭 */}
           {activeTab === 'returns' && (
             <div className="space-y-5 mt-0.5">
-              {/* 7. 다크모드 시 현재 대여중인 게임 배너 시인성 개선 */}
               <div className={`p-4 rounded-2xl flex justify-between items-center shadow-sm ${
                 isDarkMode ? 'bg-slate-800 border-2 border-slate-700 text-white' : 'bg-slate-900 text-white'
               }`}>
@@ -2153,7 +2188,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* 6, 7. '공지 작성' 버튼명 원복 및 설명 문구 제거 */}
+              {/* ⭕ 공지사항 작성 버튼명 원복('공지 작성') 및 서브 타이틀 설명 제거 완료 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2211,7 +2246,7 @@ export default function App() {
           )}
         </main>
 
-        {/* 2. 다크모드/라이트모드 플로팅 장바구니 버튼 색상 차별화 (다크: 옐로우, 라이트: 어두운 톤) */}
+        {/* ⭕ 1. 장바구니 플로팅 버튼 테마별 차별화 (라이트: 검은색, 다크: 노란색) */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
@@ -2233,31 +2268,31 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. 하단 네비게이션 아이콘 직관적 개선 (대여: Boxes, 반납: PackageCheck) */}
+        {/* ⭕ 2. 하단 네비게이션 탭별 스크롤 분리용 함수(handleTabChange) 적용 */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
-          <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
             <Boxes size={20} />
             <span className="mt-1">대여</span>
           </button>
-          <button onClick={() => setActiveTab('returns')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <button onClick={() => handleTabChange('returns')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
             <PackageCheck size={20} />
             <span className="mt-1">반납</span>
           </button>
-          <button onClick={() => setActiveTab('ranking')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <button onClick={() => handleTabChange('ranking')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
             <Trophy size={20} />
             <span className="mt-1">랭킹</span>
           </button>
           {isAdmin && (
-            <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
+            <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
               <ShieldCheck size={20} />
               <span className="mt-1">관리자</span>
             </button>
           )}
         </nav>
 
-        {/* 1, 3, 5. 설정 드로어 (왼쪽 오버레이 클릭 닫기 적용, 최하단 로그아웃) */}
+        {/* 설정 드로어 (왼쪽 오버레이 클릭 닫기 적용) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -2374,7 +2409,7 @@ export default function App() {
 
               </div>
 
-              {/* 3. 로그아웃 버튼 위치를 최하단(닫기 버튼 위치)으로 이동 */}
+              {/* 로그아웃 버튼 (최하단에 배치) */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={handleLogout}
@@ -2387,7 +2422,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1, 2, 3, 4, 5. 관리자용 신고/건의 내역 우측 슬라이딩 Drawer 모달 */}
+        {/* 관리자용 신고/건의 내역 우측 슬라이딩 Drawer 모달 */}
         {isAdminReportDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
             <div 
