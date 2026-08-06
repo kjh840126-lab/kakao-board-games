@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -268,11 +268,21 @@ export default function App() {
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
 
-  // 대여 페이지 필터 State (인원수, 장르, 난이도)
+  // 대여 페이지 필터 State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [playerFilter, setPlayerFilter] = useState<number>(0);
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
+
+  // ⭕ 선언 보정: 스크롤 Ref 및 핸들러 위치 확보
+  const mainScrollRef = useRef<HTMLDivElement | null>(null);
+  const tabScrollPositions = useRef<{ [key: string]: number }>({
+    games: 0,
+    returns: 0,
+    ranking: 0,
+    sites: 0,
+    admin: 0
+  });
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -311,6 +321,26 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
+
+  // ⭕ 선언 보정: 스크롤 저장 함수
+  const handleScroll = () => {
+    if (mainScrollRef.current) {
+      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
+    }
+  };
+
+  // ⭕ 선언 보정: 탭 전환 및 스크롤 복원 함수
+  const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
+    if (mainScrollRef.current) {
+      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
+    }
+    setActiveTab(newTab);
+    setTimeout(() => {
+      if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTop = tabScrollPositions.current[newTab] || 0;
+      }
+    }, 0);
+  };
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -1548,7 +1578,7 @@ export default function App() {
           )}
         </header>
 
-        {/* ⭕ 1. 탭별 스크롤 분리를 위한 개별 Scroll Container 메인 영역 */}
+        {/* ⭕ 1. 탭별 독립 스크롤 분리를 위한 메인 컨테이너 영역 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -1599,7 +1629,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* ⭕ 2. 필터 버튼 (텍스트 제거 후 아이콘만 세련되게 노출) */}
+              {/* ⭕ 2. 필터 버튼 (텍스트 제외 아이콘만 세련되게 노출) */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -2025,7 +2055,7 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* ⭕ 4. 수치 항목 줄바꿈 없이 한 줄로 노출 */}
+                        {/* ⭕ 수치 항목 줄바꿈 없이 한 줄(whitespace-nowrap)로 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -2088,7 +2118,7 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* ⭕ 4. 수치 항목 한 줄 노출 */}
+                        {/* ⭕ 수치 항목 한 줄 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -2777,7 +2807,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 로그아웃 버튼 (평범한 스타일로 상단 배치) */}
+                {/* 로그아웃 버튼 */}
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
@@ -2907,7 +2937,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 신고 및 건의하기 독립 팝업 모달 (Placeholder 크기 동기화, 셀렉트 박스 구별 감싸기) */}
+        {/* ⭕ 3. 신고 및 건의하기 독립 팝업 모달 (입력 텍스트 크기 text-xs 통일, 셀렉트 박스 구별 감싸기) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -2928,7 +2958,7 @@ export default function App() {
                   <select
                     value={reportForm.category}
                     onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900'
                     }`}
                   >
@@ -2941,7 +2971,7 @@ export default function App() {
 
                 <div>
                   <label className="font-bold block mb-1.5">제목</label>
-                  {/* ⭕ 3. 예시(placeholder) 폰트 크기를 입력 크기(text-inherit)와 동기화 */}
+                  {/* ⭕ 3. 입력 텍스트 크기 text-xs 축소 및 예시 폰트크기 완벽 동기화 */}
                   <input
                     type="text"
                     required
@@ -2949,7 +2979,7 @@ export default function App() {
                     placeholder="제목을 입력해 주세요"
                     value={reportForm.title}
                     onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
                     }`}
                   />
@@ -2969,7 +2999,7 @@ export default function App() {
                     placeholder="운영진에게 전달할 내용을 작성해 주세요."
                     value={reportForm.content}
                     onChange={(e) => setReportForm({ ...reportForm, content: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none leading-relaxed resize-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none leading-relaxed resize-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
                     }`}
                   ></textarea>
@@ -2979,15 +3009,15 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsReportModalOpen(false)}
-                    className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
+                    className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition text-xs"
                   >
                     취소
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+                    className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm text-xs"
                   >
-                    <Send size={15} /> 제출하기
+                    <Send size={14} /> 제출하기
                   </button>
                 </div>
               </form>
@@ -3012,7 +3042,7 @@ export default function App() {
                     type="text"
                     disabled
                     value={currentUser.userId}
-                    className="w-full border border-slate-300/40 p-2.5 rounded-xl bg-slate-100 text-slate-500 font-mono"
+                    className="w-full border border-slate-300/40 p-2.5 rounded-xl bg-slate-100 text-slate-500 font-mono text-xs"
                   />
                 </div>
 
@@ -3022,7 +3052,7 @@ export default function App() {
                     type="text"
                     disabled
                     value={currentUser.email}
-                    className="w-full border border-slate-300/40 p-2.5 rounded-xl bg-slate-100 text-slate-500"
+                    className="w-full border border-slate-300/40 p-2.5 rounded-xl bg-slate-100 text-slate-500 text-xs"
                   />
                 </div>
 
@@ -3033,7 +3063,7 @@ export default function App() {
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3046,7 +3076,7 @@ export default function App() {
                     placeholder="새 비밀번호 입력 (변경 시에만 작성)"
                     value={changePassword}
                     onChange={(e) => setNewPasswordInput(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3055,7 +3085,7 @@ export default function App() {
                     placeholder="새 비밀번호 재입력"
                     value={changePasswordConfirm}
                     onChange={(e) => setNewPasswordConfirmInput(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3065,13 +3095,13 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsEditProfileOpen(false)}
-                    className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
+                    className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition text-xs"
                   >
                     취소
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition"
+                    className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
                   >
                     저장하기
                   </button>
@@ -3234,7 +3264,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5, 6, 7. 추천 사이트 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 인디케이터 적용) */}
+        {/* ⭕ 3. 추천 사이트 등록/수정 모달 (입력 폰트 크기 text-xs 적용) */}
         {isSiteModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
@@ -3250,7 +3280,7 @@ export default function App() {
                     placeholder="예: 보드라이프"
                     value={editingSite.name}
                     onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3264,7 +3294,7 @@ export default function App() {
                     placeholder="https://boardlife.co.kr"
                     value={editingSite.url}
                     onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3277,7 +3307,7 @@ export default function App() {
                     placeholder="https://example.com/banner.jpg"
                     value={editingSite.bannerUrl}
                     onChange={(e) => setEditingSite({ ...editingSite, bannerUrl: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3290,19 +3320,18 @@ export default function App() {
                     placeholder="사이트에 대한 간단한 설명을 입력하세요"
                     value={editingSite.description}
                     onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   ></textarea>
                 </div>
 
                 <div>
-                  {/* ⭕ 6, 7. 노출 여부 라벨 크기 통일 및 셀렉트 박스 구별 인디케이터 적용 */}
                   <label className="font-bold block mb-1.5">노출 여부</label>
                   <select
                     value={editingSite.isVisible}
                     onChange={(e) => setEditingSite({ ...editingSite, isVisible: e.target.value as 'Y' | 'N' })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900'
                     }`}
                   >
@@ -3312,15 +3341,15 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition">취소</button>
-                  <button type="submit" className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">저장</button>
+                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                  <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* ⭕ 5, 6, 7. 게임 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 인디케이터 적용) */}
+        {/* ⭕ 3. 게임 등록/수정 모달 (입력 폰트 크기 text-xs 적용) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3338,7 +3367,7 @@ export default function App() {
                     placeholder="https://example.com/image.jpg"
                     value={editingGame.imageUrl}
                     onChange={(e) => setEditingGame({ ...editingGame, imageUrl: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3353,7 +3382,7 @@ export default function App() {
                     placeholder="예: KG0001"
                     value={editingGame.gameId}
                     onChange={(e) => setEditingGame({ ...editingGame, gameId: e.target.value })}
-                    className={`w-full border p-3 rounded-xl placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isEditingMode ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50/50 border-slate-300'
                     }`}
                   />
@@ -3367,7 +3396,7 @@ export default function App() {
                     placeholder="보드게임 이름"
                     value={editingGame.title}
                     onChange={(e) => setEditingGame({ ...editingGame, title: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3385,7 +3414,7 @@ export default function App() {
                       max={2030}
                       value={editingGame.releaseYear}
                       onChange={(e) => setEditingGame({ ...editingGame, releaseYear: Number(e.target.value) })}
-                      className={`w-full border p-3 rounded-xl ${
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3402,7 +3431,7 @@ export default function App() {
                       max={10.0}
                       value={editingGame.bggRating}
                       onChange={(e) => setEditingGame({ ...editingGame, bggRating: Number(e.target.value) })}
-                      className={`w-full border p-3 rounded-xl ${
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3426,7 +3455,7 @@ export default function App() {
                           type="button"
                           disabled={isMaxReached}
                           onClick={() => handleToggleGenre(preset)}
-                          className={`px-2.5 py-1 rounded-full font-bold transition ${
+                          className={`px-2.5 py-1 rounded-full font-bold transition text-[11px] ${
                             isSelected ? 'bg-slate-900 text-white' : isMaxReached ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           }`}
                         >
@@ -3449,7 +3478,7 @@ export default function App() {
                           handleAddCustomGenre();
                         }
                       }}
-                      className={`flex-1 border p-2.5 rounded-xl placeholder:text-inherit placeholder:opacity-50 ${
+                      className={`flex-1 border p-2.5 rounded-xl text-xs placeholder:text-xs placeholder:opacity-50 ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3457,7 +3486,7 @@ export default function App() {
                       type="button"
                       disabled={editingGame.genres.length >= 3}
                       onClick={handleAddCustomGenre}
-                      className="bg-slate-800 text-white px-3.5 rounded-xl font-bold disabled:bg-slate-300 disabled:cursor-not-allowed"
+                      className="bg-slate-800 text-white px-3.5 rounded-xl font-bold text-xs disabled:bg-slate-300 disabled:cursor-not-allowed"
                     >
                       추가
                     </button>
@@ -3472,7 +3501,7 @@ export default function App() {
                       min={1}
                       value={editingGame.minPlayers}
                       onChange={(e) => setEditingGame({ ...editingGame, minPlayers: Number(e.target.value) })}
-                      className={`w-full border p-3 rounded-xl ${
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3484,7 +3513,7 @@ export default function App() {
                       min={1}
                       value={editingGame.maxPlayers}
                       onChange={(e) => setEditingGame({ ...editingGame, maxPlayers: Number(e.target.value) })}
-                      className={`w-full border p-3 rounded-xl ${
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3499,7 +3528,7 @@ export default function App() {
                       min={1}
                       value={editingGame.playTime}
                       onChange={(e) => setEditingGame({ ...editingGame, playTime: Number(e.target.value) })}
-                      className={`w-full border p-3 rounded-xl ${
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3515,7 +3544,7 @@ export default function App() {
                       max={5.00}
                       value={editingGame.difficulty}
                       onChange={(e) => setEditingGame({ ...editingGame, difficulty: Number(e.target.value) })}
-                      className={`w-full border p-3 rounded-xl ${
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3523,30 +3552,29 @@ export default function App() {
                 </div>
 
                 <div>
-                  {/* ⭕ 6, 7. 노출 여부 라벨 크기 통일 및 셀렉트 박스 구별 스타일링 */}
                   <label className="font-bold block mb-1.5">노출 여부</label>
                   <select
                     value={editingGame.isVisible}
                     onChange={(e) => setEditingGame({ ...editingGame, isVisible: e.target.value as 'Y' | 'N' })}
-                    className={`w-full border p-3 rounded-xl font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
+                    className={`w-full border p-2.5 rounded-xl font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   >
-                    <Option value="Y">노출 (Y)</Option>
-                    <Option value="N">숨김 (N)</Option>
+                    <option value="Y">노출 (Y)</option>
+                    <option value="N">숨김 (N)</option>
                   </select>
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsGameModalOpen(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition">취소</button>
-                  <button type="submit" className="flex-1 bg-[#FEE500] text-slate-900 py-3 rounded-xl font-bold hover:bg-amber-400 transition">저장</button>
+                  <button type="button" onClick={() => setIsGameModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                  <button type="submit" className="flex-1 bg-[#FEE500] text-slate-900 py-2.5 rounded-xl font-bold hover:bg-amber-400 transition text-xs">저장</button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* ⭕ 5, 6. 공지사항 작성 모달 (Placeholder 크기 동기화) */}
+        {/* ⭕ 3. 공지사항 작성 모달 (입력 폰트 크기 text-xs 적용) */}
         {isNoticeModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
@@ -3562,7 +3590,7 @@ export default function App() {
                     placeholder="공지 제목을 입력하세요"
                     value={editingNotice.title}
                     onChange={(e) => setEditingNotice({ ...editingNotice, title: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3576,15 +3604,15 @@ export default function App() {
                     placeholder="공지할 내용을 상세히 작성하세요"
                     value={editingNotice.content}
                     onChange={(e) => setEditingNotice({ ...editingNotice, content: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   ></textarea>
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition">취소</button>
-                  <button type="submit" className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">저장</button>
+                  <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                  <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
                 </div>
               </form>
             </div>
