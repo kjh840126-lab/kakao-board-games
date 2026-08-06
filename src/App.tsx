@@ -1835,7 +1835,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 3) 난이도 인라인 필터 (가변 크기 px-2 py-0.5 적용) */}
+                  {/* 3) 난이도 인라인 필터 */}
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">난이도</span>
                     <div className="flex flex-wrap gap-1 flex-1">
@@ -1881,12 +1881,12 @@ export default function App() {
                     const userRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === game.gameId);
 
                     return (
-                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm transition ${
+                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2 shadow-sm transition ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                       }`}>
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
-                        <div className="flex gap-3.5">
+                        <div className="flex gap-3.5 items-start">
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -1894,17 +1894,19 @@ export default function App() {
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
-                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
-                              <div className="flex justify-between items-start">
-                                <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                              {/* ⭕ 1. 게임명 길어질 때 줄바꿈(break-keep) 및 게임정보와의 적절한 여백(mb-1.5) 확보 */}
+                              <div className="flex justify-between items-start gap-1">
+                                <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{game.title}</span>
-                                  <span className="text-[11px] text-slate-400 font-mono font-normal ml-1">({game.releaseYear}년)</span>
+                                  <span className="text-[11px] text-slate-400 font-mono font-normal whitespace-nowrap ml-1">({game.releaseYear}년)</span>
                                 </h3>
                                 <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                               </div>
                               
-                              <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              {/* ⭕ 2. 게임 정보 영역: 상단 게임명과의 여백 확보(mt-1.5) 및 하단 장르와의 여백 조율 */}
+                              <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                 <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                                 <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
                                 <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
@@ -1912,7 +1914,8 @@ export default function App() {
                               </div>
                             </div>
 
-                            <div className={`pt-2 border-t flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
+                            {/* ⭕ 2. 게임정보와 장르 사이 구분선 및 여백 밀착(mt-1.5 pt-1.5) */}
+                            <div className={`pt-1.5 border-t mt-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
                               {game.genres.map((genre) => (
                                 <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
                                   isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-800'
@@ -1924,7 +1927,7 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* 카드 맨 하단 영역 (장르행 아래 구분선 제거됨) */}
+                        {/* 카드 맨 하단 영역 */}
                         <div className="flex justify-between items-center gap-2 pt-1">
                           
                           {/* 나의 평점 1줄 노출 및 이미지 시작 열 바짝 정렬 */}
@@ -1944,7 +1947,7 @@ export default function App() {
                             />
                           </div>
 
-                          {/* 우측 정렬 그룹: [대여가능 버튼 높이/핏과 정확히 연동된 찜하기 버튼 (하트 size=16 고정, 안쪽 여백 최소화)] + [대여가능 버튼] */}
+                          {/* 우측 정렬 그룹: [찜하기 버튼] + [대여가능 버튼] */}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <button
                               onClick={() => toggleFavorite(game.gameId)}
@@ -3886,7 +3889,6 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    {/* 모바일 OS 높이 왜곡 방지 h-[38px] min-h-[38px] -webkit-appearance */}
                     <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
