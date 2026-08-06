@@ -37,7 +37,8 @@ import {
   Send,
   CalendarDays,
   Flame,
-  Award
+  Award,
+  ChevronRight
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -119,8 +120,12 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ⭕ 공지사항 롤링 인덱스 State (최대 5개 공지 4초 간격 자동 전환)
+  // 공지사항 롤링 인덱스 State
   const [noticeIndex, setNoticeIndex] = useState(0);
+
+  // ⭕ 공지사항 우측 드로어 모달 State & 클릭한 공지사항 State
+  const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
+  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('kakao_boardgame_user');
@@ -196,7 +201,6 @@ export default function App() {
     }
   }, [activeTab, adminSubTab]);
 
-  // ⭕ 공지사항 4초(4000ms) 주기 수직 롤링 자동 타이머
   useEffect(() => {
     if (notices.length <= 1) return;
     const interval = setInterval(() => {
@@ -787,6 +791,12 @@ export default function App() {
     }
   };
 
+  // ⭕ 롤링 공지사항 클릭 시 우측 드로어 모달 오픈 처리
+  const handleNoticeClick = (notice: Notice) => {
+    setSelectedNotice(notice);
+    setIsNoticeDrawerOpen(true);
+  };
+
   const getReleaseBonus = (year: number) => {
     const diff = currentYear - year;
     if (diff === 0) return 3;
@@ -867,7 +877,6 @@ export default function App() {
     return d.toISOString().split('T')[0];
   };
 
-  // ⭕ 최근 공지사항 최대 5개 추출
   const recentNoticesList = notices.slice(0, 5);
 
   if (loading) {
@@ -1232,8 +1241,16 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* ⭕ 수직 롤링 공지사항 배너 (최신 5개 수직 슬라이딩) */}
-              <div className="bg-slate-900 text-white px-3.5 py-3 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm overflow-hidden h-11">
+              {/* ⭕ 수직 롤링 공지사항 배너 (클릭 시 우측 공지사항 드로어 열림) */}
+              <div 
+                onClick={() => {
+                  if (recentNoticesList.length > 0) {
+                    const activeNotice = recentNoticesList[noticeIndex] || recentNoticesList[0];
+                    handleNoticeClick(activeNotice);
+                  }
+                }}
+                className="bg-slate-900 text-white px-3.5 py-3 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm overflow-hidden h-11 cursor-pointer hover:bg-slate-800 transition active:scale-[0.99]"
+              >
                 <Bell size={16} className="text-[#FEE500] flex-shrink-0 z-10" />
                 <div className="flex-1 h-5 overflow-hidden relative">
                   {recentNoticesList.length > 0 ? (
@@ -1242,7 +1259,7 @@ export default function App() {
                       style={{ transform: `translateY(-${noticeIndex * 20}px)` }}
                     >
                       {recentNoticesList.map((notice) => (
-                        <div key={notice.noticeId} className="h-5 flex items-center">
+                        <div key={notice.noticeId} className="h-5 flex items-center justify-between">
                           <span className="text-[#FEE500] font-extrabold text-xs truncate">
                             {notice.title}
                           </span>
@@ -1257,6 +1274,9 @@ export default function App() {
                     </div>
                   )}
                 </div>
+                {recentNoticesList.length > 0 && (
+                  <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+                )}
               </div>
 
               <div className="relative">
@@ -2046,6 +2066,7 @@ export default function App() {
           )}
         </nav>
 
+        {/* 장바구니 Drawer 모달 */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className="w-full max-w-xs bg-white h-full flex flex-col shadow-2xl">
@@ -2112,6 +2133,73 @@ export default function App() {
                     닫기
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⭕ 신규 추가: 공지사항 우측 슬라이딩 Drawer 모달 */}
+        {isNoticeDrawerOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
+            <div className="w-full max-w-xs bg-white h-full flex flex-col shadow-2xl">
+              <div className="p-4 bg-slate-900 flex justify-between items-center font-bold text-white text-sm">
+                <span className="flex items-center gap-2">
+                  <Bell size={16} className="text-[#FEE500]" /> 공지사항 목록
+                </span>
+                <button onClick={() => setIsNoticeDrawerOpen(false)} className="text-slate-300 hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                {/* 1) 클릭해서 선택한 공지사항의 상세 내용 우선 노출 */}
+                {selectedNotice && (
+                  <div className="p-4 bg-amber-50/80 border border-amber-300/80 rounded-2xl space-y-2 shadow-sm">
+                    <span className="text-[10px] text-amber-800 font-extrabold bg-amber-200/80 px-2 py-0.5 rounded-md inline-block">
+                      선택한 공지사항
+                    </span>
+                    <h3 className="font-extrabold text-slate-900 text-xs leading-snug">{selectedNotice.title}</h3>
+                    <p className="text-[11px] text-slate-700 whitespace-pre-wrap leading-relaxed pt-1 border-t border-amber-200/60">
+                      {selectedNotice.content}
+                    </p>
+                    <span className="text-[10px] text-slate-400 block text-right pt-0.5">{selectedNotice.createdAt}</span>
+                  </div>
+                )}
+
+                {/* 2) 전체 공지사항 리스트 */}
+                <div className="space-y-2 pt-1">
+                  <h4 className="text-[11px] font-bold text-slate-500 px-0.5">전체 공지 목록 ({notices.length})</h4>
+                  {notices.map((notice) => {
+                    const isSelected = selectedNotice?.noticeId === notice.noticeId;
+                    return (
+                      <div
+                        key={notice.noticeId}
+                        onClick={() => setSelectedNotice(notice)}
+                        className={`p-3 rounded-xl border text-xs cursor-pointer transition ${
+                          isSelected
+                            ? 'border-slate-900 bg-slate-900 text-white font-bold shadow-sm'
+                            : 'border-slate-200/80 bg-white text-slate-800 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <span className="truncate pr-2 font-semibold text-[11px]">{notice.title}</span>
+                          <span className={`text-[9px] font-mono flex-shrink-0 ${isSelected ? 'text-amber-300' : 'text-slate-400'}`}>
+                            {notice.createdAt.substring(5)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border-t border-slate-200">
+                <button
+                  onClick={() => setIsNoticeDrawerOpen(false)}
+                  className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs hover:bg-slate-800 transition"
+                >
+                  닫기
+                </button>
               </div>
             </div>
           </div>
