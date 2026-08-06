@@ -1609,7 +1609,7 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ 최외곽 너비 제한(max-w-md)을 제거하고 모바일 화면 전체 폭(w-full)으로 확장
+    // ⭕ 1. 최외곽 레이아웃 너비 제약(max-w-md)을 완전히 제거하여 모바일 스크린 너비 전체(100%) 사용
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
@@ -1620,70 +1620,72 @@ export default function App() {
             isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
           }`}
         >
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <img 
-                src="/header_logo.png" 
-                alt="kakao board games" 
-                className="h-9 w-auto object-contain drop-shadow-sm"
-                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-900">
-              <div className="flex items-center gap-1">
-                <UserCheck size={14} className="text-slate-900" />
-                <span>{currentUser.userId}</span>
+          <div className="w-full flex justify-between items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <img 
+                  src="/header_logo.png" 
+                  alt="kakao board games" 
+                  className="h-9 w-auto object-contain drop-shadow-sm"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
               </div>
 
-              {currentUser.penaltyEndDate && currentUser.penaltyEndDate >= today && (
+              <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-900">
                 <div className="flex items-center gap-1">
-                  <span className="bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-0.5 font-extrabold shadow-sm">
-                    <AlertCircle size={10} /> 패널티 {currentUser.penaltyPoints}점
-                  </span>
-                  <span className="text-[10px] text-rose-700 font-extrabold bg-rose-100 px-1.5 py-0.5 rounded-md border border-rose-200">
-                    (~{currentUser.penaltyEndDate} 대여불가)
-                  </span>
+                  <UserCheck size={14} className="text-slate-900" />
+                  <span>{currentUser.userId}</span>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* 관리자 페이지 진입 시 신고 아이콘으로 변경 & 신규 글 있을 경우 N 뱃지 표시 */}
-          {isHeaderAdminTheme ? (
-            <button
-              onClick={() => setIsAdminReportDrawerOpen(true)}
-              title="신고/건의 확인"
-              className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-sky-300 hover:bg-sky-200 text-slate-900 relative"
-            >
-              <Siren size={18} />
-              {unreadReportsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm animate-pulse">
-                  N
-                </span>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              title="설정"
-              className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-amber-400/80 hover:bg-amber-400 text-slate-900"
-            >
-              <Settings size={18} />
-            </button>
-          )}
+                {currentUser.penaltyEndDate && currentUser.penaltyEndDate >= today && (
+                  <div className="flex items-center gap-1">
+                    <span className="bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-0.5 font-extrabold shadow-sm">
+                      <AlertCircle size={10} /> 패널티 {currentUser.penaltyPoints}점
+                    </span>
+                    <span className="text-[10px] text-rose-700 font-extrabold bg-rose-100 px-1.5 py-0.5 rounded-md border border-rose-200">
+                      (~{currentUser.penaltyEndDate} 대여불가)
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 관리자 페이지 진입 시 신고 아이콘으로 변경 & 신규 글 있을 경우 N 뱃지 표시 */}
+            {isHeaderAdminTheme ? (
+              <button
+                onClick={() => setIsAdminReportDrawerOpen(true)}
+                title="신고/건의 확인"
+                className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-sky-300 hover:bg-sky-200 text-slate-900 relative"
+              >
+                <Siren size={18} />
+                {unreadReportsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm animate-pulse">
+                    N
+                  </span>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                title="설정"
+                className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-amber-400/80 hover:bg-amber-400 text-slate-900"
+              >
+                <Settings size={18} />
+              </button>
+            )}
+          </div>
         </header>
 
-        {/* 탭별 독립 스크롤 분리를 위한 메인 컨테이너 영역 */}
+        {/* 2. 본문 영역(main)도 너비 제한 없이 100% 가득 차도록 보정 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+          className={`flex-1 w-full p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
         >
           {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
-            <div className="space-y-4 mt-0.5">
+            <div className="space-y-4 mt-0.5 w-full">
               
               {/* 수직 롤링 공지사항 배너 */}
               <div 
@@ -1693,7 +1695,7 @@ export default function App() {
                     handleNoticeClick(recentNoticesList[activeIndex]);
                   }
                 }}
-                className={`px-3.5 py-3 rounded-2xl flex items-center gap-2.5 shadow-sm overflow-hidden h-11 cursor-pointer transition active:scale-[0.99] ${
+                className={`w-full px-3.5 py-3 rounded-2xl flex items-center gap-2.5 shadow-sm overflow-hidden h-11 cursor-pointer transition active:scale-[0.99] ${
                   isDarkMode ? 'bg-slate-800 border-2 border-slate-700 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'
                 }`}
               >
@@ -1725,8 +1727,8 @@ export default function App() {
                 )}
               </div>
 
-              {/* 필터 버튼 (아이콘만 노출) */}
-              <div className="flex gap-2">
+              {/* 검색어 입력 및 필터 버튼 */}
+              <div className="flex gap-2 w-full">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
@@ -1767,7 +1769,7 @@ export default function App() {
 
               {/* 컴팩트 인라인 형태의 필터 드로어 */}
               {isFilterOpen && (
-                <div className={`p-3.5 rounded-2xl border space-y-2.5 shadow-sm transition ${
+                <div className={`w-full p-3.5 rounded-2xl border space-y-2.5 shadow-sm transition ${
                   isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/20">
@@ -1867,9 +1869,10 @@ export default function App() {
                 </div>
               )}
 
-              <div className="grid gap-3">
+              {/* 게임 리스트 카드 영역 */}
+              <div className="grid gap-3 w-full">
                 {filteredGameList.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl">
+                  <div className="text-center py-12 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl w-full">
                     검색 조건에 해당되는 보드게임이 없습니다.
                   </div>
                 ) : (
@@ -1884,12 +1887,12 @@ export default function App() {
                     const userRating = allRatings.find((r: UserRating) => currentUser && r.userId === currentUser.userId && r.gameId === game.gameId);
 
                     return (
-                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm transition ${
+                      <div key={game.gameId} className={`w-full border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm transition ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                       }`}>
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
-                        <div className="flex gap-3.5 items-start">
+                        <div className="flex gap-3.5 items-start w-full">
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -1899,7 +1902,6 @@ export default function App() {
 
                           <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
-                              {/* 게임명 줄바꿈 및 공간 확보 */}
                               <div className="flex justify-between items-start gap-1">
                                 <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{game.title}</span>
@@ -1908,7 +1910,6 @@ export default function App() {
                                 <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                               </div>
                               
-                              {/* 게임 정보 및 여백 조율 */}
                               <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                 <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                                 <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
@@ -1917,7 +1918,6 @@ export default function App() {
                               </div>
                             </div>
 
-                            {/* 장르 영역 간격 조율 */}
                             <div className={`pt-1.5 border-t mt-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
                               {game.genres.map((genre: string) => (
                                 <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
@@ -1931,9 +1931,8 @@ export default function App() {
                         </div>
 
                         {/* 카드 맨 하단 영역 */}
-                        <div className="flex justify-between items-center gap-2 pt-1">
+                        <div className="flex justify-between items-center gap-2 pt-1 w-full">
                           
-                          {/* 나의 평점 1줄 노출 및 이미지 시작 열 바짝 정렬 */}
                           <div 
                             onClick={() => {
                               setSelectedScore(userRating ? userRating.score : 5.0);
@@ -1950,7 +1949,6 @@ export default function App() {
                             />
                           </div>
 
-                          {/* 우측 정렬 그룹: [찜하기 버튼] + [대여가능 버튼] */}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <button
                               onClick={() => toggleFavorite(game.gameId)}
@@ -2003,8 +2001,8 @@ export default function App() {
 
           {/* 2. 반납/히스토리 탭 */}
           {activeTab === 'returns' && (
-            <div className="space-y-5 mt-0.5">
-              <div className={`p-4 rounded-2xl flex justify-between items-center shadow-sm ${
+            <div className="space-y-5 mt-0.5 w-full">
+              <div className={`p-4 rounded-2xl flex justify-between items-center shadow-sm w-full ${
                 isDarkMode ? 'bg-slate-800 border-2 border-slate-700 text-white' : 'bg-slate-900 text-white'
               }`}>
                 <div className="flex items-center justify-between w-full">
@@ -2021,20 +2019,20 @@ export default function App() {
                 )}
               </div>
 
-              <section className="space-y-2.5">
+              <section className="space-y-2.5 w-full">
                 <h3 className={`font-extrabold tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                   <span className="w-1.5 h-3.5 bg-slate-900 rounded-full inline-block"></span>
                   대여중인 게임
                 </h3>
                 {rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').length === 0 ? (
-                  <div className="text-center py-8 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl">대여 중인 보드게임이 없습니다.</div>
+                  <div className="text-center py-8 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl w-full">대여 중인 보드게임이 없습니다.</div>
                 ) : (
                   rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').map((rental: Rental) => {
                     const isOverdue = today > rental.endDate;
                     const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
 
                     return (
-                      <div key={rental.rentalId} className={`border p-3.5 rounded-2xl flex justify-between items-center ${
+                      <div key={rental.rentalId} className={`w-full border p-3.5 rounded-2xl flex justify-between items-center ${
                         isOverdue 
                           ? 'border-rose-300 bg-rose-50/40' 
                           : isDarkMode 
@@ -2074,13 +2072,13 @@ export default function App() {
                 )}
               </section>
 
-              <section className="space-y-2.5">
+              <section className="space-y-2.5 w-full">
                 <h3 className={`font-extrabold tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                   <span className="w-1.5 h-3.5 bg-slate-400 rounded-full inline-block"></span>
                   대여 및 반납 이력
                 </h3>
                 {returnedRentalsList.length === 0 ? (
-                  <div className="text-center py-8 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl">반납 이력이 없습니다.</div>
+                  <div className="text-center py-8 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl w-full">반납 이력이 없습니다.</div>
                 ) : (
                   returnedRentalsList.map((rental: Rental) => {
                     const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
@@ -2088,7 +2086,7 @@ export default function App() {
                     const overdueDays = isLateReturn ? getDaysDifference(returnedDate, rental.endDate) : 0;
 
                     return (
-                      <div key={rental.rentalId} className={`border p-3.5 rounded-2xl flex justify-between items-center ${
+                      <div key={rental.rentalId} className={`w-full border p-3.5 rounded-2xl flex justify-between items-center ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div>
@@ -2120,8 +2118,8 @@ export default function App() {
 
           {/* 3. 랭킹 탭 */}
           {activeTab === 'ranking' && (
-            <div className="space-y-4 mt-0.5">
-              <div className={`pb-2 border-b flex justify-between items-end ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+            <div className="space-y-4 mt-0.5 w-full">
+              <div className={`pb-2 border-b flex justify-between items-end w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                 <div>
                   <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                     <Trophy size={18} className="text-amber-500 fill-amber-400" />
@@ -2130,7 +2128,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`flex p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setRankingTab('hot')}
                   className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1.5 ${
@@ -2155,14 +2153,14 @@ export default function App() {
 
               {/* 요즘 핫한 게임 */}
               {rankingTab === 'hot' && (
-                <div className="space-y-2.5">
+                <div className="space-y-2.5 w-full">
                   <p className="text-slate-400 font-medium px-1">
                     * 최근 30일 대여 횟수 + 신작 가산점 + BGG & 회원 평점 합산 기준
                   </p>
                   {hotRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
                     return (
-                      <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
+                      <div key={game.gameId} className={`w-full border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
@@ -2221,14 +2219,14 @@ export default function App() {
 
               {/* 명예의 전당 */}
               {rankingTab === 'hall' && (
-                <div className="space-y-2.5">
+                <div className="space-y-2.5 w-full">
                   <p className="text-slate-400 font-medium px-1">
                     * 전체 누적 대여 횟수 + BGG & 회원 평점 기준 (스테디셀러)
                   </p>
                   {hallOfFameRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
                     return (
-                      <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
+                      <div key={game.gameId} className={`w-full border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
@@ -2289,8 +2287,8 @@ export default function App() {
 
           {/* 보드게임 추천 사이트 탭 */}
           {activeTab === 'sites' && (
-            <div className="space-y-4 mt-0.5">
-              <div className={`pb-2 border-b flex justify-between items-end ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+            <div className="space-y-4 mt-0.5 w-full">
+              <div className={`pb-2 border-b flex justify-between items-end w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                 <div>
                   <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                     <Globe size={18} className="text-sky-500" />
@@ -2302,14 +2300,14 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid gap-3.5">
+              <div className="grid gap-3.5 w-full">
                 {visibleSitesList.map((site: BoardSite) => (
                   <a
                     key={site.siteId}
                     href={site.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`border rounded-2xl overflow-hidden block shadow-sm transition hover:scale-[1.01] ${
+                    className={`w-full border rounded-2xl overflow-hidden block shadow-sm transition hover:scale-[1.01] ${
                       isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80 hover:border-slate-300'
                     }`}
                   >
@@ -2343,9 +2341,9 @@ export default function App() {
 
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
-            <div className="space-y-4 mt-0.5">
+            <div className="space-y-4 mt-0.5 w-full">
               {/* 운영자 서브메뉴 순서: 게임관리, 대여/반납, 사이트관리, 회원관리, 공지사항 */}
-              <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
                   className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'gameAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
@@ -2380,8 +2378,8 @@ export default function App() {
 
               {/* A. 게임 관리 */}
               {adminSubTab === 'gameAdmin' && (
-                <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                <div className="space-y-4 w-full">
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2415,7 +2413,7 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"
@@ -2433,9 +2431,9 @@ export default function App() {
                     )}
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2.5 w-full">
                     {filteredGameAdminList.map((game: Game) => (
-                      <div key={game.gameId} className={`border p-3 rounded-2xl flex justify-between items-center shadow-sm ${
+                      <div key={game.gameId} className={`w-full border p-3 rounded-2xl flex justify-between items-center shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -2487,15 +2485,15 @@ export default function App() {
 
               {/* B. 대여/반납 현황 */}
               {adminSubTab === 'rentalAdmin' && (
-                <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                <div className="space-y-4 w-full">
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                       대여 및 반납 현황
                     </h2>
                   </div>
 
-                  <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                  <div className={`flex p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setAdminRentalTab('active')}
                       className={`flex-1 py-2 rounded-lg transition ${
@@ -2519,13 +2517,13 @@ export default function App() {
                   </div>
 
                   {adminRentalTab === 'active' && (
-                    <div className="space-y-2.5">
+                    <div className="space-y-2.5 w-full">
                       {rentals.filter((r: Rental) => r.status === '대여중').map((rental: Rental) => {
                         const isOverdue = today > rental.endDate;
                         const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
 
                         return (
-                          <div key={rental.rentalId} className={`p-3.5 rounded-2xl border ${
+                          <div key={rental.rentalId} className={`w-full p-3.5 rounded-2xl border ${
                             isOverdue 
                               ? 'border-rose-300 bg-rose-50/50' 
                               : isDarkMode 
@@ -2557,12 +2555,12 @@ export default function App() {
                   )}
 
                   {adminRentalTab === 'completed' && (
-                    <div className="space-y-2.5">
+                    <div className="space-y-2.5 w-full">
                       {allReturnedRentalsAdminList.map((rental: Rental) => {
                         const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
 
                         return (
-                          <div key={rental.rentalId} className={`p-3.5 rounded-2xl border shadow-sm space-y-1.5 ${
+                          <div key={rental.rentalId} className={`w-full p-3.5 rounded-2xl border shadow-sm space-y-1.5 ${
                             isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                           }`}>
                             <div className="flex justify-between items-start">
@@ -2589,8 +2587,8 @@ export default function App() {
 
               {/* C. 추천 사이트 관리 */}
               {adminSubTab === 'siteAdmin' && (
-                <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                <div className="space-y-4 w-full">
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2615,9 +2613,9 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2.5 w-full">
                     {sites.map((s: BoardSite) => (
-                      <div key={s.siteId} className={`border p-3.5 rounded-2xl shadow-sm space-y-2 ${
+                      <div key={s.siteId} className={`w-full border p-3.5 rounded-2xl shadow-sm space-y-2 ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start">
@@ -2658,15 +2656,15 @@ export default function App() {
 
               {/* D. 회원 관리 */}
               {adminSubTab === 'userAdmin' && (
-                <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                <div className="space-y-4 w-full">
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                       회원 관리
                     </h2>
                   </div>
 
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"
@@ -2684,12 +2682,12 @@ export default function App() {
                     )}
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2.5 w-full">
                     {filteredUserAdminList.map((user: UserData) => {
                       const isWithdrawn = user.role === '탈퇴회원';
 
                       return (
-                        <div key={user.userId} className={`border p-3.5 rounded-2xl space-y-2 shadow-sm ${
+                        <div key={user.userId} className={`w-full border p-3.5 rounded-2xl space-y-2 shadow-sm ${
                           isWithdrawn 
                             ? isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200' 
                             : isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
@@ -2741,8 +2739,8 @@ export default function App() {
 
               {/* E. 공지사항 관리 */}
               {adminSubTab === 'noticeAdmin' && (
-                <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                <div className="space-y-4 w-full">
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2760,9 +2758,9 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2.5 w-full">
                     {notices.map((n: Notice) => (
-                      <div key={n.noticeId} className={`border p-3.5 rounded-2xl shadow-sm space-y-1.5 ${
+                      <div key={n.noticeId} className={`w-full border p-3.5 rounded-2xl shadow-sm space-y-1.5 ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start gap-2">
