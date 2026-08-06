@@ -48,10 +48,13 @@
   }
 }
 
-/* 2. 전역 및 모바일 사파리 폰트 강제 설정 */
+/* 2. 전역 및 모바일 사파리 폰트/너비 강제 설정 */
 html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   font-family: "Kakao", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
 }
 
@@ -68,10 +71,11 @@ h1, h2, h3, h4, h5, h6, b, strong, .font-bold, .font-extrabold {
   font-family: "KakaoBold", "Kakao", "Pretendard Variable", Pretendard, -apple-system, sans-serif !important;
 }
 
+/* ⭕ 핵심 수정: max-width 440px 제한 제거 후 100% 꽉 차게 변경 */
 #root {
   width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
+  max-width: 100% !important;
+  margin: 0;
   min-height: 100vh;
   min-height: 100svh;
   display: flex;
@@ -93,7 +97,7 @@ h1, h2, h3, h4, h5, h6, b, strong, .font-bold, .font-extrabold {
   }
 }
 
-/* 💥 4. 예시 문구(플레이스홀더) 및 입력창 서식 미세 조정 (글자 안잘리게 수정) */
+/* 4. 예시 문구(플레이스홀더) 및 입력창 서식 미세 조정 */
 ::placeholder {
   font-size: 13px !important;
   opacity: 0.6;
