@@ -1162,7 +1162,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* ⭕ 고정 상단 헤더 (관리자 모드일 경우 로그아웃 버튼과 관리자 텍스트 제거) */}
+        {/* 고정 상단 헤더 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
@@ -1198,7 +1198,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* ⭕ 관리자 모드가 아닐 경우에만 로그아웃 버튼 표시 */}
           {!isHeaderAdminTheme && (
             <button
               onClick={handleLogout}
@@ -1219,14 +1218,12 @@ export default function App() {
           {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
-              <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-start gap-2.5 shadow-sm">
-                <Bell size={16} className="text-[#FEE500] flex-shrink-0 mt-0.5" />
+              {/* ⭕ 공지사항 배너: [공지] 말머리 삭제 & 공지 내용 삭제 후 타이틀만 명확히 노출 */}
+              <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
+                <Bell size={16} className="text-[#FEE500] flex-shrink-0" />
                 <div className="leading-tight">
                   {latestNotice ? (
-                    <div>
-                      <span className="text-[#FEE500] font-extrabold block mb-0.5">[공지] {latestNotice.title}</span>
-                      <p className="text-slate-300 text-[11px] leading-relaxed">{latestNotice.content}</p>
-                    </div>
+                    <span className="text-[#FEE500] font-extrabold text-xs block">{latestNotice.title}</span>
                   ) : (
                     <span>1인당 최대 <strong className="text-[#FEE500] font-bold">3개</strong>까지 대여하실 수 있습니다.</span>
                   )}
