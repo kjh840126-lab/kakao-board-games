@@ -1162,7 +1162,7 @@ export default function App() {
     }
   };
 
-  // ⭕ 공지사항 토글 펼치기/접기 (목록 내 인라인 아코디언)
+  // 공지사항 토글 펼치기/접기
   const handleNoticeClick = (notice: Notice) => {
     if (expandedNoticeId === notice.noticeId) {
       setExpandedNoticeId(null);
@@ -2746,7 +2746,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 3. 관리자 > 공지사항 관리: 타이틀 및 내용 자동 줄바꿈(break-all) 적용 */}
+              {/* 3. 관리자 > 공지사항 관리: 타이틀 및 내용 자동 줄바꿈(break-all) 적용 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -3132,6 +3132,7 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
+                        {/* 내 평점 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -3282,9 +3283,9 @@ export default function App() {
                         {selectedReport.userId}
                       </span>
                     </div>
-                    {/* 1. 접수함 상세 제목 break-all 적용 */}
+                    {/* 접수함 상세 제목 break-all 적용 */}
                     <h3 className={`font-extrabold leading-snug break-all text-xs ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
-                    {/* 1. 접수함 상세 내용 break-all 적용 */}
+                    {/* 접수함 상세 내용 break-all 적용 */}
                     <p className={`whitespace-pre-wrap break-all leading-relaxed text-xs pt-1.5 border-t ${
                       isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-sky-200'
                     }`}>
@@ -3320,7 +3321,7 @@ export default function App() {
                                   N
                                 </span>
                               )}
-                              {/* 1. 접수함 리스트 제목 break-all 적용 */}
+                              {/* 접수함 리스트 제목 break-all 적용 */}
                               <span className="font-semibold text-xs leading-snug break-all">{report.title}</span>
                             </div>
                           </div>
@@ -3606,7 +3607,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2, 3. 공지사항 우측 슬라이딩 Drawer 모달 (인라인 아코디언 펼치기 구조로 동선 개선 & 화면 잘림 방지) */}
+        {/* ⭕ 2, 3. 공지사항 우측 슬라이딩 Drawer 모달 (인라인 아코디언 펼치기 구조로 동선 개선 & break-all 적용) */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
@@ -3622,7 +3623,7 @@ export default function App() {
                 </button>
               </div>
 
-              <div ref={noticeDrawerScrollRef} className="flex-1 p-4 overflow-y-auto space-y-3 overflow-x-hidden">
+              <div className="flex-1 p-4 overflow-y-auto space-y-3 overflow-x-hidden">
                 <h4 className="font-bold text-slate-400 px-0.5 text-[11px]">전체 공지 목록 ({notices.length})</h4>
                 {notices.map((notice: Notice) => {
                   const isExpanded = expandedNoticeId === notice.noticeId;
@@ -3630,7 +3631,7 @@ export default function App() {
                   return (
                     <div
                       key={notice.noticeId}
-                      className={`rounded-2xl border transition overflow-hidden ${
+                      className={`rounded-2xl border transition overflow-hidden max-w-full ${
                         isExpanded
                           ? isDarkMode 
                             ? 'border-amber-500/80 bg-slate-800' 
