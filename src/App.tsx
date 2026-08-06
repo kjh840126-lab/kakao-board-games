@@ -1881,22 +1881,23 @@ export default function App() {
                     const userRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === game.gameId);
 
                     return (
-                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2 shadow-sm transition ${
+                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm transition ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                       }`}>
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
+                          {/* ⭕ 라이트 모드 테두리 보정 border border-slate-200 dark:border-slate-700 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200/40 flex-shrink-0"
+                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700 flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
                           <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
-                              {/* ⭕ 1. 게임명 길어질 때 줄바꿈(break-keep) 및 게임정보와의 적절한 여백(mb-1.5) 확보 */}
+                              {/* 게임명 줄바꿈 및 공간 확보 */}
                               <div className="flex justify-between items-start gap-1">
                                 <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{game.title}</span>
@@ -1905,7 +1906,7 @@ export default function App() {
                                 <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                               </div>
                               
-                              {/* ⭕ 2. 게임 정보 영역: 상단 게임명과의 여백 확보(mt-1.5) 및 하단 장르와의 여백 조율 */}
+                              {/* 게임 정보 및 여백 조율 */}
                               <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                 <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                                 <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
@@ -1914,7 +1915,7 @@ export default function App() {
                               </div>
                             </div>
 
-                            {/* ⭕ 2. 게임정보와 장르 사이 구분선 및 여백 밀착(mt-1.5 pt-1.5) */}
+                            {/* 장르 영역 간격 조율 */}
                             <div className={`pt-1.5 border-t mt-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
                               {game.genres.map((genre) => (
                                 <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
@@ -2184,10 +2185,11 @@ export default function App() {
                           )}
                         </div>
 
+                        {/* ⭕ 랭킹 페이지 라이트 모드 테테두리 보정 border border-slate-200 dark:border-slate-700 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/40 flex-shrink-0"
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2249,10 +2251,11 @@ export default function App() {
                           )}
                         </div>
 
+                        {/* ⭕ 랭킹 명예의 전당 라이트 모드 테두리 보정 border border-slate-200 dark:border-slate-700 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/40 flex-shrink-0"
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2432,10 +2435,11 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3">
+                          {/* ⭕ 게임 관리 리스트 라이트 모드 테두리 보정 border border-slate-200 dark:border-slate-700 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-200/40" 
+                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700" 
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
                           <div>
@@ -3036,10 +3040,11 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
+                        {/* ⭕ 찜 모달 라이트 모드 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-11 h-11 object-cover rounded-xl bg-white border flex-shrink-0"
+                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0">
@@ -3096,10 +3101,11 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
+                        {/* ⭕ 내 평점 모달 라이트 모드 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-11 h-11 object-cover rounded-xl bg-white border flex-shrink-0"
+                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0">
@@ -3755,10 +3761,11 @@ export default function App() {
                   />
                   {editingGame.imageUrl && (
                     <div className="mt-2 flex items-center gap-2.5 p-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                      {/* ⭕ 게임 등록 모달 이미지 미리보기 라이트 모드 테두리 보정 */}
                       <img 
                         src={editingGame.imageUrl} 
                         alt="미리보기" 
-                        className="w-12 h-12 object-cover rounded-lg bg-white border flex-shrink-0"
+                        className="w-12 h-12 object-cover rounded-lg bg-white border border-slate-200 dark:border-slate-700 flex-shrink-0"
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                       />
                       <span className="text-[11px] text-slate-400 font-medium">이미지 미리보기</span>
