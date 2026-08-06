@@ -1212,7 +1212,7 @@ export default function App() {
     <div className={`min-h-screen flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#FEE500]'}`}>
       <div className={`w-full max-w-md min-h-screen flex flex-col relative border-x transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/60'}`}>
         
-        {/* ⭕ 고정 상단 헤더 (다크모드를 해도 색상이 변하지 않도록 bg-[#FEE500] 고정) */}
+        {/* 고정 상단 헤더 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
@@ -1368,9 +1368,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* ⭕ 개편된 레이아웃: 장르 태그(상단 행)와 대여 버튼(하단 행)을 분리하여 짤림 현상 방지 */}
                           <div className={`mt-3 pt-2.5 border-t space-y-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                            {/* 1) 장르 태그 행 */}
                             <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
                               {game.genres.map((genre) => (
                                 <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
@@ -1381,7 +1379,6 @@ export default function App() {
                               ))}
                             </div>
 
-                            {/* 2) 대여 버튼 행 */}
                             <div className="flex justify-end">
                               {isAvailable ? (
                                 <button
@@ -2104,7 +2101,7 @@ export default function App() {
                               onClick={() => deleteNotice(n.noticeId)}
                               className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50/10 rounded-lg transition"
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </div>
@@ -2137,28 +2134,28 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 고정 하단 네비게이션 (다크모드 영향 없이 백그라운드 깨끗하게 유지) */}
+        {/* ⭕ 고정 하단 네비게이션 (text-[10px] 클래스로 폰트 크기 고정) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
-          <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center font-bold ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
             <Gamepad2 size={20} />
             <span className="mt-1">대여</span>
           </button>
-          <button onClick={() => setActiveTab('returns')} className={`flex flex-col items-center font-bold ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <button onClick={() => setActiveTab('returns')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
             <RotateCcw size={20} />
             <span className="mt-1">반납</span>
           </button>
-          <button onClick={() => setActiveTab('ranking')} className={`flex flex-col items-center font-bold ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <button onClick={() => setActiveTab('ranking')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
             <Trophy size={20} />
             <span className="mt-1">랭킹</span>
           </button>
-          <button onClick={() => setActiveTab('report')} className={`flex flex-col items-center font-bold ${activeTab === 'report' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <button onClick={() => setActiveTab('report')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'report' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
             <Siren size={20} />
             <span className="mt-1">신고</span>
           </button>
           {isAdmin && (
-            <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center font-bold ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
+            <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
               <ShieldCheck size={20} />
               <span className="mt-1">관리자</span>
             </button>
