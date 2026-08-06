@@ -3,9 +3,6 @@ import { supabase } from './supabaseClient';
 import { 
   Gamepad2, 
   RotateCcw, 
-  Settings, 
-  ClipboardList, 
-  Users, 
   ShoppingCart, 
   UserCheck,
   Plus,
@@ -26,7 +23,6 @@ import {
   Check,
   Image as ImageIcon,
   Tag,
-  Info,
   KeyRound,
   Mail,
   Search,
@@ -165,7 +161,6 @@ export default function App() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
 
-  // ⭕ 신고/건의 폼 State (카테고리 지정 및 최대 1,000자 제한)
   const [reportForm, setReportForm] = useState({ 
     title: '', 
     content: '', 
@@ -754,7 +749,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 신고/건의사항 DB 저장 연동 함수 (회원ID, 카테고리, 제목, 내용, 등록일)
   const handleSendReport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -1565,7 +1559,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ⭕ 4. 신고 및 건의 전용 탭 (작성 및 제출 전용, 이력/답변 기능 제거, 최대 1,000자 제한) */}
+          {/* 4. 신고 및 건의 전용 탭 */}
           {activeTab === 'report' && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
