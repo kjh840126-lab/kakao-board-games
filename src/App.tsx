@@ -2134,7 +2134,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 고정 하단 네비게이션 (text-[10px] 클래스로 폰트 크기 고정) */}
+        {/* ⭕ 하단 네비게이션 고정 (text-[10px] 폰트 크기 고정) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2162,7 +2162,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 우측 슬라이딩 Drawer 모달 */}
+        {/* ⭕ 설정 우측 슬라이딩 Drawer 모달 (로그아웃 위로 이동, 하단에 닫기 버튼 배치) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
@@ -2175,7 +2175,7 @@ export default function App() {
 
               <div className="flex-1 p-5 overflow-y-auto space-y-6">
                 
-                {/* A. 테마 선택 (라이트 / 다크) */}
+                {/* A. 테마 선택 */}
                 <div className="space-y-2.5">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sun size={14} /> 테마 선택
@@ -2200,7 +2200,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* B. 본문 글자 크기 (보통 / 크게) */}
+                {/* B. 본문 글자 크기 */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Type size={14} /> 본문 글자 크기
@@ -2232,15 +2232,27 @@ export default function App() {
                   </p>
                 </div>
 
+                {/* C. ⭕ 로그아웃 버튼 (위로 이동) */}
+                <div className="pt-2 border-t border-slate-200/20">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <LogOut size={16} /> 로그아웃
+                  </button>
+                </div>
+
               </div>
 
-              {/* C. 하단 로그아웃 버튼 */}
+              {/* D. ⭕ 최하단 닫기 버튼 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
-                  onClick={handleLogout}
-                  className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className={`w-full py-3 rounded-xl font-bold text-xs transition shadow-sm ${
+                    isDarkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'
+                  }`}
                 >
-                  <LogOut size={16} /> 로그아웃
+                  닫기
                 </button>
               </div>
             </div>
