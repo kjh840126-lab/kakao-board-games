@@ -44,7 +44,8 @@ import {
   User,
   Brain,
   Medal,
-  Users as PlayerIcon
+  Users as PlayerIcon,
+  RotateCcw
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -160,7 +161,7 @@ export default function App() {
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // ⭕ 관리자용 신고/건의 우측 드로어 State
+  // 관리자용 신고/건의 우측 드로어 State
   const [isAdminReportDrawerOpen, setIsAdminReportDrawerOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
 
@@ -409,7 +410,6 @@ export default function App() {
         })));
       }
 
-      // ⭕ 신고 및 건의 데이터 가져오기
       const { data: reportsData } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
       if (reportsData) {
         setReportList(reportsData.map(r => ({
@@ -626,7 +626,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 개별 신고글 읽음 처리 및 DB 업데이트
   const handleMarkReportAsRead = async (report: ReportData) => {
     setSelectedReport(report);
     if (!report.isRead) {
@@ -635,7 +634,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 모든 신고글 읽음 일괄 처리
   const handleMarkAllReportsAsRead = async () => {
     const unreadIds = reports.filter(r => !r.isRead).map(r => r.reportId);
     if (unreadIds.length === 0) return;
@@ -649,8 +647,6 @@ export default function App() {
     : 0;
 
   const isAdmin = currentUser?.role === '운영자';
-
-  // ⭕ 읽지 않은 신규 신고/건의 개수
   const unreadReportsCount = reports.filter(r => !r.isRead).length;
 
   const toggleCartItem = (game: Game) => {
@@ -1410,7 +1406,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* 수직 롤링 공지사항 배너 */}
+              {/* 7. 다크모드 공지사항 시인성 개선 */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -1503,6 +1499,7 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
+                            {/* 메타 순서: 인원수 ➔ 플레이시간 ➔ 난이도 ➔ BGG 평점 순서 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
@@ -1564,6 +1561,7 @@ export default function App() {
           {/* 2. 반납/히스토리 탭 */}
           {activeTab === 'returns' && (
             <div className="space-y-5 mt-0.5">
+              {/* 7. 다크모드 시 현재 대여중인 게임 배너 시인성 개선 */}
               <div className={`p-4 rounded-2xl flex justify-between items-center shadow-sm ${
                 isDarkMode ? 'bg-slate-800 border-2 border-slate-700 text-white' : 'bg-slate-900 text-white'
               }`}>
@@ -2155,7 +2153,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 6, 7. '공지 작성' 버튼명 원복 및 설명 문구 제거 */}
+              {/* 6, 7. '공지 작성' 버튼명 원복 및 설명 문구 제거 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2213,7 +2211,7 @@ export default function App() {
           )}
         </main>
 
-        {/* ⭕ 2. 다크모드/라이트모드 플로팅 장바구니 버튼 색상 차별화 (다크: 옐로우, 라이트: 어두운 톤) */}
+        {/* 2. 다크모드/라이트모드 플로팅 장바구니 버튼 색상 차별화 (다크: 옐로우, 라이트: 어두운 톤) */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
@@ -2235,7 +2233,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 4. 하단 네비게이션 아이콘 직관적 개선 (대여: Boxes, 반납: PackageCheck) */}
+        {/* 4. 하단 네비게이션 아이콘 직관적 개선 (대여: Boxes, 반납: PackageCheck) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2259,7 +2257,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 1, 3, 5. 설정 드로어 (왼쪽 오버레이 클릭 닫기 적용, 최하단 로그아웃) */}
+        {/* 1, 3, 5. 설정 드로어 (왼쪽 오버레이 클릭 닫기 적용, 최하단 로그아웃) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -2376,7 +2374,7 @@ export default function App() {
 
               </div>
 
-              {/* ⭕ 3. 로그아웃 버튼을 최하단 위치에 배치 */}
+              {/* 3. 로그아웃 버튼 위치를 최하단(닫기 버튼 위치)으로 이동 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={handleLogout}
@@ -2491,7 +2489,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2, 3. 신고 및 건의하기 독립 팝업 모달 (다크모드 시 테두리 고대비 border-slate-600 처리) */}
+        {/* 신고 및 건의하기 독립 팝업 모달 */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
