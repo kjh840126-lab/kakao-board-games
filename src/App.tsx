@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
-  Gamepad2, 
-  RotateCcw, 
+  Boxes,
+  PackageCheck,
   ShoppingCart, 
   UserCheck,
   Plus,
@@ -140,7 +140,7 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 설정 관련 State
+  // 설정 관련 State (LocalStorage 연동)
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
   });
@@ -148,6 +148,14 @@ export default function App() {
     return (localStorage.getItem('kakao_bg_fontSize') as 'normal' | 'large') || 'normal';
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_theme', themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_fontSize', fontSize);
+  }, [fontSize]);
 
   // 내 정보 수정 / 비밀번호 변경 모달 State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -239,14 +247,6 @@ export default function App() {
       fetchInitialData();
     }
   }, [activeTab, adminSubTab]);
-
-  useEffect(() => {
-    localStorage.setItem('kakao_bg_theme', themeMode);
-  }, [themeMode]);
-
-  useEffect(() => {
-    localStorage.setItem('kakao_bg_fontSize', fontSize);
-  }, [fontSize]);
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -797,7 +797,7 @@ export default function App() {
         status: '대여가능',
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
-        playTime: editingGame.playTime,
+        play_time: editingGame.playTime,
         difficulty: formattedDifficulty,
         description: '',
         is_visible: editingGame.isVisible,
@@ -1437,11 +1437,13 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
-                            {/* ⭕ 4, 5, 6. 메타 순서(인원/시간/난이도/BGG평점) 및 난이도 색상 통일, BGG 커스텀 아이콘 반영 */}
+                            {/* ⭕ 4. 메타 순서: 인원수 ➔ 플레이시간 ➔ 난이도 ➔ BGG 평점 순서 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
+                              {/* 5. 난이도 아이콘 & 폰트색 통일 */}
                               <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
+                              {/* 6. BGG 커스텀 아이콘 및 평점 노출 */}
                               <span className="flex items-center gap-0.5"><BggIcon size={11} className="text-slate-400" /> BGG {game.bggRating}</span>
                             </div>
                           </div>
@@ -2093,6 +2095,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* ⭕ 6, 7. 공지사항 작성 버튼명 '공지 작성'으로 원복 및 타이틀 밑 설명 제거 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2101,9 +2104,6 @@ export default function App() {
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                         공지사항 관리
                       </h2>
-                      <p className="text-slate-400 font-medium mt-0.5">
-                        대여(게임목록) 상단에 노출되는 공지사항을 등록 및 수정합니다.
-                      </p>
                     </div>
                     <button
                       onClick={() => {
@@ -2112,7 +2112,7 @@ export default function App() {
                       }}
                       className="bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
                     >
-                      <Plus size={14} /> 작성
+                      <Plus size={14} /> 공지 작성
                     </button>
                   </div>
 
@@ -2153,15 +2153,19 @@ export default function App() {
           )}
         </main>
 
-        {/* ⭕ 7. 다크모드 시 장바구니 플로팅 버튼 시인성 상향 ([#FEE500] 노란색 카카오 테마 적용) */}
+        {/* ⭕ 2. 다크모드/라이트모드 장바구니 아이콘 색상 차별화 */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
               onClick={() => setIsCartOpen(true)}
-              className="pointer-events-auto relative p-3.5 bg-[#FEE500] text-slate-900 rounded-full hover:bg-amber-400 active:scale-95 transition-all shadow-xl border border-amber-300 flex items-center justify-center"
+              className={`pointer-events-auto relative p-3.5 rounded-full active:scale-95 transition-all shadow-xl flex items-center justify-center ${
+                isDarkMode 
+                  ? 'bg-[#FEE500] text-slate-900 border border-amber-300 hover:bg-amber-400' 
+                  : 'bg-slate-900 text-white border border-slate-700 hover:bg-slate-800'
+              }`}
               title="장바구니 열기"
             >
-              <ShoppingCart size={20} className="text-slate-900" />
+              <ShoppingCart size={20} className={isDarkMode ? 'text-slate-900' : 'text-white'} />
               {cart.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm text-[10px]">
                   {cart.length}
@@ -2171,16 +2175,16 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 하단 네비게이션 개편 (설정 탭 삭제) */}
+        {/* ⭕ 4. 하단 네비게이션 아이콘 직관적 개선 (대여: Boxes, 반납: PackageCheck) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Gamepad2 size={20} />
+            <Boxes size={20} />
             <span className="mt-1">대여</span>
           </button>
           <button onClick={() => setActiveTab('returns')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <RotateCcw size={20} />
+            <PackageCheck size={20} />
             <span className="mt-1">반납</span>
           </button>
           <button onClick={() => setActiveTab('ranking')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
@@ -2195,11 +2199,17 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 3. 설정 우측 슬라이딩 Drawer 모달 (로그아웃 버튼을 최하단으로 이동) */}
+        {/* ⭕ 1, 3, 5. 설정 드로어 (왼쪽 오버레이 클릭 닫기, 관리자모드 하늘색 헤더, 최하단 로그아웃) */}
         {isSettingsOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
-            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
-              <div className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm">
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
+            <div 
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              onClick={(e) => e.stopPropagation()} // 클릭 이벤트 전파 차단
+            >
+              {/* ⭕ 5. 관리자 페이지 시 설정 드로어 헤더 배경도 하늘색 연동 */}
+              <div className={`p-4 flex justify-between items-center font-bold text-sm ${
+                isHeaderAdminTheme ? 'bg-sky-400 text-slate-900' : 'bg-[#FEE500] text-slate-900'
+              }`}>
                 <span className="flex items-center gap-2">
                   <Settings size={18} /> 설정
                 </span>
@@ -2231,7 +2241,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* B. 2. 신고 및 건의하기 (독립 팝업 모달로 열림) */}
+                {/* B. 신고 및 건의하기 */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Siren size={14} /> 고객지원
@@ -2320,11 +2330,11 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2. 신고 및 건의하기 독립 팝업 모달 */}
+        {/* ⭕ 2, 3. 신고 및 건의하기 독립 팝업 모달 (3. 다크모드 시 테두리 고대비 border-slate-600 처리) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
-              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+              isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
             } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
                 <h3 className="font-extrabold text-base flex items-center gap-2">
@@ -2407,11 +2417,11 @@ export default function App() {
           </div>
         )}
 
-        {/* 내 정보 수정 및 비밀번호 변경 모달 */}
+        {/* ⭕ 3. 내 정보 수정 및 비밀번호 변경 모달 (다크모드 시 테두리 고대비 border-slate-600 처리) */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
-              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+              isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
             } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <h3 className="font-extrabold text-base flex items-center gap-2">
                 <User size={18} /> 내 정보 / 비밀번호 변경
@@ -2493,10 +2503,13 @@ export default function App() {
           </div>
         )}
 
-        {/* 장바구니 Drawer 모달 */}
+        {/* ⭕ 1. 장바구니 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
         {isCartOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
-            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsCartOpen(false)}>
+            <div 
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm">
                 <span>장바구니 ({cart.length} / 3)</span>
                 <button onClick={() => setIsCartOpen(false)}><X size={18} /></button>
@@ -2569,10 +2582,13 @@ export default function App() {
           </div>
         )}
 
-        {/* 공지사항 우측 슬라이딩 Drawer 모달 */}
+        {/* ⭕ 1. 공지사항 우측 슬라이딩 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
         {isNoticeDrawerOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
-            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
+            <div 
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="p-4 bg-slate-900 flex justify-between items-center font-bold text-white text-sm">
                 <span className="flex items-center gap-2">
                   <Bell size={16} className="text-[#FEE500]" /> 공지사항 목록
