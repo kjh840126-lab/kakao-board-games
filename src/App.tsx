@@ -48,7 +48,9 @@ import {
   RotateCcw,
   Loader2,
   Globe,
-  ExternalLink
+  ExternalLink,
+  Filter,
+  RotateCcw as ResetIcon
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -133,41 +135,6 @@ const ALLOWED_EMAIL_DOMAINS = [
   'kakaoent.com',
 ];
 
-const DEFAULT_SITES: BoardSite[] = [
-  {
-    siteId: 1,
-    name: '보드라이프 (BoardLife)',
-    url: 'https://boardlife.co.kr',
-    bannerUrl: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600',
-    description: '국내 최대 보드게임 커뮤니티, 리뷰 및 커스텀 한글화 자료실',
-    isVisible: 'Y'
-  },
-  {
-    siteId: 2,
-    name: '보드게임긱 (BoardGameGeek)',
-    url: 'https://boardgamegeek.com',
-    bannerUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600',
-    description: '전 세계 보드게이머들의 글로벌 1위 랭킹 및 데이터베이스',
-    isVisible: 'Y'
-  },
-  {
-    siteId: 3,
-    name: '팝콘에듀 (Popcorn Edu)',
-    url: 'https://www.popcornedu.co.kr',
-    bannerUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600',
-    description: '보드게임 프로텍터, 수납 슬리브 및 한국어판 게임 쇼핑몰',
-    isVisible: 'Y'
-  },
-  {
-    siteId: 4,
-    name: '코리아보드게임즈 (Korea Boardgames)',
-    url: 'https://koreaboardgames.com',
-    bannerUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600',
-    description: '루미큐브, 할리갈리 등 대표 보드게임 퍼블리셔 공식 스토어',
-    isVisible: 'Y'
-  }
-];
-
 const currentYear = new Date().getFullYear();
 
 // BGG 커스텀 아이콘 Component
@@ -197,7 +164,7 @@ export default function App() {
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [reports, setReportList] = useState<ReportData[]>([]);
-  const [sites, setSiteList] = useState<BoardSite[]>(DEFAULT_SITES);
+  const [sites, setSiteList] = useState<BoardSite[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 설정 관련 State (LocalStorage 연동)
@@ -256,11 +223,14 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
-  // ⭕ 3. 하단 네비게이션 'sites' 탭 신규 추가
-  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'sites' | 'admin'>('games');
+  // ⭕ 2. 새로고침 시 기존 탭 유지 (LocalStorage 연동)
+  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'sites' | 'admin'>(() => {
+    const savedTab = localStorage.getItem('kakao_bg_activeTab');
+    return (savedTab as 'games' | 'returns' | 'ranking' | 'sites' | 'admin') || 'games';
+  });
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
-  // ⭕ 4. 관리자 서브탭 'siteAdmin' 추가
+  // ⭕ 3. 관리자 서브탭 명칭 변경 ('siteAdmin' => 사이트관리)
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>('gameAdmin');
   const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
 
@@ -274,7 +244,7 @@ export default function App() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
 
-  // ⭕ 관리자 사이트 등록/수정 모달 State
+  // 관리자 사이트 등록/수정 모달 State
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<BoardSite>({
     siteId: 0,
@@ -295,6 +265,13 @@ export default function App() {
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
 
+  // ⭕ 5. 대여 페이지 필터 State (인원수, 장르, 난이도)
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [playerFilter, setPlayerFilter] = useState<number>(0); // 0: 전체, 1~5 (5: 5인이상)
+  const [genreFilter, setGenreFilter] = useState<string>(''); // '': 전체
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
+
+  // ⭕ 1. 탭별 스크롤 분리를 위한 Ref 및 스크롤 이벤트 수신기
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
   const tabScrollPositions = useRef<{ [key: string]: number }>({
     games: 0,
@@ -334,6 +311,19 @@ export default function App() {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
   }, [fontSize]);
 
+  // ⭕ 새로고침을 위해 activeTab을 LocalStorage에 저
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_activeTab', activeTab);
+  }, [activeTab]);
+
+  // ⭕ 1. 스크롤 실시간 저장
+  const handleScroll = () => {
+    if (mainScrollRef.current) {
+      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
+    }
+  };
+
+  // ⭕ 1, 2. 탭 전환 시 스크롤 위치 복원
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     if (mainScrollRef.current) {
       tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
@@ -505,9 +495,8 @@ export default function App() {
         })));
       }
 
-      // ⭕ 추천 사이트 데이터 조회 (DB 조회가 없으면 기본 데이터 유지)
       const { data: sitesData } = await supabase.from('sites').select('*').order('site_id', { ascending: true });
-      if (sitesData && sitesData.length > 0) {
+      if (sitesData) {
         setSiteList(sitesData.map(s => ({
           siteId: s.site_id,
           name: s.name,
@@ -737,7 +726,6 @@ export default function App() {
     await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
   };
 
-  // ⭕ 사이트 저장 (등록/수정)
   const saveSite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingSite.name.trim() || !editingSite.url.trim()) {
@@ -755,14 +743,12 @@ export default function App() {
       }).eq('site_id', editingSite.siteId);
 
       if (error) {
-        setSiteList(prev => prev.map(s => s.siteId === editingSite.siteId ? editingSite : s));
+        alert('사이트 수정 실패: ' + error.message);
       } else {
         alert('사이트 정보가 수정되었습니다.');
       }
     } else {
       const newId = Date.now();
-      const newSite: BoardSite = { ...editingSite, siteId: newId };
-
       const { error } = await supabase.from('sites').insert([{
         site_id: newId,
         name: editingSite.name,
@@ -773,7 +759,7 @@ export default function App() {
       }]);
 
       if (error) {
-        setSiteList(prev => [...prev, newSite]);
+        alert('사이트 등록 실패: ' + error.message);
       } else {
         alert('새 사이트가 추가되었습니다.');
       }
@@ -783,15 +769,11 @@ export default function App() {
     setIsSiteModalOpen(false);
   };
 
-  // ⭕ 사이트 삭제
   const deleteSite = async (siteId: number, name: string) => {
-    if (window.confirm(`'${name}' 사이트를 삭제하시겠습니까?`)) {
+    if (window.confirm(`정말로 '${name}' 사이트를 삭제하시겠습니까?`)) {
       const { error } = await supabase.from('sites').delete().eq('site_id', siteId);
-      if (error) {
-        setSiteList(prev => prev.filter(s => s.siteId !== siteId));
-      } else {
-        alert('사이트가 삭제되었습니다.');
-      }
+      if (error) alert('삭제 실패: ' + error.message);
+      else alert('사이트가 삭제되었습니다.');
       await fetchInitialData();
     }
   };
@@ -1130,10 +1112,27 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
+  // ⭕ 5. 대여 페이지 게임 목록 필터링 (검색어 + 인원수 + 장르 + 난이도)
   const filteredGameList = [...games]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .filter((g) => g.isVisible === 'Y')
-    .filter((g) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()));
+    .filter((g) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
+    .filter((g) => {
+      if (playerFilter === 0) return true;
+      if (playerFilter === 5) return g.maxPlayers >= 5;
+      return g.minPlayers <= playerFilter && g.maxPlayers >= playerFilter;
+    })
+    .filter((g) => {
+      if (!genreFilter) return true;
+      return g.genres.includes(genreFilter);
+    })
+    .filter((g) => {
+      if (difficultyFilter === 'all') return true;
+      if (difficultyFilter === 'easy') return g.difficulty < 2.3;
+      if (difficultyFilter === 'normal') return g.difficulty >= 2.3 && g.difficulty <= 3.5;
+      if (difficultyFilter === 'hard') return g.difficulty > 3.5;
+      return true;
+    });
 
   const filteredGameAdminList = [...games]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -1178,6 +1177,15 @@ export default function App() {
     });
 
   const visibleSitesList = sites.filter(s => s.isVisible === 'Y');
+
+  // 필터 적용 상태 확인
+  const isFilterActive = playerFilter > 0 || genreFilter !== '' || difficultyFilter !== 'all';
+
+  const resetFilters = () => {
+    setPlayerFilter(0);
+    setGenreFilter('');
+    setDifficultyFilter('all');
+  };
 
   const calculatedCalculatedEndDate = () => {
     const d = new Date();
@@ -1564,9 +1572,10 @@ export default function App() {
           )}
         </header>
 
-        {/* 메인 스크롤 영역 */}
+        {/* ⭕ 메인 스크롤 영역 (독립 스크롤 이벤트 수신기 등록) */}
         <main 
           ref={mainScrollRef}
+          onScroll={handleScroll}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
         >
@@ -1574,7 +1583,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* 공지사항 배너 */}
+              {/* 수직 롤링 공지사항 배너 */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -1614,30 +1623,154 @@ export default function App() {
                 )}
               </div>
 
-              <div className="relative">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="게임명 검색..."
-                  value={gameListSearch}
-                  onChange={(e) => setGameListSearch(e.target.value)}
-                  className={`w-full border pl-10 pr-9 py-2.5 rounded-xl focus:outline-none transition ${
-                    isDarkMode 
-                      ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-slate-500' 
-                      : 'bg-slate-50/50 border-slate-200 text-slate-900 focus:border-slate-800'
+              {/* ⭕ 5. 대여 페이지 검색바 및 오른쪽에 필터(Filter) 버튼 신규 노출 */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="게임명 검색..."
+                    value={gameListSearch}
+                    onChange={(e) => setGameListSearch(e.target.value)}
+                    className={`w-full border pl-10 pr-9 py-2.5 rounded-xl focus:outline-none transition ${
+                      isDarkMode 
+                        ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-slate-500' 
+                        : 'bg-slate-50/50 border-slate-200 text-slate-900 focus:border-slate-800'
+                    }`}
+                  />
+                  {gameListSearch && (
+                    <button onClick={() => setGameListSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className={`px-3.5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition border relative flex-shrink-0 ${
+                    isFilterActive 
+                      ? 'bg-slate-900 text-white border-slate-900' 
+                      : isDarkMode 
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' 
+                      : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
                   }`}
-                />
-                {gameListSearch && (
-                  <button onClick={() => setGameListSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                    <X size={14} />
-                  </button>
-                )}
+                >
+                  <Filter size={15} />
+                  <span>필터</span>
+                  {isFilterActive && (
+                    <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-1.5 right-1.5"></span>
+                  )}
+                </button>
               </div>
+
+              {/* ⭕ 5. 필터 확장 드로어 영역 (인원수, 장르, 난이도) */}
+              {isFilterOpen && (
+                <div className={`p-4 rounded-2xl border space-y-3.5 shadow-sm transition ${
+                  isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+                    <span className="font-extrabold flex items-center gap-1.5 text-xs">
+                      <Filter size={13} /> 조건별 게임 검색
+                    </span>
+                    {isFilterActive && (
+                      <button 
+                        onClick={resetFilters}
+                        className="text-[10px] font-bold text-rose-500 hover:underline flex items-center gap-0.5"
+                      >
+                        <ResetIcon size={11} /> 필터 초기화
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 1) 인원수 필터 */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-400 block">인원수 선택</span>
+                    <div className="flex flex-wrap gap-1">
+                      {[0, 1, 2, 3, 4, 5].map((count) => (
+                        <button
+                          key={count}
+                          onClick={() => setPlayerFilter(count)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                            playerFilter === count 
+                              ? 'bg-slate-900 text-white' 
+                              : isDarkMode 
+                              ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {count === 0 ? '전체' : count === 5 ? '5인 이상' : `${count}인`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 2) 장르 필터 */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-400 block">장르 선택</span>
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        onClick={() => setGenreFilter('')}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                          genreFilter === '' 
+                            ? 'bg-slate-900 text-white' 
+                            : isDarkMode 
+                            ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        전체
+                      </button>
+                      {PRESET_GENRES.map((preset) => (
+                        <button
+                          key={preset}
+                          onClick={() => setGenreFilter(preset)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                            genreFilter === preset 
+                              ? 'bg-slate-900 text-white' 
+                              : isDarkMode 
+                              ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 3) 난이도 필터 */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-400 block">난이도 선택</span>
+                    <div className="flex gap-1">
+                      {[
+                        { key: 'all', label: '전체' },
+                        { key: 'easy', label: '쉬움 (~2.2)' },
+                        { key: 'normal', label: '보통 (2.3~3.5)' },
+                        { key: 'hard', label: '어려움 (3.6~)' }
+                      ].map((diff) => (
+                        <button
+                          key={diff.key}
+                          onClick={() => setDifficultyFilter(diff.key as any)}
+                          className={`flex-1 py-1 rounded-lg text-[11px] font-bold transition text-center ${
+                            difficultyFilter === diff.key 
+                              ? 'bg-slate-900 text-white' 
+                              : isDarkMode 
+                              ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {diff.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid gap-3">
                 {filteredGameList.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl">
-                    '{gameListSearch}' 검색 결과가 없습니다.
+                    검색 조건에 해당되는 보드게임이 없습니다.
                   </div>
                 ) : (
                   filteredGameList.map((game) => {
@@ -2003,7 +2136,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ⭕ 3. 신규 보드게임 사이트 모음 탭 */}
+          {/* ⭕ 3. 보드게임 추천 사이트 탭 */}
           {activeTab === 'sites' && (
             <div className="space-y-4 mt-0.5">
               <div className={`pb-2 border-b flex justify-between items-end ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2085,19 +2218,19 @@ export default function App() {
                 >
                   공지사항
                 </button>
-                {/* ⭕ 4. 관리자 서브탭 '사이트' 관리 추가 */}
+                {/* ⭕ 3. 서브 메뉴명 '사이트관리'로 변경 */}
                 <button
                   onClick={() => setAdminSubTab('siteAdmin')}
                   className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
-                  사이트
+                  사이트관리
                 </button>
               </div>
 
               {adminSubTab === 'gameAdmin' && (
                 <div className="space-y-4">
-                  {/* ⭕ 1. 관리자 게임관리 하단 설명 텍스트 제거 */}
-                  <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 1, 4. 5개 관리자 서브메뉴의 최상단 여백 및 헤더 높이 완벽 통일 */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2201,7 +2334,8 @@ export default function App() {
 
               {adminSubTab === 'rentalAdmin' && (
                 <div className="space-y-4">
-                  <div className={`pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 4. 상단 헤더 높이 통일 (min-h-[42px]) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                       대여 및 반납 현황
@@ -2298,7 +2432,8 @@ export default function App() {
 
               {adminSubTab === 'userAdmin' && (
                 <div className="space-y-4">
-                  <div className={`pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 4. 상단 헤더 높이 통일 (min-h-[42px]) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                       회원 관리
@@ -2381,7 +2516,8 @@ export default function App() {
               {/* 공지사항 관리 페이지 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 4. 상단 헤더 높이 통일 (min-h-[42px]) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2432,10 +2568,10 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 4. 관리자 추천 사이트 관리 서브페이지 */}
+              {/* ⭕ 4. 관리자 추천 사이트 관리 서브페이지 (헤더 높이 통일 min-h-[42px]) */}
               {adminSubTab === 'siteAdmin' && (
                 <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2527,7 +2663,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 하단 네비게이션 개편 (대여 / 반납 / 랭킹 / 사이트 / 관리자) */}
+        {/* ⭕ 3. 하단 네비게이션 (대여 / 반납 / 랭킹 / 사이트 / 관리자) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2555,7 +2691,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 2. 설정 드로어 (로그아웃 버튼 위치 및 가독성 개선, 닫기 버튼 배치) */}
+        {/* ⭕ 2. 설정 드로어 (로그아웃 버튼 위치 및 가독성 개선, 최하단에 닫기 버튼 배치) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -2686,7 +2822,7 @@ export default function App() {
 
               </div>
 
-              {/* ⭕ 2. 최하단 닫기 버튼 */}
+              {/* ⭕ 2. 최하단에 닫기 버튼 배치 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
@@ -3129,7 +3265,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 4. 관리자용 추천 사이트 등록/수정 모달 */}
+        {/* ⭕ 관리자 추천 사이트 등록/수정 모달 */}
         {isSiteModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
