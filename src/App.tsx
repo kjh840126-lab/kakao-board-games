@@ -1162,19 +1162,20 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더 */}
+        {/* 고정 상단 헤더 (로고 크기 h-9로 확대 및 패널티/아이디 영역 레이아웃 정돈) */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-          className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-3 z-30 shadow-sm flex justify-between items-center transition-colors ${
+          className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
             isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40'
           }`}
         >
           <div>
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              {/* ⭕ 로고 크기 h-9로 확대 */}
               <img 
                 src="/header_logo.png" 
                 alt="kakao board games" 
-                className="h-7 w-auto object-contain drop-shadow-sm"
+                className="h-9 w-auto object-contain drop-shadow-sm"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
               />
               {isHeaderAdminTheme && (
@@ -1215,9 +1216,9 @@ export default function App() {
           </button>
         </header>
 
-        {/* 메인 스크롤 영역 */}
+        {/* ⭕ 메인 스크롤 영역 (pt-[92px]로 로고 확대 보정) */}
         <main 
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 86px)' }} 
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
         >
           {/* 1. 게임목록(대여) 탭 */}
