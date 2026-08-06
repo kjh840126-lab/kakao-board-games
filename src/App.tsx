@@ -50,8 +50,7 @@ import {
   Globe,
   ExternalLink,
   Filter,
-  RotateCcw as ResetIcon,
-  ChevronDown
+  RotateCcw as ResetIcon
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -231,7 +230,7 @@ export default function App() {
   });
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
-  // ⭕ 2. 운영자 서브탭 새로고침 시 유지 (LocalStorage 연동)
+  // 운영자 서브탭 새로고침 시 유지
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>(() => {
     const savedAdminTab = localStorage.getItem('kakao_bg_adminSubTab');
     return (savedAdminTab as any) || 'gameAdmin';
@@ -318,7 +317,6 @@ export default function App() {
     localStorage.setItem('kakao_bg_activeTab', activeTab);
   }, [activeTab]);
 
-  // ⭕ 2. 관리자 서브탭 변경 시 저장
   useEffect(() => {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
@@ -363,7 +361,7 @@ export default function App() {
         setNoticeIndex(0);
       }, 500);
 
-      return () => clearInterval(timer);
+      return () => clearTimeout(timer);
     }
   }, [noticeIndex, recentNoticesList.length]);
 
@@ -2709,10 +2707,10 @@ export default function App() {
                 <button onClick={() => setIsSettingsOpen(false)}><X size={18} /></button>
               </div>
 
-              <div className="flex-1 p-4 overflow-y-auto space-y-5">
+              <div className="flex-1 p-5 overflow-y-auto space-y-6">
                 
                 {/* A. 내 정보 수정 / 비밀번호 변경 */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <User size={14} /> 계정 설정
                   </h4>
@@ -2725,7 +2723,7 @@ export default function App() {
                         setIsEditProfileOpen(true);
                       }
                     }}
-                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
@@ -2735,7 +2733,7 @@ export default function App() {
                 </div>
 
                 {/* B. 신고 및 건의하기 */}
-                <div className="space-y-2 pt-2 border-t border-slate-200/20">
+                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Siren size={14} /> 고객지원
                   </h4>
@@ -2743,51 +2741,51 @@ export default function App() {
                     onClick={() => {
                       setIsReportModalOpen(true);
                     }}
-                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
                     <span className="flex items-center gap-1.5 truncate">
-                      <Siren size={14} className="text-rose-500 flex-shrink-0" /> 신고 및 건의
+                      <Siren size={15} className="text-rose-500 flex-shrink-0" /> 신고 및 건의
                     </span>
                     <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                   </button>
                 </div>
 
                 {/* C. 테마 선택 */}
-                <div className="space-y-2 pt-2 border-t border-slate-200/20">
+                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sun size={14} /> 테마 선택
                   </h4>
                   <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setThemeMode('light')}
-                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 ${
+                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center gap-1 ${
                         themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      <Sun size={13} className="text-amber-500" /> 라이트
+                      <Sun size={14} className="text-amber-500" /> 라이트
                     </button>
                     <button
                       onClick={() => setThemeMode('dark')}
-                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 ${
+                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center gap-1 ${
                         themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      <Moon size={13} className="text-indigo-400" /> 다크
+                      <Moon size={14} className="text-indigo-400" /> 다크
                     </button>
                   </div>
                 </div>
 
                 {/* D. 본문 글자 크기 */}
-                <div className="space-y-2 pt-2 border-t border-slate-200/20">
+                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Type size={14} /> 본문 글자 크기
                   </h4>
                   <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setFontSize('normal')}
-                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
+                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center ${
                         fontSize === 'normal' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                           : 'text-slate-400 hover:text-slate-200'
@@ -2797,7 +2795,7 @@ export default function App() {
                     </button>
                     <button
                       onClick={() => setFontSize('large')}
-                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
+                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center ${
                         fontSize === 'large' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                           : 'text-slate-400 hover:text-slate-200'
@@ -2812,7 +2810,7 @@ export default function App() {
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
-                    className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 border ${
+                    className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-2 border ${
                       isDarkMode 
                         ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' 
                         : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -2938,7 +2936,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5, 6, 7. 신고 및 건의하기 독립 팝업 모달 (Placeholder 크기 통일, 셀렉트 박스 스타일 구분) */}
+        {/* ⭕ 5, 6, 7. 신고 및 건의하기 독립 팝업 모달 (Placeholder 크기 동기화, 셀렉트 박스 구별 감싸기) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3266,7 +3264,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5, 6, 7. 추천 사이트 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 감싸기) */}
+        {/* ⭕ 5, 6, 7. 추천 사이트 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 인디케이터 적용) */}
         {isSiteModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
@@ -3352,7 +3350,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5, 6, 7. 게임 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 감싸기) */}
+        {/* ⭕ 5, 6, 7. 게임 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 인디케이터 적용) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 max-h-[90vh] overflow-y-auto shadow-2xl border ${
