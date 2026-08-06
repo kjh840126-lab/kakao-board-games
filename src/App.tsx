@@ -356,7 +356,7 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // ⭕ 3. 스크롤 확실히 최상단 조작 (대여 탭 제외)
+  // ⭕ 3. 스크롤 최상단 처리 보정 (대여 탭 제외)
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
     if (newTab !== 'games') {
@@ -1925,7 +1925,7 @@ export default function App() {
                               ))}
                             </div>
 
-                            {/* 1. 나의 평점 이미지 구도대로 배치 (하단 1줄, 좌측 나의 평점 ☆☆☆☆☆, 우측 투명 찜하트 + 대여버튼) */}
+                            {/* ⭕ 1. 이미지 요구 구도와 100% 동일하게 배치 (좌측: 나의 평점 ☆☆☆☆☆, 우측: 투명 하트 + 대여가능 버튼) */}
                             <div className="flex justify-between items-center gap-2 pt-0.5">
                               
                               {/* 1. 나의 평점 1줄 노출 및 좌측 정렬 */}
@@ -1946,7 +1946,7 @@ export default function App() {
                               </div>
 
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {/* 2. 배경/외곽선 없는 투명 찜하기 아이콘 버튼 */}
+                                {/* ⭕ 2. 배경/외곽선 없는 투명 찜하기 아이콘 버튼 (선택 시 빨간색 하트 채움) */}
                                 <button
                                   onClick={() => toggleFavorite(game.gameId)}
                                   className="p-1 rounded-full transition flex items-center justify-center bg-transparent hover:scale-110 active:scale-95"
@@ -3723,7 +3723,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 게임 등록/수정 모달 (8. 노출 여부 모바일/PC 높이 완벽 고정) */}
+        {/* 게임 등록/수정 모달 */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3886,7 +3886,7 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    {/* 8. 모바일 OS 높이 왜곡 방지 h-[38px] min-h-[38px] -webkit-appearance */}
+                    {/* 모바일 OS 높이 왜곡 방지 h-[38px] min-h-[38px] -webkit-appearance */}
                     <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
