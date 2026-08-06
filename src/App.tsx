@@ -54,7 +54,6 @@ import {
   Star
 } from 'lucide-react';
 
-// ⭕ 4. Role 권한명 '운영자' -> '관리자'로 변경
 export type Role = '일반회원' | '관리자' | '탈퇴회원';
 export type GameStatus = '대여가능' | '대여중' | '대여불가';
 export type RentalStatus = '대여중' | '반납완료';
@@ -1164,7 +1163,7 @@ export default function App() {
     }
   };
 
-  // ⭕ 2. 공지사항 선택 시 최상단으로 스크롤 자동 이동
+  // ⭕ 2. 공지사항 선택 시 최상단 스크롤 자동 이동
   const handleNoticeClick = (notice: Notice) => {
     setSelectedNotice(notice);
     setIsNoticeDrawerOpen(true);
@@ -1894,7 +1893,7 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
-                          {/* 1. 라이트 모드 이미지 외곽선 옅은 회색 보정 (border-slate-200/50) */}
+                          {/* 라이트 모드 이미지 외곽선 옅은 회색 보정 (border-slate-200/50) */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2193,7 +2192,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 1. 이미지 테두리 라이트/다크 보정 */}
+                        {/* 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2260,7 +2259,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 1. 이미지 테두리 라이트/다크 보정 */}
+                        {/* 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2446,7 +2445,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {/* 1. 이미지 테두리 라이트/다크 보정 */}
+                          {/* 이미지 테두리 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2750,7 +2749,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 3. 관리자 > 공지사항 관리: 타이틀 및 내용 자동 줄바꿈(break-keep) 적용 */}
+              {/* E. 공지사항 관리 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2777,7 +2776,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start gap-2">
-                          {/* 3. 공지사항 타이틀 줄바꿈 처리 */}
+                          {/* 공지사항 타이틀 줄바꿈 처리 */}
                           <h3 className={`font-bold break-keep leading-snug ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
@@ -2797,7 +2796,7 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                        {/* 3. 공지사항 내용 줄바꿈 처리 */}
+                        {/* 공지사항 내용 줄바꿈 처리 */}
                         <p className={`whitespace-pre-wrap break-keep leading-relaxed text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
                         <span className="text-slate-400 block pt-1 text-[11px]">{n.createdAt} 작성</span>
                       </div>
@@ -3065,7 +3064,6 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {/* 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -3249,7 +3247,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 관리자용 신고/건의 내역 우측 슬라이딩 Drawer */}
+        {/* ⭕ 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (제목/내용 자동 줄바꿈) */}
         {isAdminReportDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
             <div 
@@ -3290,8 +3288,10 @@ export default function App() {
                         {selectedReport.userId}
                       </span>
                     </div>
-                    <h3 className={`font-extrabold leading-snug ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
-                    <p className={`whitespace-pre-wrap leading-relaxed pt-1.5 border-t ${
+                    {/* 접수함 상세 제목 줄바꿈 처리 */}
+                    <h3 className={`font-extrabold leading-snug break-keep text-xs ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
+                    {/* 접수함 상세 내용 줄바꿈 처리 */}
+                    <p className={`whitespace-pre-wrap break-keep leading-relaxed text-xs pt-1.5 border-t ${
                       isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-sky-200'
                     }`}>
                       {selectedReport.content}
@@ -3326,7 +3326,8 @@ export default function App() {
                                   N
                                 </span>
                               )}
-                              <span className="truncate font-semibold text-xs">{report.title}</span>
+                              {/* 접수함 리스트 제목 줄바꿈 처리 */}
+                              <span className="font-semibold text-xs leading-snug break-keep">{report.title}</span>
                             </div>
                           </div>
                         </div>
@@ -3614,7 +3615,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1, 2. 공지사항 우측 슬라이딩 Drawer 모달 (타이틀/내용 줄바꿈 & 선택 시 스크롤 최상단 이동) */}
+        {/* 공지사항 우측 슬라이딩 Drawer 모달 (타이틀/내용 줄바꿈 & 선택 시 스크롤 최상단 이동) */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
@@ -3638,9 +3639,9 @@ export default function App() {
                     <span className="text-amber-800 font-extrabold bg-amber-200/80 px-2 py-0.5 rounded-md inline-block">
                       선택한 공지사항
                     </span>
-                    {/* 1. 공지사항 타이틀 줄바꿈 처리 */}
+                    {/* 공지사항 타이틀 줄바꿈 처리 */}
                     <h3 className={`font-extrabold leading-snug break-keep ${isDarkMode ? 'text-amber-300' : 'text-slate-900'}`}>{selectedNotice.title}</h3>
-                    {/* 1. 공지사항 내용 줄바꿈 처리 */}
+                    {/* 공지사항 내용 줄바꿈 처리 */}
                     <p className={`whitespace-pre-wrap break-keep leading-relaxed pt-1 border-t text-xs ${
                       isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-amber-200/60'
                     }`}>
@@ -3667,7 +3668,7 @@ export default function App() {
                         }`}
                       >
                         <div className="flex justify-between items-start gap-2">
-                          {/* 1. 공지사항 리스트 제목 줄바꿈 처리 */}
+                          {/* 공지사항 리스트 제목 줄바꿈 처리 */}
                           <span className="break-keep font-semibold text-xs leading-snug">{notice.title}</span>
                           <span className={`font-mono flex-shrink-0 text-[10px] ${isSelected ? 'text-amber-300' : 'text-slate-400'}`}>
                             {notice.createdAt.substring(5)}
