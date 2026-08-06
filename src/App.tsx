@@ -42,14 +42,15 @@ import {
   Settings,
   Sun,
   Moon,
-  Type
+  Type,
+  User
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
 export type GameStatus = '대여가능' | '대여중' | '대여불가';
 export type RentalStatus = '대여중' | '반납완료';
 
-export interface User {
+export interface UserData {
   userId: string;
   name: string;
   email: string;
@@ -118,7 +119,7 @@ const getDaysDifference = (dateStr1: string, dateStr2: string) => {
 };
 
 export default function App() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [notices, setNoticeList] = useState<Notice[]>([]);
@@ -129,6 +130,12 @@ export default function App() {
   const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // 내 정보 수정 / 비밀번호 변경 모달 State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [changePassword, setNewPasswordInput] = useState('');
+  const [changePasswordConfirm, setNewPasswordConfirmInput] = useState('');
+
   // 공지사항 롤링 State
   const [noticeIndex, setNoticeIndex] = useState(0);
   const [isNoticeTransition, setIsNoticeTransition] = useState(true);
@@ -137,7 +144,7 @@ export default function App() {
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+  const [currentUser, setCurrentUser] = useState<UserData | null>(() => {
     const savedUser = localStorage.getItem('kakao_boardgame_user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
@@ -241,7 +248,7 @@ export default function App() {
     try {
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
-        const mappedUsers: User[] = await Promise.all(
+        const mappedUsers: UserData[] = await Promise.all(
           usersData.map(async (u) => {
             let currentPenaltyPoints = u.penalty_count || 0;
             let currentPenaltyEndDate = u.penalty_end_date || null;
@@ -380,7 +387,7 @@ export default function App() {
     const nowStr = new Date().toISOString();
     await supabase.from('users').update({ last_login_at: nowStr }).eq('user_id', user.userId);
 
-    const loggedInUser: User = { 
+    const loggedInUser: UserData = { 
       ...user, 
       lastLoginAt: nowStr.replace('T', ' ').substring(0, 16) 
     };
@@ -498,6 +505,42 @@ export default function App() {
     }
   };
 
+  // ⭕ 내 정보 수정 및 비밀번호 변경 처리 함수
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    if (changePassword || changePasswordConfirm) {
+      if (changePassword !== changePasswordConfirm) {
+        alert('신규 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+        return;
+      }
+    }
+
+    const updates: { name: string; password_hash?: string } = {
+      name: editName.trim()
+    };
+
+    if (changePassword) {
+      updates.password_hash = changePassword;
+    }
+
+    const { error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('user_id', currentUser.userId);
+
+    if (error) {
+      alert('정보 수정 실패: ' + error.message);
+    } else {
+      alert('회원 정보가 성공적으로 변경되었습니다.');
+      setIsEditProfileOpen(false);
+      setNewPasswordInput('');
+      setNewPasswordConfirmInput('');
+      await fetchInitialData();
+    }
+  };
+
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('kakao_boardgame_user');
@@ -506,7 +549,7 @@ export default function App() {
     setIsSettingsOpen(false);
   };
 
-  const handleUserRoleChange = async (targetUser: User, newRole: Role) => {
+  const handleUserRoleChange = async (targetUser: UserData, newRole: Role) => {
     const actionText = newRole === '탈퇴회원' ? '탈퇴' : '복구';
     if (window.confirm(`'${targetUser.name}' 회원님을 ${actionText} 처리하시겠습니까?`)) {
       const { error } = await supabase
@@ -2134,7 +2177,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 하단 네비게이션 고정 (text-[10px] 폰트 크기 고정) */}
+        {/* ⭕ 하단 네비게이션 개편 (신고 탭 ➔ 설정 탭으로 변경) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2150,9 +2193,10 @@ export default function App() {
             <Trophy size={20} />
             <span className="mt-1">랭킹</span>
           </button>
-          <button onClick={() => setActiveTab('report')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'report' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Siren size={20} />
-            <span className="mt-1">신고</span>
+          {/* ⭕ 신고 탭을 설정 탭으로 변경 */}
+          <button onClick={() => setIsSettingsOpen(true)} className="flex flex-col items-center font-bold text-[10px] text-slate-400 hover:text-slate-600">
+            <Settings size={20} />
+            <span className="mt-1">설정</span>
           </button>
           {isAdmin && (
             <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
@@ -2162,7 +2206,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 설정 우측 슬라이딩 Drawer 모달 (로그아웃 위로 이동, 하단에 닫기 버튼 배치) */}
+        {/* ⭕ 설정 우측 슬라이딩 Drawer 모달 (내 정보 수정, 신고하기 이동, 로그아웃, 닫기 배치) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
@@ -2175,8 +2219,52 @@ export default function App() {
 
               <div className="flex-1 p-5 overflow-y-auto space-y-6">
                 
-                {/* A. 테마 선택 */}
+                {/* 1) 내 정보 수정 & 비밀번호 변경 */}
                 <div className="space-y-2.5">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <User size={14} /> 계정 설정
+                  </h4>
+                  <button
+                    onClick={() => {
+                      if (currentUser) {
+                        setEditName(currentUser.name);
+                        setNewPasswordInput('');
+                        setNewPasswordConfirmInput('');
+                        setIsEditProfileOpen(true);
+                      }
+                    }}
+                    className={`w-full p-3 rounded-xl border text-left font-bold text-xs flex justify-between items-center transition ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>내 정보 / 비밀번호 변경</span>
+                    <ChevronRight size={16} className="text-slate-400" />
+                  </button>
+                </div>
+
+                {/* 2) 신고/건의하기 이동 */}
+                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Siren size={14} /> 고객지원
+                  </h4>
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      setActiveTab('report');
+                    }}
+                    className={`w-full p-3 rounded-xl border text-left font-bold text-xs flex justify-between items-center transition ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Siren size={15} className="text-rose-500" /> 신고 및 건의하기
+                    </span>
+                    <ChevronRight size={16} className="text-slate-400" />
+                  </button>
+                </div>
+
+                {/* 3) 테마 선택 */}
+                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sun size={14} /> 테마 선택
                   </h4>
@@ -2200,7 +2288,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* B. 본문 글자 크기 */}
+                {/* 4) 본문 글자 크기 */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Type size={14} /> 본문 글자 크기
@@ -2227,12 +2315,9 @@ export default function App() {
                       크게
                     </button>
                   </div>
-                  <p className="text-[11px] text-slate-400">
-                    * 상/하단 네비게이션을 제외한 게임 목록, 게시글 등의 폰트 크기가 조정됩니다.
-                  </p>
                 </div>
 
-                {/* C. ⭕ 로그아웃 버튼 (위로 이동) */}
+                {/* 5) 로그아웃 버튼 */}
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
@@ -2244,7 +2329,7 @@ export default function App() {
 
               </div>
 
-              {/* D. ⭕ 최하단 닫기 버튼 */}
+              {/* 최하단 닫기 버튼 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
@@ -2255,6 +2340,92 @@ export default function App() {
                   닫기
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⭕ 신규 추가: 내 정보 수정 및 비밀번호 변경 모달 */}
+        {isEditProfileOpen && currentUser && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
+              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+            }`}>
+              <h3 className="font-extrabold text-base flex items-center gap-2">
+                <User size={18} /> 내 정보 / 비밀번호 변경
+              </h3>
+
+              <form onSubmit={handleSaveProfile} className="space-y-3.5 text-xs">
+                <div>
+                  <label className="font-bold block mb-1 text-slate-400">아이디 (LDAP)</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={currentUser.userId}
+                    className="w-full border border-slate-300/40 p-2.5 rounded-xl bg-slate-100 text-slate-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold block mb-1">이메일</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={currentUser.email}
+                    className="w-full border border-slate-300/40 p-2.5 rounded-xl bg-slate-100 text-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold block mb-1">이름</label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/20 space-y-2">
+                  <label className="font-bold block text-slate-400">비밀번호 변경 (선택)</label>
+                  <input
+                    type="password"
+                    placeholder="새 비밀번호 입력 (변경 시에만 작성)"
+                    value={changePassword}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                  <input
+                    type="password"
+                    placeholder="새 비밀번호 재입력"
+                    value={changePasswordConfirm}
+                    onChange={(e) => setNewPasswordConfirmInput(e.target.value)}
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditProfileOpen(false)}
+                    className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition"
+                  >
+                    저장하기
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
