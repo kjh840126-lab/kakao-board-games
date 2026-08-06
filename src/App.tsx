@@ -315,7 +315,6 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
-  // ⭕ 스크롤 제어를 위한 Ref
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -356,19 +355,15 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // ⭕ 1. 메뉴 이동 시 무조건 스크롤 최상단(0)으로 이동
-  useEffect(() => {
-    if (mainScrollRef.current) {
-      mainScrollRef.current.scrollTop = 0;
-    }
-  }, [activeTab, adminSubTab]);
-
+  // ⭕ 5. 대여 탭을 제외한 나머지 하단 메뉴 클릭 시 무조건 스크롤 최상단(0)으로 이동
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
-    if (mainScrollRef.current) {
+    if (newTab !== 'games' && mainScrollRef.current) {
       mainScrollRef.current.scrollTop = 0;
     }
   };
+
+  const handleScroll = () => {};
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -590,6 +585,7 @@ export default function App() {
     }
   };
 
+  // ⭕ 2. 나의 평점 저장 얼럿 삭제 및 즉시 반영
   const handleSaveRating = async () => {
     if (!currentUser || !ratingModalGame) return;
 
@@ -609,7 +605,6 @@ export default function App() {
         .insert([{ user_id: currentUser.userId, game_id: ratingModalGame.gameId, score: selectedScore }]);
     }
 
-    alert(`'${ratingModalGame.title}' 평점이 ${selectedScore}점으로 저장되었습니다.`);
     setRatingModalGame(null);
     await fetchInitialData();
   };
@@ -1657,9 +1652,10 @@ export default function App() {
           )}
         </header>
 
-        {/* ⭕ 메인 스크롤 영역 (메뉴 변경 시 scrollTop 0으로 초기화) */}
+        {/* 탭별 독립 스크롤 분리를 위한 메인 컨테이너 영역 */}
         <main 
           ref={mainScrollRef}
+          onScroll={handleScroll}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
         >
@@ -1870,7 +1866,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                       }`}>
                         
-                        {/* 이미지 및 나의 평점 노출 영억 */}
+                        {/* 이미지 및 나의 평점 한 줄 노출 영역 */}
                         <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
                           <img 
                             src={game.imageUrl} 
@@ -1879,19 +1875,19 @@ export default function App() {
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
-                          {/* "나의 평점" 및 별점 5개 노출 */}
+                          {/* ⭕ 3. 나의 평점 1줄(가로) 노출 및 폰트 크기 키움 */}
                           <div 
                             onClick={() => {
                               setSelectedScore(userRating ? userRating.score : 5.0);
                               setRatingModalGame(game);
                             }}
-                            className="cursor-pointer group flex flex-col items-center text-[10px] font-bold text-slate-400 hover:text-rose-500 transition"
+                            className="cursor-pointer group flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-rose-500 transition pt-0.5"
                             title="나의 평점 등록/수정"
                           >
-                            <span>나의 평점</span>
+                            <span className="whitespace-nowrap">나의 평점</span>
                             <StarRating 
                               rating={userRating ? userRating.score : 0} 
-                              size={11} 
+                              size={12} 
                               colorClass={userRating ? "text-rose-500" : "text-slate-300 dark:text-slate-600"} 
                             />
                           </div>
@@ -1930,19 +1926,17 @@ export default function App() {
                             </div>
 
                             <div className="flex justify-end items-center gap-2">
-                              {/* 하트(♥) 찜 아이콘 버튼 */}
+                              {/* ⭕ 1. 찜 아이콘 배경 제거 후 하트만 빨간색 노출 */}
                               <button
                                 onClick={() => toggleFavorite(game.gameId)}
-                                className={`p-1.5 rounded-xl border transition flex items-center justify-center ${
+                                className={`p-1.5 rounded-xl transition flex items-center justify-center ${
                                   isFav 
-                                    ? 'bg-rose-50 border-rose-200 text-rose-500 dark:bg-rose-950/40 dark:border-rose-800' 
-                                    : isDarkMode
-                                    ? 'border-slate-700 text-slate-400 hover:text-slate-200'
-                                    : 'border-slate-200 text-slate-400 hover:text-slate-600'
+                                    ? 'text-rose-500' 
+                                    : 'text-slate-300 hover:text-slate-400 dark:text-slate-600'
                                 }`}
                                 title={isFav ? "찜 해제" : "찜하기"}
                               >
-                                <Heart size={16} className={isFav ? "fill-rose-500" : ""} />
+                                <Heart size={20} className={isFav ? "fill-rose-500 text-rose-500" : ""} />
                               </button>
 
                               {isAvailable ? (
@@ -2100,7 +2094,7 @@ export default function App() {
             </div>
           )}
 
-          {/* 3. 랭킹 탭 (회원 평점 합산 반영) */}
+          {/* 3. 랭킹 탭 */}
           {activeTab === 'ranking' && (
             <div className="space-y-4 mt-0.5">
               <div className={`pb-2 border-b flex justify-between items-end ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2176,7 +2170,6 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* 회원 평점 지표 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -2242,7 +2235,6 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* 회원 평점 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -3625,7 +3617,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 개편 반영: 게임 등록/수정 모달 (노출 여부 셀렉트 박스 세로 높이 통일 및 비율 재배치) */}
+        {/* ⭕ 게임 등록/수정 모달 (노출 여부 높이 통일 및 비율 배치) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3667,7 +3659,7 @@ export default function App() {
                   )}
                 </div>
 
-                {/* ⭕ 3. 보드게임 ID / 게임명 같은 행 노출 (3:7 비율) */}
+                {/* 보드게임 ID / 게임명 같은 행 노출 (3:7 비율) */}
                 <div className="flex gap-2">
                   <div className="w-[30%]">
                     <label className="font-bold block mb-1 truncate">보드게임 ID</label>
@@ -3698,7 +3690,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ⭕ 3. 출시년도 / 플레이타임 / 난이도 같은 행 노출 (1:1:1 비율) */}
+                {/* 출시년도 / 플레이타임 / 난이도 같은 행 노출 (1:1:1 비율) */}
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
@@ -3748,7 +3740,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ⭕ 3. 최소인원 / 최대인원 / BGG 평점 / 노출 여부 같은 행 노출 (1:1:1:1 비율) */}
+                {/* 최소인원 / 최대인원 / BGG 평점 / 노출 여부 같은 행 노출 (1:1:1:1 비율) */}
                 <div className="grid grid-cols-4 gap-1.5">
                   <div>
                     <label className="font-bold block mb-1 truncate text-[11px]">최소인원</label>
@@ -3790,7 +3782,7 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    {/* ⭕ 2. 노출 여부 세로 높이 다른 input들과 동일하게 보정 (py-2.5 h-[38px]) */}
+                    {/* ⭕ 4. 모바일/PC 셀렉트 박스 높이 완벽 고정 통일 (h-[38px] h-9) */}
                     <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
