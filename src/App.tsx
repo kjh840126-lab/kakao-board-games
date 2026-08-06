@@ -1162,7 +1162,6 @@ export default function App() {
     }
   };
 
-  // 공지사항 토글 펼치기/접기
   const handleNoticeClick = (notice: Notice) => {
     if (expandedNoticeId === notice.noticeId) {
       setExpandedNoticeId(null);
@@ -1610,14 +1609,14 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ 1. 최외곽 배경 테마에 따른 배경색 일치 지정 (흰색 여백 방지)
-    <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#FEE500]'}`}>
-      <div className={`w-full max-w-md min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+    // ⭕ 최외곽 너비 제한(max-w-md)을 제거하고 모바일 화면 전체 폭(w-full)으로 확장
+    <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
+      <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-          className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
+          className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
             isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
           }`}
         >
@@ -2189,7 +2188,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 이미지 테두리 라이트/다크 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2256,7 +2254,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 이미지 테두리 라이트/다크 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2442,7 +2439,6 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {/* 이미지 테두리 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2450,7 +2446,6 @@ export default function App() {
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
                           <div className="min-w-0 flex-1">
-                            {/* 게임명 줄바꿈, 게임ID 괄호 배치, 노출 아이콘 연속 노출 */}
                             <div className="font-bold leading-snug break-keep text-xs mb-0.5">
                               <span className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{game.title}</span>
                               <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
@@ -2540,7 +2535,6 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                {/* 대여중 게임명 뒤에 {게임ID} 노출 */}
                                 <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{rental.gameTitle}</span>
                                   <span className="text-slate-400 font-mono font-normal ml-1">({rental.gameId})</span>
@@ -2574,7 +2568,6 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                {/* 반납완료 게임명 뒤에 {게임ID} 노출 */}
                                 <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
                                   <span>{rental.gameTitle}</span>
@@ -2746,7 +2739,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* E. 공지사항 관리 (타이틀 및 내용 자동 줄바꿈 break-all) */}
+              {/* E. 공지사항 관리 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2804,9 +2797,9 @@ export default function App() {
           )}
         </main>
 
-        {/* 장바구니 플로팅 버튼 (Safe Area 및 하단 네비게이션 높이 자동 반영 계산) */}
+        {/* 장바구니 플로팅 버튼 */}
         {activeTab === 'games' && (
-          <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] max-w-md mx-auto right-4 pointer-events-none z-30 transition-all">
+          <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-30 transition-all">
             <button
               onClick={() => setIsCartOpen(true)}
               className={`pointer-events-auto relative p-3.5 rounded-full active:scale-95 transition-all shadow-xl flex items-center justify-center ${
@@ -2827,7 +2820,7 @@ export default function App() {
         )}
 
         {/* 하단 네비게이션 */}
-        <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
+        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
@@ -2854,7 +2847,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
+        {/* 설정 드로어 */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
