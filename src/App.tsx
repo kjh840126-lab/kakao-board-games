@@ -32,6 +32,7 @@ import {
   Siren,
   ShieldCheck,
   Bell,
+  Send,
   CalendarDays,
   Flame,
   Award,
@@ -263,7 +264,7 @@ export default function App() {
   });
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
-  const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>(() => {
+  const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'siteAdmin' | 'userAdmin' | 'noticeAdmin'>(() => {
     const savedAdminTab = localStorage.getItem('kakao_bg_adminSubTab');
     return (savedAdminTab as any) || 'gameAdmin';
   });
@@ -288,7 +289,6 @@ export default function App() {
     isVisible: 'Y'
   });
 
-  // ⭕ 3. 카테고리 '선택' 기본값 설정
   const [reportForm, setReportForm] = useState({ 
     title: '', 
     content: '', 
@@ -1010,7 +1010,7 @@ export default function App() {
     await fetchInitialData();
   };
 
-  // ⭕ 5. 장르 선택 최대 개수 4개로 확장
+  // 장르 선택 최대 4개 확대
   const handleToggleGenre = (genreName: string) => {
     if (!editingGame) return;
     const exists = editingGame.genres.includes(genreName);
@@ -1132,7 +1132,7 @@ export default function App() {
     }
   };
 
-  // ⭕ 3. 신고 및 건의하기 카테고리 필수값 체크 구문
+  // 신고 및 건의하기 카테고리 필수값 체크
   const handleSendReport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -1883,11 +1883,11 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
-                          {/* ⭕ 1. 이미지 테두리 명확화 border border-slate-300 dark:border-slate-700 */}
+                          {/* 5. 이미지 테두리 라이트/다크 분리 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-300 dark:border-slate-700 flex-shrink-0"
+                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700 flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
@@ -2147,7 +2147,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* ⭕ 4. 랭킹 - 요즘 핫한 게임: 줄바꿈(break-keep) 및 요구 노출 순서 적용 */}
+              {/* 4. 랭킹 - 요즘 핫한 게임: 줄바꿈(break-keep) 및 요구 노출 순서 재배치 */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
@@ -2182,11 +2182,11 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 1. 이미지 테두리 보정 */}
+                        {/* 5. 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-300 dark:border-slate-700 flex-shrink-0"
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2217,7 +2217,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 4. 랭킹 - 명예의 전당: 줄바꿈(break-keep) 및 요구 노출 순서 적용 */}
+              {/* 4. 랭킹 - 명예의 전당: 줄바꿈(break-keep) 및 요구 노출 순서 재배치 */}
               {rankingTab === 'hall' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
@@ -2252,11 +2252,11 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 1. 이미지 테두리 보정 */}
+                        {/* 5. 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-300 dark:border-slate-700 flex-shrink-0"
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2346,6 +2346,7 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
+              {/* ⭕ 3. 운영자 서브메뉴 순서: 게임관리, 대여/반납, 사이트관리, 회원관리, 공지사항 */}
               <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
@@ -2360,6 +2361,12 @@ export default function App() {
                   대여/반납
                 </button>
                 <button
+                  onClick={() => setAdminSubTab('siteAdmin')}
+                  className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  사이트관리
+                </button>
+                <button
                   onClick={() => setAdminSubTab('userAdmin')}
                   className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'userAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
@@ -2371,14 +2378,9 @@ export default function App() {
                 >
                   공지사항
                 </button>
-                <button
-                  onClick={() => setAdminSubTab('siteAdmin')}
-                  className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                  사이트관리
-                </button>
               </div>
 
+              {/* A. 게임 관리 */}
               {adminSubTab === 'gameAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2438,29 +2440,32 @@ export default function App() {
                       <div key={game.gameId} className={`border p-3 rounded-2xl flex justify-between items-center shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
-                        <div className="flex items-center gap-3">
-                          {/* 1. 이미지 테두리 보정 */}
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {/* 5. 이미지 테두리 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-300 dark:border-slate-700 flex-shrink-0" 
+                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-200 dark:border-slate-700 flex-shrink-0" 
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <h3 className={`font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
-                              <span className="text-slate-400 font-mono">({game.gameId})</span>
-                              {game.isVisible === 'Y' ? (
-                                <span className="text-emerald-500 font-bold flex items-center gap-0.5"><Eye size={11} /> 노출</span>
-                              ) : (
-                                <span className="text-slate-400 font-bold flex items-center gap-0.5"><EyeOff size={11} /> 숨김</span>
-                              )}
+                          <div className="min-w-0 flex-1">
+                            {/* ⭕ 1. 게임명 줄바꿈, 게임ID 괄호 배치, 노출 아이콘 연속 노출 */}
+                            <div className="font-bold leading-snug break-keep text-xs mb-0.5">
+                              <span className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{game.title}</span>
+                              <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
+                              <span className="inline-flex items-center ml-1.5 align-middle">
+                                {game.isVisible === 'Y' ? (
+                                  <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><Eye size={11} /> 노출</span>
+                                ) : (
+                                  <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><EyeOff size={11} /> 숨김</span>
+                                )}
+                              </span>
                             </div>
-                            <p className="text-slate-400 mt-0.5">{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
+                            <p className="text-slate-400 text-[11px] mt-0.5">{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                           <button
                             onClick={() => {
                               setIsEditingMode(true);
@@ -2484,6 +2489,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* B. 대여/반납 현황 */}
               {adminSubTab === 'rentalAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2533,10 +2539,14 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                <h3 className={`font-bold mt-0.5 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{rental.gameTitle}</h3>
+                                {/* ⭕ 2. 대여중 게임명 뒤에 {게임ID} 노출 */}
+                                <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                  <span>{rental.gameTitle}</span>
+                                  <span className="text-slate-400 font-mono font-normal ml-1">({rental.gameId})</span>
+                                </h3>
                               </div>
                               {isOverdue && (
-                                <span className="bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <span className="bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
                                   <AlertTriangle size={10} /> 연체 ({overdueDays}일)
                                 </span>
                               )}
@@ -2563,9 +2573,11 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                                  <CheckCircle2 size={13} className="text-emerald-500" />
-                                  {rental.gameTitle}
+                                {/* ⭕ 2. 반납완료 게임명 뒤에 {게임ID} 노출 */}
+                                <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                  <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
+                                  <span>{rental.gameTitle}</span>
+                                  <span className="text-slate-400 font-mono font-normal">({rental.gameId})</span>
                                 </h3>
                               </div>
                             </div>
@@ -2581,6 +2593,76 @@ export default function App() {
                 </div>
               )}
 
+              {/* C. 추천 사이트 관리 */}
+              {adminSubTab === 'siteAdmin' && (
+                <div className="space-y-4">
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                    <div>
+                      <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                        <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
+                        추천 사이트 관리
+                      </h2>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditingSite({
+                          siteId: 0,
+                          name: '',
+                          url: '',
+                          bannerUrl: '',
+                          description: '',
+                          isVisible: 'Y'
+                        });
+                        setIsSiteModalOpen(true);
+                      }}
+                      className="bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                    >
+                      <Plus size={14} /> 사이트 추가
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {sites.map((s) => (
+                      <div key={s.siteId} className={`border p-3.5 rounded-2xl shadow-sm space-y-2 ${
+                        isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
+                      }`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <h3 className={`font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{s.name}</h3>
+                            {s.isVisible === 'Y' ? (
+                              <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><Eye size={11} /> 노출</span>
+                            ) : (
+                              <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><EyeOff size={11} /> 숨김</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingSite(s);
+                                setIsSiteModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:bg-slate-700/50 rounded-lg transition"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={() => deleteSite(s.siteId, s.name)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50/10 rounded-lg transition"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <p className="text-slate-400 text-[11px] truncate font-mono">{s.url}</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{s.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* D. 회원 관리 */}
               {adminSubTab === 'userAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2663,7 +2745,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* 공지사항 관리 페이지 */}
+              {/* E. 공지사항 관리 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2711,75 +2793,6 @@ export default function App() {
                         </div>
                         <p className={`whitespace-pre-wrap ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
                         <span className="text-slate-400 block pt-1">{n.createdAt} 작성</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 추천 사이트 관리 서브페이지 */}
-              {adminSubTab === 'siteAdmin' && (
-                <div className="space-y-4">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
-                    <div>
-                      <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                        <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
-                        추천 사이트 관리
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setEditingSite({
-                          siteId: 0,
-                          name: '',
-                          url: '',
-                          bannerUrl: '',
-                          description: '',
-                          isVisible: 'Y'
-                        });
-                        setIsSiteModalOpen(true);
-                      }}
-                      className="bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
-                    >
-                      <Plus size={14} /> 사이트 추가
-                    </button>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    {sites.map((s) => (
-                      <div key={s.siteId} className={`border p-3.5 rounded-2xl shadow-sm space-y-2 ${
-                        isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
-                      }`}>
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-2">
-                            <h3 className={`font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{s.name}</h3>
-                            {s.isVisible === 'Y' ? (
-                              <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><Eye size={11} /> 노출</span>
-                            ) : (
-                              <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><EyeOff size={11} /> 숨김</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => {
-                                setEditingSite(s);
-                                setIsSiteModalOpen(true);
-                              }}
-                              className="p-1.5 text-slate-400 hover:bg-slate-700/50 rounded-lg transition"
-                            >
-                              <Edit size={14} />
-                            </button>
-                            <button
-                              onClick={() => deleteSite(s.siteId, s.name)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50/10 rounded-lg transition"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </div>
-
-                        <p className="text-slate-400 text-[11px] truncate font-mono">{s.url}</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{s.description}</p>
                       </div>
                     ))}
                   </div>
@@ -3045,10 +3058,11 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {/* 5. 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-12 h-12 object-cover rounded-xl bg-white border border-slate-300 dark:border-slate-700 flex-shrink-0"
+                          className="w-12 h-12 object-cover rounded-xl bg-white border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0 flex-1">
@@ -3118,10 +3132,11 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
+                        {/* 5. 내 평점 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-300 dark:border-slate-700 flex-shrink-0"
+                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-200 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0">
@@ -3326,7 +3341,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 신고 및 건의하기 독립 팝업 모달 ('선택' 기본값 & 아이콘 제거 & 카테고리 추가) */}
+        {/* ⭕ 3. 신고 및 건의하기 독립 팝업 모달 ('선택' 기본값 & 카테고리 추가 & 제출 아이콘 제거) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3344,7 +3359,7 @@ export default function App() {
               <form onSubmit={handleSendReport} className="space-y-3.5">
                 <div>
                   <label className="font-bold block mb-1.5">카테고리 선택</label>
-                  {/* 3. 선택 기본값 + 요구 카테고리 5종 구성 */}
+                  {/* 3. 선택 기본값 및 5종 선택지 구성 */}
                   <select
                     value={reportForm.category}
                     onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
@@ -3404,7 +3419,7 @@ export default function App() {
                   >
                     취소
                   </button>
-                  {/* 3. 제출하기 버튼 내 아이콘 제거 */}
+                  {/* 3. 제출하기 버튼 아이콘 제거 */}
                   <button
                     type="submit"
                     className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm text-xs"
@@ -3417,7 +3432,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 6. 내 정보 수정 및 비밀번호 변경 모달 (입력 불가 필드 시인성 보정) */}
+        {/* ⭕ 6. 내 정보 수정 및 비밀번호 변경 모달 (입력 가능/불가능 공통 딤드 스타일 적용) */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3433,7 +3448,7 @@ export default function App() {
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-3.5">
-                {/* 6. 입력 불가 필드 공통 딤드 스타일 적용 */}
+                {/* 6. 입력 불가능 필드 딤드 시인성 보정 */}
                 <div>
                   <label className="font-bold block mb-1 text-slate-400">아이디 (LDAP)</label>
                   <input
@@ -3757,7 +3772,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5. 게임 등록/수정 모달 (장르 4개로 확대 & 보드게임 ID 및 미리보기 딤드 시인성 개선) */}
+        {/* ⭕ 5. 게임 등록/수정 모달 (장르 4개로 확대 & 다크모드/라이트모드 딤드 시인성 완전 개선) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3939,7 +3954,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 5. 장르 선택 최대 4개 확대 및 딤드 스타일 시인성 개선 */}
+                {/* ⭕ 4, 5. 장르 선택 최대 4개 및 다크모드 선택 대비 강렬한 명암 대비 처리 */}
                 <div className="pt-1">
                   <label className="font-bold block mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 4개)</span>
@@ -3959,10 +3974,10 @@ export default function App() {
                           onClick={() => handleToggleGenre(preset)}
                           className={`px-2.5 py-1 rounded-full font-bold transition text-[10px] ${
                             isSelected 
-                              ? 'bg-slate-900 text-white' 
+                              ? 'bg-slate-900 text-white dark:bg-[#FEE500] dark:text-slate-950 dark:font-extrabold shadow-sm' 
                               : isMaxReached 
-                              ? 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed border border-slate-300 dark:border-slate-700' 
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300 hover:bg-slate-200'
+                              ? 'bg-slate-200 text-slate-400 dark:bg-slate-900 dark:text-slate-600 cursor-not-allowed border border-slate-300 dark:border-slate-800' 
+                              : 'bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-200'
                           }`}
                         >
                           {preset}
