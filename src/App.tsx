@@ -330,11 +330,16 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
-    // html 태그에 dark 클래스 토글로 전역 배경 동기화
+    
+    // ⭕ html/body 전역 배경색 동적 분기 처리 (바운스 스크롤 시 이질감 완전 제거)
     if (themeMode === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.backgroundColor = '#020617';
+      document.body.style.backgroundColor = '#020617';
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.backgroundColor = '#ffffff';
+      document.body.style.backgroundColor = '#ffffff';
     }
   }, [themeMode]);
 
@@ -1615,7 +1620,6 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ 최외곽 wrapper 배경을 테마(다크/라이트)에 완벽 동기화하여 당김 시 흰 화면 발생 차단
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
@@ -1967,7 +1971,7 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
-                            {/* ⭕ 라이트모드 대여버튼: 카카오 옐로우(#FEE500) 원복 / 다크모드: 스카이 블루(dark:bg-sky-400) 적용 */}
+                            {/* 라이트모드 대여버튼: 카카오 옐로우(#FEE500) / 다크모드: 스카이 블루(dark:bg-sky-400) 분기 적용 */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
@@ -2850,7 +2854,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 (우측 슬라이딩 방식 + 슬림 가로 폭 + Safe Area 대응) */}
+        {/* 설정 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3030,7 +3034,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 장바구니 드로어 (우측 슬라이딩 방식 + Safe Area 대응) */}
+        {/* 장바구니 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3115,7 +3119,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 공지사항 드로어 (우측 슬라이딩 방식 + Safe Area 대응) */}
+        {/* 공지사항 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isNoticeDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3199,7 +3203,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 관리자용 접수함 드로어 (우측 슬라이딩 방식 + Safe Area 대응) */}
+        {/* 관리자용 접수함 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isAdminReportDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
