@@ -147,7 +147,6 @@ const ALLOWED_EMAIL_DOMAINS = [
 
 const currentYear = new Date().getFullYear();
 
-// BGG 커스텀 아이콘 Component
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
   <svg 
     width={size} 
@@ -168,7 +167,6 @@ const getDaysDifference = (dateStr1: string, dateStr2: string) => {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 };
 
-// 별점 5개 UI 표시 컴포넌트
 const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { rating: number; size?: number; colorClass?: string }) => {
   return (
     <div className="flex items-center gap-0.5 inline-flex">
@@ -201,19 +199,15 @@ export default function App() {
   const [sites, setSiteList] = useState<BoardSite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 찜(Favorites) 및 평점(Ratings) State
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
   
-  // 평점 등록/수정 모달 State
   const [ratingModalGame, setRatingModalGame] = useState<Game | null>(null);
   const [selectedScore, setSelectedScore] = useState<number>(5.0);
 
-  // 설정 드로어 내부 모달 State
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
   const [isMyRatingsModalOpen, setIsMyRatingsModalOpen] = useState(false);
 
-  // 설정 관련 State
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
   });
@@ -222,24 +216,19 @@ export default function App() {
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // 관리자용 신고/건의 우측 드로어 State
   const [isAdminReportDrawerOpen, setIsAdminReportDrawerOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
 
-  // 내 정보 수정 / 비밀번호 변경 모달 State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [changePassword, setNewPasswordInput] = useState('');
   const [changePasswordConfirm, setNewPasswordConfirmInput] = useState('');
 
-  // 신고 및 건의하기 팝업(모달) State
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  // 공지사항 롤링 State
   const [noticeIndex, setNoticeIndex] = useState(0);
   const [isNoticeTransition, setIsNoticeTransition] = useState(true);
 
-  // 공지사항 우측 드로어 State
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
@@ -310,7 +299,6 @@ export default function App() {
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
 
-  // 대여 페이지 필터 State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [playerFilter, setPlayerFilter] = useState<number>(0);
   const [genreFilter, setGenreFilter] = useState<string>('');
@@ -356,15 +344,18 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // ⭕ 2. 모든 하단 네비게이션 메뉴 클릭 시 본문 최상단으로 부드럽고 확실하게 이동
+  // ⭕ 2. 스크롤 최상단 이동 완벽 보정 (DOM 타겟 강제 리셋)
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
-    setTimeout(() => {
+    
+    requestAnimationFrame(() => {
       if (mainScrollRef.current) {
         mainScrollRef.current.scrollTop = 0;
-        mainScrollRef.current.scrollTo({ top: 0, behavior: 'instant' });
       }
-    }, 0);
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    });
   };
 
   const handleScroll = () => {};
@@ -1886,11 +1877,11 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
-                          {/* ⭕ 1. 이미지 테두리 색상 부드럽게 보정 (border-slate-200/60) */}
+                          {/* ⭕ 1. 부드럽게 완화된 라이트 모드 이미지 테두리 border-slate-200 border-opacity-40 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200/60 dark:border-slate-700 flex-shrink-0"
+                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200 border-opacity-40 dark:border-slate-700 flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
@@ -2184,11 +2175,11 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 1. 랭킹 이미지 테두리 보정 (border-slate-200/60) */}
+                        {/* 1. 랭킹 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/60 dark:border-slate-700 flex-shrink-0"
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200 border-opacity-40 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2254,7 +2245,7 @@ export default function App() {
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/60 dark:border-slate-700 flex-shrink-0"
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200 border-opacity-40 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2438,7 +2429,7 @@ export default function App() {
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-200/60 dark:border-slate-700" 
+                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-200 border-opacity-40 dark:border-slate-700" 
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
                           <div>
@@ -3039,11 +3030,11 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
-                        {/* 1. 찜 모달 라이트 모드 테두리 보정 */}
+                        {/* 1. 찜 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-200/60 dark:border-slate-700 flex-shrink-0"
+                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-200 border-opacity-40 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0">
@@ -3100,11 +3091,11 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
-                        {/* 1. 내 평점 모달 라이트 모드 테두리 보정 */}
+                        {/* 1. 내 평점 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-200/60 dark:border-slate-700 flex-shrink-0"
+                          className="w-11 h-11 object-cover rounded-xl bg-white border border-slate-200 border-opacity-40 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0">
@@ -3764,7 +3755,7 @@ export default function App() {
                       <img 
                         src={editingGame.imageUrl} 
                         alt="미리보기" 
-                        className="w-12 h-12 object-cover rounded-lg bg-white border border-slate-200/60 dark:border-slate-700 flex-shrink-0"
+                        className="w-12 h-12 object-cover rounded-lg bg-white border border-slate-200 border-opacity-40 dark:border-slate-700 flex-shrink-0"
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                       />
                       <span className="text-[11px] text-slate-400 font-medium">이미지 미리보기</span>
