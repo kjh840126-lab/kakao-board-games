@@ -12,8 +12,6 @@ import {
   Trash2,
   X,
   Clock,
-  Star,
-  Users as PlayerIcon,
   CheckCircle2,
   AlertTriangle,
   ShieldAlert,
@@ -44,7 +42,8 @@ import {
   Moon,
   Type,
   User,
-  Brain
+  Brain,
+  Medal
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -112,6 +111,20 @@ const ALLOWED_EMAIL_DOMAINS = [
 
 const currentYear = new Date().getFullYear();
 
+// ⭕ BGG 커스텀 아이콘 Component (첨부 이미지 형태 반영)
+const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 32" 
+    fill="currentColor" 
+    className={`inline-block flex-shrink-0 ${className}`}
+  >
+    <path d="M 12 0 L 22 6 L 20 18 L 12 22 L 4 18 L 2 6 Z" />
+    <path d="M 4 20 L 12 24 L 20 20 L 18 32 L 12 28 L 6 32 Z" />
+  </svg>
+);
+
 const getDaysDifference = (dateStr1: string, dateStr2: string) => {
   const d1 = new Date(dateStr1);
   const d2 = new Date(dateStr2);
@@ -126,7 +139,7 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ⭕ 1. 새로고침 시 테마 및 폰트 크기 유지 (LocalStorage 연동)
+  // 설정 관련 State
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
   });
@@ -135,19 +148,14 @@ export default function App() {
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem('kakao_bg_theme', themeMode);
-  }, [themeMode]);
-
-  useEffect(() => {
-    localStorage.setItem('kakao_bg_fontSize', fontSize);
-  }, [fontSize]);
-
   // 내 정보 수정 / 비밀번호 변경 모달 State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [changePassword, setNewPasswordInput] = useState('');
   const [changePasswordConfirm, setNewPasswordConfirmInput] = useState('');
+
+  // ⭕ 신고 및 건의하기 팝업(모달) State
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // 공지사항 롤링 State
   const [noticeIndex, setNoticeIndex] = useState(0);
@@ -183,7 +191,7 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
-  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'report' | 'admin'>('games');
+  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'admin'>('games');
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin'>('gameAdmin');
@@ -230,6 +238,14 @@ export default function App() {
       fetchInitialData();
     }
   }, [activeTab, adminSubTab]);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_theme', themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_fontSize', fontSize);
+  }, [fontSize]);
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -873,6 +889,7 @@ export default function App() {
     } else {
       alert('운영진에게 성공적으로 전달되었습니다.\n감사합니다.');
       setReportForm({ title: '', content: '', category: '장애/오류 신고' });
+      setIsReportModalOpen(false);
     }
   };
 
@@ -1317,7 +1334,7 @@ export default function App() {
           </button>
         </header>
 
-        {/* ⭕ 메인 스크롤 영역 (설정된 폰트크기 동적 제어) */}
+        {/* 메인 스크롤 영역 */}
         <main 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
@@ -1326,7 +1343,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* 수직 롤링 공지사항 배너 */}
+              {/* ⭕ 7. 다크모드 공지사항 시인성 개선 (테두리 및 배경 고대비 처리) */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -1335,7 +1352,7 @@ export default function App() {
                   }
                 }}
                 className={`px-3.5 py-3 rounded-2xl flex items-center gap-2.5 shadow-sm overflow-hidden h-11 cursor-pointer transition active:scale-[0.99] ${
-                  isDarkMode ? 'bg-slate-800 border border-slate-700 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'
+                  isDarkMode ? 'bg-slate-800 border-2 border-slate-700 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'
                 }`}
               >
                 <Bell size={16} className="text-[#FEE500] flex-shrink-0 z-10" />
@@ -1411,7 +1428,7 @@ export default function App() {
                         />
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div>
-                            {/* ⭕ 3. 게임명 뒤에 (2026년) 출시년도 노출 */}
+                            {/* 3. 게임명 뒤에 (2026년) 출시년도 노출 */}
                             <div className="flex justify-between items-start">
                               <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                 <span>{game.title}</span>
@@ -1420,12 +1437,14 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
-                            {/* ⭕ 4. 난이도를 소수점 2자리(0.00)까지 적당한 아이콘(Brain)과 함께 노출 */}
+                            {/* ⭕ 4. 메타 순서: 인원수 ➔ 플레이시간 ➔ 난이도 ➔ BGG 평점 순서 및 5,6 번 항목 보정 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
-                              <span className="flex items-center gap-0.5"><Star size={11} className="text-amber-500 fill-amber-500" /> BGG {game.bggRating}</span>
-                              <span className="flex items-center gap-0.5 text-indigo-500 font-mono"><Brain size={11} /> {Number(game.difficulty).toFixed(2)}</span>
+                              {/* 5. 난이도 아이콘 & 폰트색 통일 */}
+                              <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
+                              {/* 6. BGG 커스텀 아이콘 및 평점 노출 */}
+                              <span className="flex items-center gap-0.5"><BggIcon size={11} className="text-slate-400" /> BGG {game.bggRating}</span>
                             </div>
                           </div>
 
@@ -1440,7 +1459,6 @@ export default function App() {
                               ))}
                             </div>
 
-                            {/* ⭕ 2. 대여 가능 버튼 크기 가변(w-auto px-3.5) 수정 */}
                             <div className="flex justify-end">
                               {isAvailable ? (
                                 <button
@@ -1483,9 +1501,12 @@ export default function App() {
           {/* 2. 반납/히스토리 탭 */}
           {activeTab === 'returns' && (
             <div className="space-y-5 mt-0.5">
-              <div className="bg-slate-900 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
+              {/* ⭕ 7. 다크모드 시 현재 대여중인 게임 배너 시인성 개선 */}
+              <div className={`p-4 rounded-2xl flex justify-between items-center shadow-sm ${
+                isDarkMode ? 'bg-slate-800 border-2 border-slate-700 text-white' : 'bg-slate-900 text-white'
+              }`}>
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-slate-400 font-medium">현재 대여 중인 게임</span>
+                  <span className="text-slate-300 font-medium">현재 대여 중인 게임</span>
                   <span className="text-lg font-black text-[#FEE500]">{activeRentalsCount} / 3 개</span>
                 </div>
                 {activeRentalsCount > 0 && (
@@ -1641,12 +1662,28 @@ export default function App() {
                       <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
-                        <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center flex-shrink-0 ${
-                          rank === 1 ? 'bg-amber-400 text-slate-900 shadow-md' :
-                          rank === 2 ? 'bg-slate-300 text-slate-900' :
-                          rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {rank}
+                        {/* ⭕ 7. 랭킹 1, 2, 3등 메달 아이콘 노출 */}
+                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
+                          {rank === 1 ? (
+                            <div className="relative flex items-center justify-center">
+                              <Medal size={32} className="text-amber-400 fill-amber-300" />
+                              <span className="absolute top-[9px] font-black text-[11px] text-amber-950">{rank}</span>
+                            </div>
+                          ) : rank === 2 ? (
+                            <div className="relative flex items-center justify-center">
+                              <Medal size={32} className="text-slate-300 fill-slate-200" />
+                              <span className="absolute top-[9px] font-black text-[11px] text-slate-800">{rank}</span>
+                            </div>
+                          ) : rank === 3 ? (
+                            <div className="relative flex items-center justify-center">
+                              <Medal size={32} className="text-amber-700 fill-amber-600" />
+                              <span className="absolute top-[9px] font-black text-[11px] text-white">{rank}</span>
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center bg-slate-100 text-slate-600">
+                              {rank}
+                            </div>
+                          )}
                         </div>
 
                         <img 
@@ -1688,12 +1725,28 @@ export default function App() {
                       <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
-                        <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center flex-shrink-0 ${
-                          rank === 1 ? 'bg-amber-400 text-slate-900 shadow-md' :
-                          rank === 2 ? 'bg-slate-300 text-slate-900' :
-                          rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {rank}
+                        {/* ⭕ 랭킹 1, 2, 3등 메달 아이콘 노출 */}
+                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
+                          {rank === 1 ? (
+                            <div className="relative flex items-center justify-center">
+                              <Medal size={32} className="text-amber-400 fill-amber-300" />
+                              <span className="absolute top-[9px] font-black text-[11px] text-amber-950">{rank}</span>
+                            </div>
+                          ) : rank === 2 ? (
+                            <div className="relative flex items-center justify-center">
+                              <Medal size={32} className="text-slate-300 fill-slate-200" />
+                              <span className="absolute top-[9px] font-black text-[11px] text-slate-800">{rank}</span>
+                            </div>
+                          ) : rank === 3 ? (
+                            <div className="relative flex items-center justify-center">
+                              <Medal size={32} className="text-amber-700 fill-amber-600" />
+                              <span className="absolute top-[9px] font-black text-[11px] text-white">{rank}</span>
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center bg-slate-100 text-slate-600">
+                              {rank}
+                            </div>
+                          )}
                         </div>
 
                         <img 
@@ -1723,83 +1776,6 @@ export default function App() {
                   })}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* 4. 신고 및 건의 전용 탭 */}
-          {activeTab === 'report' && (
-            <div className="space-y-4 mt-0.5">
-              <div className={`pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
-                <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                  <Siren size={18} className="text-rose-600" />
-                  신고 및 건의하기
-                </h2>
-                <p className="text-slate-400 font-medium mt-0.5">
-                  서비스 이용 중 발생한 불편사항이나 건의하고 싶은 내용을 전달해 주세요.
-                </p>
-              </div>
-
-              <form onSubmit={handleSendReport} className={`space-y-3.5 p-4 rounded-2xl border shadow-sm ${
-                isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50/50 border-slate-200/80'
-              }`}>
-                <div>
-                  <label className={`block font-bold mb-1.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>카테고리 선택</label>
-                  <select
-                    value={reportForm.category}
-                    onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none font-semibold ${
-                      isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    <option value="장애/오류 신고">장애/오류 신고</option>
-                    <option value="이용제한">이용제한 문의</option>
-                    <option value="개선사항 건의">개선사항 건의</option>
-                    <option value="기타">기타</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`block font-bold mb-1.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>제목</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={100}
-                    placeholder="제목을 입력해 주세요"
-                    value={reportForm.title}
-                    onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none ${
-                      isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className={`block font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>상세 내용</label>
-                    <span className={`font-bold ${reportForm.content.length >= 1000 ? 'text-rose-600' : 'text-slate-400'}`}>
-                      {reportForm.content.length} / 1000자
-                    </span>
-                  </div>
-                  <textarea
-                    required
-                    rows={6}
-                    maxLength={1000}
-                    placeholder="운영진에게 전달할 내용을 상세히 작성해 주세요. (최대 1,000자)"
-                    value={reportForm.content}
-                    onChange={(e) => setReportForm({ ...reportForm, content: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none leading-relaxed resize-none ${
-                      isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  ></textarea>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm mt-2"
-                >
-                  <Send size={15} /> 제출하기
-                </button>
-              </form>
             </div>
           )}
 
@@ -2119,7 +2095,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 5. 공지사항 관리 페이지에서 '작성' 버튼명으로 명확히 수정 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2180,16 +2155,17 @@ export default function App() {
           )}
         </main>
 
+        {/* ⭕ 7. 다크모드 시 장바구니 플로팅 버튼 시인성 상향 ([#FEE500] 노란색 카카오 테마로 고대비 처리) */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
               onClick={() => setIsCartOpen(true)}
-              className="pointer-events-auto relative p-3.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 active:scale-95 transition-all shadow-xl border border-slate-700/50 flex items-center justify-center"
+              className="pointer-events-auto relative p-3.5 bg-[#FEE500] text-slate-900 rounded-full hover:bg-amber-400 active:scale-95 transition-all shadow-xl border border-amber-300 flex items-center justify-center"
               title="장바구니 열기"
             >
-              <ShoppingCart size={20} />
+              <ShoppingCart size={20} className="text-slate-900" />
               {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm text-[10px]">
                   {cart.length}
                 </span>
               )}
@@ -2197,7 +2173,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 고정 하단 네비게이션 (text-[10px] 폰트 크기 고정) */}
+        {/* ⭕ 1. 하단 네비게이션 개편 (설정 탭 삭제 ➔ 대여/반납/랭킹/관리자 3~4개 메뉴 구성) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2213,10 +2189,6 @@ export default function App() {
             <Trophy size={20} />
             <span className="mt-1">랭킹</span>
           </button>
-          <button onClick={() => setIsSettingsOpen(true)} className="flex flex-col items-center font-bold text-[10px] text-slate-400 hover:text-slate-600">
-            <Settings size={20} />
-            <span className="mt-1">설정</span>
-          </button>
           {isAdmin && (
             <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center font-bold text-[10px] ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
               <ShieldCheck size={20} />
@@ -2225,7 +2197,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 우측 슬라이딩 Drawer 모달 */}
+        {/* ⭕ 2, 3. 설정 우측 슬라이딩 Drawer 모달 (로그아웃 버튼을 닫기 위치로 이동) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
@@ -2238,7 +2210,7 @@ export default function App() {
 
               <div className="flex-1 p-5 overflow-y-auto space-y-6">
                 
-                {/* 1) 내 정보 수정 & 비밀번호 변경 */}
+                {/* A. 내 정보 수정 / 비밀번호 변경 */}
                 <div className="space-y-2.5">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <User size={14} /> 계정 설정
@@ -2261,15 +2233,14 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* 2) 신고/건의하기 이동 */}
+                {/* B. 2. 신고 및 건의하기 (클릭 시 독립 팝업 모달 오픈) */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Siren size={14} /> 고객지원
                   </h4>
                   <button
                     onClick={() => {
-                      setIsSettingsOpen(false);
-                      setActiveTab('report');
+                      setIsReportModalOpen(true);
                     }}
                     className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
@@ -2282,7 +2253,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* 3) 테마 선택 */}
+                {/* C. 테마 선택 */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sun size={14} /> 테마 선택
@@ -2307,7 +2278,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 4) 본문 글자 크기 */}
+                {/* D. 본문 글자 크기 */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Type size={14} /> 본문 글자 크기
@@ -2336,34 +2307,109 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 5) 로그아웃 버튼 */}
-                <div className="pt-2 border-t border-slate-200/20">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold hover:bg-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
-                  >
-                    <LogOut size={16} /> 로그아웃
-                  </button>
-                </div>
-
               </div>
 
-              {/* 최하단 닫기 버튼 */}
+              {/* ⭕ 3. 로그아웃 버튼을 닫기 위치(최하단)로 이동 배치 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
-                  onClick={() => setIsSettingsOpen(false)}
-                  className={`w-full py-3 rounded-xl font-bold transition shadow-sm ${
-                    isDarkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'
-                  }`}
+                  onClick={handleLogout}
+                  className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-sm hover:bg-rose-700"
                 >
-                  닫기
+                  <LogOut size={16} /> 로그아웃
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ⭕ 6. 내 정보 수정 및 비밀번호 변경 모달 (폰트 크기 변경 가변 대응) */}
+        {/* ⭕ 2. 신고 및 건의하기 독립 팝업(모달) */}
+        {isReportModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
+              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+                <h3 className="font-extrabold text-base flex items-center gap-2">
+                  <Siren size={18} className="text-rose-600" /> 신고 및 건의하기
+                </h3>
+                <button onClick={() => setIsReportModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSendReport} className="space-y-3.5">
+                <div>
+                  <label className="block font-bold mb-1.5">카테고리 선택</label>
+                  <select
+                    value={reportForm.category}
+                    onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
+                    className={`w-full border p-3 rounded-xl focus:outline-none font-semibold ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    <option value="장애/오류 신고">장애/오류 신고</option>
+                    <option value="이용제한">이용제한 문의</option>
+                    <option value="개선사항 건의">개선사항 건의</option>
+                    <option value="기타">기타</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold mb-1.5">제목</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={100}
+                    placeholder="제목을 입력해 주세요"
+                    value={reportForm.title}
+                    onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
+                    className={`w-full border p-3 rounded-xl focus:outline-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block font-bold">상세 내용</label>
+                    <span className={`font-bold ${reportForm.content.length >= 1000 ? 'text-rose-600' : 'text-slate-400'}`}>
+                      {reportForm.content.length} / 1000자
+                    </span>
+                  </div>
+                  <textarea
+                    required
+                    rows={5}
+                    maxLength={1000}
+                    placeholder="운영진에게 전달할 내용을 작성해 주세요."
+                    value={reportForm.content}
+                    onChange={(e) => setReportForm({ ...reportForm, content: e.target.value })}
+                    className={`w-full border p-3 rounded-xl focus:outline-none leading-relaxed resize-none ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
+                  ></textarea>
+                </div>
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsReportModalOpen(false)}
+                    className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <Send size={15} /> 제출하기
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 내 정보 수정 및 비밀번호 변경 모달 */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -2596,7 +2642,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 6. 게임 등록/수정 모달 (소수점 2자리 입력 지원 및 폰트크기 가변 동기화) */}
+        {/* 게임 등록/수정 모달 */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -2668,7 +2714,7 @@ export default function App() {
                   </div>
                   <div>
                     <label className="font-bold block mb-1.5 flex items-center gap-1">
-                      <Star size={13} className="text-amber-500" /> BGG 평점
+                      <BggIcon size={13} className="text-slate-400" /> BGG 평점
                     </label>
                     <input
                       type="number"
@@ -2780,10 +2826,9 @@ export default function App() {
                       }`}
                     />
                   </div>
-                  {/* ⭕ 4. 난이도 소수점 2자리(step 0.01)까지 세밀 입력 지원 */}
                   <div>
                     <label className="font-bold block mb-1.5 flex items-center gap-1">
-                      <Brain size={13} className="text-indigo-500" /> 난이도 (1.00~5.00)
+                      <Brain size={13} className="text-slate-400" /> 난이도 (1.00~5.00)
                     </label>
                     <input
                       type="number"
@@ -2822,7 +2867,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 6. 공지사항 작성 모달 (폰트 크기 동기화) */}
+        {/* 공지사항 작성 모달 */}
         {isNoticeModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
