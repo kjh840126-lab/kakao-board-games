@@ -1218,7 +1218,6 @@ export default function App() {
           {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
-              {/* ⭕ 공지사항 배너: [공지] 말머리 삭제 & 공지 내용 삭제 후 타이틀만 명확히 노출 */}
               <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
                 <Bell size={16} className="text-[#FEE500] flex-shrink-0" />
                 <div className="leading-tight">
@@ -1346,10 +1345,11 @@ export default function App() {
                 )}
               </div>
 
+              {/* ⭕ 소타이틀 변경: 대여중인 게임 */}
               <section className="space-y-2.5">
                 <h3 className="font-extrabold text-slate-900 text-sm tracking-tight flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-slate-900 rounded-full inline-block"></span>
-                  현재 대여 중인 게임
+                  대여중인 게임
                 </h3>
                 {rentals.filter((r) => r.userId === currentUser.userId && r.status === '대여중').length === 0 ? (
                   <div className="text-center py-8 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">대여 중인 보드게임이 없습니다.</div>
@@ -1361,7 +1361,11 @@ export default function App() {
                     return (
                       <div key={rental.rentalId} className={`border p-3.5 rounded-2xl flex justify-between items-center ${isOverdue ? 'border-rose-300 bg-rose-50/40' : 'border-amber-300/60 bg-amber-50/40'}`}>
                         <div>
-                          <h4 className="font-bold text-slate-900 text-sm">{rental.gameTitle}</h4>
+                          {/* ⭕ 게임명 옆에 (게임ID) 표기 추가 */}
+                          <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                            <span>{rental.gameTitle}</span>
+                            <span className="text-xs text-slate-400 font-mono font-normal">({rental.gameId})</span>
+                          </h4>
                           <div className="text-[11px] text-slate-700 mt-1 space-y-0.5">
                             <div>대여일: {rental.startDate}</div>
                             <div>
@@ -1406,9 +1410,13 @@ export default function App() {
                     return (
                       <div key={rental.rentalId} className="border border-slate-200/80 p-3.5 rounded-2xl flex justify-between items-center bg-white">
                         <div>
+                          {/* ⭕ 게임명 옆에 (게임ID) 표기 추가 */}
                           <div className="flex items-center gap-1.5">
-                            <CheckCircle2 size={15} className="text-emerald-600" />
-                            <h4 className="font-bold text-slate-900 text-xs">{rental.gameTitle}</h4>
+                            <CheckCircle2 size={15} className="text-emerald-600 flex-shrink-0" />
+                            <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1">
+                              <span>{rental.gameTitle}</span>
+                              <span className="text-[11px] text-slate-400 font-mono font-normal">({rental.gameId})</span>
+                            </h4>
                           </div>
                           <p className="text-[11px] text-slate-500 mt-1">
                             대여일: {rental.startDate} | 반납일:{' '}
