@@ -209,8 +209,9 @@ export default function App() {
   const [ratingModalGame, setRatingModalGame] = useState<Game | null>(null);
   const [selectedScore, setSelectedScore] = useState<number>(5.0);
 
-  // 찜한 보드게임 확인 모달 State
+  // 설정 드로어 내부 모달 State
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
+  const [isMyRatingsModalOpen, setIsMyRatingsModalOpen] = useState(false);
 
   // 설정 관련 State
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
@@ -268,12 +269,14 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
+  // 새로고침 시 메인 탭 유지
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'sites' | 'admin'>(() => {
     const savedTab = localStorage.getItem('kakao_bg_activeTab');
     return (savedTab as 'games' | 'returns' | 'ranking' | 'sites' | 'admin') || 'games';
   });
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
+  // 운영자 서브탭 새로고침 시 유지
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>(() => {
     const savedAdminTab = localStorage.getItem('kakao_bg_adminSubTab');
     return (savedAdminTab as any) || 'gameAdmin';
@@ -289,6 +292,7 @@ export default function App() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
 
+  // 관리자 사이트 등록/수정 모달 State
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<BoardSite>({
     siteId: 0,
@@ -355,11 +359,11 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // ⭕ 5. 대여 탭을 제외한 나머지 하단 메뉴 클릭 시 무조건 스크롤 최상단(0)으로 이동
+  // ⭕ 6. 대여 탭을 제외한 나머지 하단 메뉴 이동 시 최상단 스크롤 강제 적용
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
     if (newTab !== 'games' && mainScrollRef.current) {
-      mainScrollRef.current.scrollTop = 0;
+      mainScrollRef.current.scrollTo({ top: 0, behavior: 'instant' });
     }
   };
 
@@ -585,7 +589,7 @@ export default function App() {
     }
   };
 
-  // ⭕ 2. 나의 평점 저장 얼럿 삭제 및 즉시 반영
+  // ⭕ 2. 얼럿 삭제 및 즉시 평점 반영
   const handleSaveRating = async () => {
     if (!currentUser || !ratingModalGame) return;
 
@@ -607,6 +611,15 @@ export default function App() {
 
     setRatingModalGame(null);
     await fetchInitialData();
+  };
+
+  // ⭕ 내가 남긴 평점 삭제
+  const handleDeleteMyRating = async (gameId: string) => {
+    if (!currentUser) return;
+    if (window.confirm('해당 보드게임에 남긴 평점을 삭제하시겠습니까?')) {
+      await supabase.from('ratings').delete().eq('user_id', currentUser.userId).eq('game_id', gameId);
+      await fetchInitialData();
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -803,22 +816,6 @@ export default function App() {
         await fetchInitialData();
       }
     }
-  };
-
-  const handleMarkReportAsRead = async (report: ReportData) => {
-    setSelectedReport(report);
-    if (!report.isRead) {
-      setReportList(prev => prev.map(r => r.reportId === report.reportId ? { ...r, isRead: true } : r));
-      await supabase.from('reports').update({ is_read: true }).eq('report_id', report.reportId);
-    }
-  };
-
-  const handleMarkAllReportsAsRead = async () => {
-    const unreadIds = reports.filter(r => !r.isRead).map(r => r.reportId);
-    if (unreadIds.length === 0) return;
-
-    setReportList(prev => prev.map(r => ({ ...r, isRead: true })));
-    await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
   };
 
   const saveSite = async (e: React.FormEvent) => {
@@ -1258,6 +1255,14 @@ export default function App() {
 
   const visibleSitesList = sites.filter(s => s.isVisible === 'Y');
   const favoriteGamesList = games.filter(g => userFavorites.includes(g.gameId));
+
+  // ⭕ 내가 평점을 남긴 보드게임 목록
+  const myRatingGamesList = games
+    .map(g => {
+      const myRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === g.gameId);
+      return { ...g, myScore: myRating ? myRating.score : null };
+    })
+    .filter(g => g.myScore !== null);
 
   const isFilterActive = playerFilter > 0 || genreFilter !== '' || difficultyFilter !== 'all';
 
@@ -1866,31 +1871,14 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                       }`}>
                         
-                        {/* 이미지 및 나의 평점 한 줄 노출 영역 */}
-                        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        {/* 이미지 영역 */}
+                        <div className="flex flex-col items-center flex-shrink-0">
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
                             className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200/40"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
-
-                          {/* ⭕ 3. 나의 평점 1줄(가로) 노출 및 폰트 크기 키움 */}
-                          <div 
-                            onClick={() => {
-                              setSelectedScore(userRating ? userRating.score : 5.0);
-                              setRatingModalGame(game);
-                            }}
-                            className="cursor-pointer group flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-rose-500 transition pt-0.5"
-                            title="나의 평점 등록/수정"
-                          >
-                            <span className="whitespace-nowrap">나의 평점</span>
-                            <StarRating 
-                              rating={userRating ? userRating.score : 0} 
-                              size={12} 
-                              colorClass={userRating ? "text-rose-500" : "text-slate-300 dark:text-slate-600"} 
-                            />
-                          </div>
                         </div>
 
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -1903,14 +1891,12 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
+                            {/* ⭕ 1. 회원 평점 평균 항목 제거 완료 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
                               <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
                               <span className="flex items-center gap-0.5"><BggIcon size={11} className="text-slate-400" /> BGG {game.bggRating}</span>
-                              {game.userAvgRating ? (
-                                <span className="flex items-center gap-0.5 text-rose-500 font-bold"><Star size={10} className="fill-rose-500" /> 회원 {game.userAvgRating}</span>
-                              ) : null}
                             </div>
                           </div>
 
@@ -1925,46 +1911,69 @@ export default function App() {
                               ))}
                             </div>
 
-                            <div className="flex justify-end items-center gap-2">
-                              {/* ⭕ 1. 찜 아이콘 배경 제거 후 하트만 빨간색 노출 */}
-                              <button
-                                onClick={() => toggleFavorite(game.gameId)}
-                                className={`p-1.5 rounded-xl transition flex items-center justify-center ${
-                                  isFav 
-                                    ? 'text-rose-500' 
-                                    : 'text-slate-300 hover:text-slate-400 dark:text-slate-600'
-                                }`}
-                                title={isFav ? "찜 해제" : "찜하기"}
+                            {/* ⭕ 2, 3. 하단 행: 나의 평점 좌측 정렬 / 찜하기 버튼 대여가능 버튼 유사 라운드 디자인 및 하트 색상 변경 */}
+                            <div className="flex justify-between items-center gap-2 pt-0.5">
+                              
+                              {/* ⭕ 2. 나의 평점 1줄 노출 및 좌측 정렬 */}
+                              <div 
+                                onClick={() => {
+                                  setSelectedScore(userRating ? userRating.score : 5.0);
+                                  setRatingModalGame(game);
+                                }}
+                                className="cursor-pointer group flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-rose-500 transition"
+                                title="나의 평점 등록/수정"
                               >
-                                <Heart size={20} className={isFav ? "fill-rose-500 text-rose-500" : ""} />
-                              </button>
+                                <span className="whitespace-nowrap">나의 평점</span>
+                                <StarRating 
+                                  rating={userRating ? userRating.score : 0} 
+                                  size={12} 
+                                  colorClass={userRating ? "text-rose-500" : "text-slate-300 dark:text-slate-600"} 
+                                />
+                              </div>
 
-                              {isAvailable ? (
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                {/* ⭕ 3. 대여가능 버튼과 유사한 외곽선 라운드 디자인의 찜하기 버튼 */}
                                 <button
-                                  onClick={() => toggleCartItem(game)}
-                                  className={`w-auto px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
-                                    isSelectedInCart
-                                      ? 'bg-slate-900 text-white hover:bg-slate-800'
-                                      : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400'
+                                  onClick={() => toggleFavorite(game.gameId)}
+                                  className={`px-2.5 py-1.5 rounded-xl font-bold border transition flex items-center justify-center gap-1 text-xs ${
+                                    isFav 
+                                      ? 'border-rose-200 bg-rose-50 dark:bg-rose-950/40 dark:border-rose-800 text-rose-500' 
+                                      : isDarkMode
+                                      ? 'border-slate-700 bg-slate-800 text-slate-400 hover:text-slate-200'
+                                      : 'border-slate-200 bg-slate-50 text-slate-400 hover:text-slate-600'
                                   }`}
+                                  title={isFav ? "찜 해제" : "찜하기"}
                                 >
-                                  {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
+                                  <Heart size={14} className={isFav ? "fill-rose-500 text-rose-500" : ""} />
                                 </button>
-                              ) : (
-                                <div>
-                                  {isOverdue ? (
-                                    <span className="px-2.5 py-1 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block text-xs">
-                                      대여중 (연체 {overdueDays}일)
-                                    </span>
-                                  ) : (
-                                    <span className={`px-2.5 py-1 rounded-xl font-bold border inline-block text-xs ${
-                                      isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-slate-100 text-slate-600 border-slate-200'
-                                    }`}>
-                                      대여중 ({activeRental?.endDate?.substring(5)} 반납예정)
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+
+                                {isAvailable ? (
+                                  <button
+                                    onClick={() => toggleCartItem(game)}
+                                    className={`w-auto px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
+                                      isSelectedInCart
+                                        ? 'bg-slate-900 text-white hover:bg-slate-800'
+                                        : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400'
+                                    }`}
+                                  >
+                                    {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
+                                  </button>
+                                ) : (
+                                  <div>
+                                    {isOverdue ? (
+                                      <span className="px-2.5 py-1 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block text-xs">
+                                        대여중 (연체 {overdueDays}일)
+                                      </span>
+                                    ) : (
+                                      <span className={`px-2.5 py-1 rounded-xl font-bold border inline-block text-xs ${
+                                        isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-slate-100 text-slate-600 border-slate-200'
+                                      }`}>
+                                        대여중 ({activeRental?.endDate?.substring(5)} 반납예정)
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -2129,6 +2138,7 @@ export default function App() {
                 </button>
               </div>
 
+              {/* ⭕ 7. 랭킹 페이지: 나의 평점 별표 제외/점수만 노출, 출시년도 가산점 문구 제외 */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
@@ -2175,11 +2185,11 @@ export default function App() {
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>최근 대여: <strong className="text-rose-500 font-bold">{game.recentRentalCount || 0}회</strong></span>
-                              <span>BGG: {game.bggRating}점</span>
+                              <span>출시: {game.releaseYear}년</span>
                             </div>
-                            <div className="whitespace-nowrap flex items-center gap-1">
+                            <div className="whitespace-nowrap flex gap-2">
+                              <span>BGG: {game.bggRating}점</span>
                               <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
-                              {game.userAvgRating ? <StarRating rating={game.userAvgRating} size={10} colorClass="text-amber-400" /> : null}
                             </div>
                           </div>
                         </div>
@@ -2240,11 +2250,11 @@ export default function App() {
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>총 대여: <strong className="text-amber-500 font-bold">{game.rentalCount || 0}회</strong></span>
-                              <span>BGG: {game.bggRating}점</span>
+                              <span>출시: {game.releaseYear}년</span>
                             </div>
-                            <div className="whitespace-nowrap flex items-center gap-1">
+                            <div className="whitespace-nowrap flex gap-2">
+                              <span>BGG: {game.bggRating}점</span>
                               <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
-                              {game.userAvgRating ? <StarRating rating={game.userAvgRating} size={10} colorClass="text-amber-400" /> : null}
                             </div>
                           </div>
                         </div>
@@ -2811,28 +2821,28 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 */}
+        {/* ⭕ 4. 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
-              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-1/3 min-w-[200px] max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className={`p-4 flex justify-between items-center font-bold text-sm ${
                 isHeaderAdminTheme ? 'bg-sky-400 text-slate-900' : 'bg-[#FEE500] text-slate-900'
               }`}>
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 truncate">
                   <Settings size={18} /> 설정
                 </span>
                 <button onClick={() => setIsSettingsOpen(false)}><X size={18} /></button>
               </div>
 
-              <div className="flex-1 p-5 overflow-y-auto space-y-6">
+              <div className="flex-1 p-4 overflow-y-auto space-y-5">
                 
                 {/* A. 내 정보 수정 / 비밀번호 변경 */}
-                <div className="space-y-2.5">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <User size={14} /> 계정 설정
+                <div className="space-y-2">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <User size={13} /> 계정 설정
                   </h4>
                   <button
                     onClick={() => {
@@ -2843,7 +2853,7 @@ export default function App() {
                         setIsEditProfileOpen(true);
                       }
                     }}
-                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
@@ -2852,80 +2862,94 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* 찜한 보드게임 메뉴 */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Heart size={14} className="text-rose-500" /> 나의 활동
+                {/* ⭕ 5. 나의 활동: 찜한 보드게임 & 내가 평가한 보드게임 메뉴 */}
+                <div className="space-y-2 pt-2 border-t border-slate-200/20">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Heart size={13} className="text-rose-500" /> 나의 활동
                   </h4>
                   <button
                     onClick={() => {
                       setIsFavoritesModalOpen(true);
                     }}
-                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Heart size={15} className="text-rose-500 fill-rose-500 flex-shrink-0" /> 찜한 보드게임 ({userFavorites.length})
+                    <span className="flex items-center gap-1 truncate">
+                      <Heart size={13} className="text-rose-500 fill-rose-500 flex-shrink-0" /> 찜목록 ({userFavorites.length})
+                    </span>
+                    <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsMyRatingsModalOpen(true);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1 truncate">
+                      <Star size={13} className="text-rose-500 fill-rose-500 flex-shrink-0" /> 내 평점 ({myRatingGamesList.length})
                     </span>
                     <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                   </button>
                 </div>
 
                 {/* B. 신고 및 건의하기 */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Siren size={14} /> 고객지원
+                <div className="space-y-2 pt-2 border-t border-slate-200/20">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Siren size={13} /> 고객지원
                   </h4>
                   <button
                     onClick={() => {
                       setIsReportModalOpen(true);
                     }}
-                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Siren size={15} className="text-rose-500 flex-shrink-0" /> 신고 및 건의
+                    <span className="flex items-center gap-1 truncate">
+                      <Siren size={14} className="text-rose-500 flex-shrink-0" /> 신고 및 건의
                     </span>
                     <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                   </button>
                 </div>
 
                 {/* C. 테마 선택 */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sun size={14} /> 테마 선택
+                <div className="space-y-2 pt-2 border-t border-slate-200/20">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Sun size={13} /> 테마 선택
                   </h4>
                   <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setThemeMode('light')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center gap-1 ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 text-[11px] ${
                         themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      <Sun size={14} className="text-amber-500" /> 라이트
+                      <Sun size={12} className="text-amber-500" /> 라이트
                     </button>
                     <button
                       onClick={() => setThemeMode('dark')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center gap-1 ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 text-[11px] ${
                         themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      <Moon size={14} className="text-indigo-400" /> 다크
+                      <Moon size={12} className="text-indigo-400" /> 다크
                     </button>
                   </div>
                 </div>
 
                 {/* D. 본문 글자 크기 */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Type size={14} /> 본문 글자 크기
+                <div className="space-y-2 pt-2 border-t border-slate-200/20">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Type size={13} /> 본문 글자 크기
                   </h4>
                   <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setFontSize('normal')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
                         fontSize === 'normal' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                           : 'text-slate-400 hover:text-slate-200'
@@ -2935,7 +2959,7 @@ export default function App() {
                     </button>
                     <button
                       onClick={() => setFontSize('large')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
                         fontSize === 'large' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                           : 'text-slate-400 hover:text-slate-200'
@@ -2950,13 +2974,13 @@ export default function App() {
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
-                    className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-2 border ${
+                    className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 border text-xs ${
                       isDarkMode 
                         ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' 
                         : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    <LogOut size={15} /> 로그아웃
+                    <LogOut size={14} /> 로그아웃
                   </button>
                 </div>
 
@@ -3028,6 +3052,80 @@ export default function App() {
               <div className="pt-2 border-t border-slate-200/20">
                 <button
                   onClick={() => setIsFavoritesModalOpen(false)}
+                  className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⭕ 5. 내가 평가한 보드게임 목록 확인 모달 */}
+        {isMyRatingsModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border max-h-[85vh] flex flex-col ${
+              isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+                <h3 className="font-extrabold text-base flex items-center gap-2">
+                  <Star size={18} className="text-rose-500 fill-rose-500" /> 내가 평가한 보드게임 ({myRatingGamesList.length})
+                </h3>
+                <button onClick={() => setIsMyRatingsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+                {myRatingGamesList.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400">평가를 남긴 보드게임이 없습니다.</div>
+                ) : (
+                  myRatingGamesList.map((game) => (
+                    <div key={game.gameId} className={`p-3 rounded-2xl border flex items-center justify-between gap-3 shadow-sm ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
+                    }`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img 
+                          src={game.imageUrl} 
+                          alt={game.title} 
+                          className="w-11 h-11 object-cover rounded-xl bg-white border flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
+                        />
+                        <div className="min-w-0">
+                          <h4 className="font-bold truncate">{game.title}</h4>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-rose-500 font-extrabold text-xs">{game.myScore?.toFixed(1)}점</span>
+                            <StarRating rating={game.myScore || 0} size={10} colorClass="text-rose-500" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            setSelectedScore(game.myScore || 5.0);
+                            setRatingModalGame(game);
+                          }}
+                          className="px-2 py-1 bg-slate-900 text-white rounded-lg font-bold text-[10px] hover:bg-slate-800 transition"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMyRating(game.gameId)}
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition"
+                          title="삭제"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/20">
+                <button
+                  onClick={() => setIsMyRatingsModalOpen(false)}
                   className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
                 >
                   닫기
@@ -3617,7 +3715,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 게임 등록/수정 모달 (노출 여부 높이 통일 및 비율 배치) */}
+        {/* ⭕ 게임 등록/수정 모달 (8. 모바일/PC 셀렉트 박스 높이 완벽 통일 h-[38px] min-h-[38px]) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3642,9 +3740,7 @@ export default function App() {
                     placeholder="https://example.com/image.jpg"
                     value={editingGame.imageUrl}
                     onChange={(e) => setEditingGame({ ...editingGame, imageUrl: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                    }`}
+                    className="w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50"
                   />
                   {editingGame.imageUrl && (
                     <div className="mt-2 flex items-center gap-2.5 p-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -3670,7 +3766,7 @@ export default function App() {
                       placeholder="예: KG0001"
                       value={editingGame.gameId}
                       onChange={(e) => setEditingGame({ ...editingGame, gameId: e.target.value })}
-                      className={`w-full border p-2.5 rounded-xl text-xs placeholder:text-xs placeholder:opacity-50 ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs placeholder:text-xs placeholder:opacity-50 ${
                         isEditingMode ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50/50 border-slate-300'
                       }`}
                     />
@@ -3683,7 +3779,7 @@ export default function App() {
                       placeholder="보드게임 이름"
                       value={editingGame.title}
                       onChange={(e) => setEditingGame({ ...editingGame, title: e.target.value })}
-                      className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3703,7 +3799,7 @@ export default function App() {
                       max={2030}
                       value={editingGame.releaseYear}
                       onChange={(e) => setEditingGame({ ...editingGame, releaseYear: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3717,7 +3813,7 @@ export default function App() {
                       min={1}
                       value={editingGame.playTime}
                       onChange={(e) => setEditingGame({ ...editingGame, playTime: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3733,7 +3829,7 @@ export default function App() {
                       max={5.00}
                       value={editingGame.difficulty}
                       onChange={(e) => setEditingGame({ ...editingGame, difficulty: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3749,7 +3845,7 @@ export default function App() {
                       min={1}
                       value={editingGame.minPlayers}
                       onChange={(e) => setEditingGame({ ...editingGame, minPlayers: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3761,7 +3857,7 @@ export default function App() {
                       min={1}
                       value={editingGame.maxPlayers}
                       onChange={(e) => setEditingGame({ ...editingGame, maxPlayers: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3776,18 +3872,18 @@ export default function App() {
                       max={10.0}
                       value={editingGame.bggRating}
                       onChange={(e) => setEditingGame({ ...editingGame, bggRating: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
                   <div>
-                    {/* ⭕ 4. 모바일/PC 셀렉트 박스 높이 완벽 고정 통일 (h-[38px] h-9) */}
+                    {/* ⭕ 8. 모바일 OS 기기별 크기 왜곡 현상 방지: h-[38px] min-h-[38px] -webkit-appearance 처리 */}
                     <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
                       onChange={(e) => setEditingGame({ ...editingGame, isVisible: e.target.value as 'Y' | 'N' })}
-                      className={`w-full border py-2.5 px-2 h-[38px] rounded-xl font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_8px] bg-no-repeat bg-[right_6px_center] pr-5 ${
+                      className={`w-full border px-2 py-0 h-[38px] min-h-[38px] rounded-xl font-semibold text-xs leading-none appearance-none -webkit-appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_8px] bg-no-repeat bg-[right_6px_center] pr-5 ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     >
