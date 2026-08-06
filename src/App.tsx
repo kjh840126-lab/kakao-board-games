@@ -169,7 +169,7 @@ const getDaysDifference = (dateStr1: string, dateStr2: string) => {
 const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { rating: number; size?: number; colorClass?: string }) => {
   return (
     <div className="flex items-center gap-0.5 inline-flex">
-      {[1, 2, 3, 4, 5].map((starIndex) => {
+      {[1, 2, 3, 4, 5].map((starIndex: number) => {
         const fillAmount = Math.max(0, Math.min(1, rating - (starIndex - 1)));
         return (
           <div key={starIndex} className="relative inline-block">
@@ -873,142 +873,6 @@ export default function App() {
     }
   };
 
-  const activeRentalsCount = currentUser 
-    ? rentals.filter((r) => r.userId === currentUser.userId && r.status === '대여중').length 
-    : 0;
-
-  const isAdmin = currentUser?.role === '운영자';
-  const unreadReportsCount = reports.filter(r => !r.isRead).length;
-
-  const toggleCartItem = (game: Game) => {
-    const isAlreadyInCart = cart.some((item) => item.gameId === game.gameId);
-    if (isAlreadyInCart) {
-      setCart(cart.filter((item) => item.gameId !== game.gameId));
-    } else {
-      if (cart.length >= 3) {
-        alert('장바구니에는 최대 3개까지만 담을 수 있습니다.');
-        return;
-      }
-      setCart([...cart, game]);
-    }
-  };
-
-  const removeFromCart = (gameId: string) => {
-    setCart(cart.filter((item) => item.gameId !== gameId));
-  };
-
-  const processCheckout = async () => {
-    if (!currentUser) return;
-
-    if (currentUser.penaltyEndDate && currentUser.penaltyEndDate >= today) {
-      alert(`패널티로 인해 대여할 수 없습니다.\n(대여 정지 종료일: ${currentUser.penaltyEndDate})`);
-      return;
-    }
-
-    if (activeRentalsCount + cart.length > 3) {
-      alert(`한 회원당 최대 3개까지만 대여 가능합니다.\n(현재 대여중: ${activeRentalsCount}개, 신청: ${cart.length}개)`);
-      return;
-    }
-
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + rentalDays);
-    const endDateStr = endDate.toISOString().split('T')[0];
-
-    const newRentals = cart.map((game) => ({
-      user_id: currentUser.userId,
-      game_id: game.gameId,
-      game_title: game.title,
-      status: '대여중',
-      start_date: today,
-      end_date: endDateStr
-    }));
-
-    const { error: rentalError } = await supabase.from('rentals').insert(newRentals);
-    if (rentalError) {
-      alert('대여 처리 실패: ' + rentalError.message);
-      return;
-    }
-
-    const rentedGameIds = cart.map((g) => g.gameId);
-    await supabase.from('games').update({ status: '대여중' }).in('game_id', rentedGameIds);
-
-    alert(`보드게임 ${cart.length}건이 ${rentalDays}일간 대여되었습니다. (~${endDateStr} 반납)`);
-    await fetchInitialData();
-    setCart([]);
-    setIsCartOpen(false);
-  };
-
-  const returnGame = async (rentalId: number, gameId: string) => {
-    if (!currentUser) return;
-    const targetRental = rentals.find(r => r.rentalId === rentalId);
-    if (!targetRental) return;
-
-    const nowStr = new Date().toISOString();
-
-    await supabase.from('rentals').update({ status: '반납완료', returned_at: nowStr }).eq('rental_id', rentalId);
-    await supabase.from('games').update({ status: '대여가능' }).eq('game_id', gameId);
-
-    const isOverdue = today > targetRental.endDate;
-    if (isOverdue) {
-      const overdueDays = getDaysDifference(today, targetRental.endDate);
-      const newPoints = currentUser.penaltyPoints + overdueDays;
-
-      const penaltyEnd = new Date();
-      penaltyEnd.setDate(penaltyEnd.getDate() + newPoints - 1);
-      const penaltyEndStr = penaltyEnd.toISOString().split('T')[0];
-
-      await supabase.from('users').update({ 
-        penalty_count: newPoints, 
-        penalty_end_date: penaltyEndStr 
-      }).eq('user_id', currentUser.userId);
-
-      alert(`반납이 완료되었습니다.\n[연체 발생] 연체일수(${overdueDays}일)만큼 패널티 +${overdueDays}점이 부여되었습니다.`);
-    } else {
-      alert('반납이 완료되었습니다.');
-    }
-
-    await fetchInitialData();
-  };
-
-  const returnAllGames = async () => {
-    if (!currentUser) return;
-    const userActiveRentals = rentals.filter((r) => r.userId === currentUser.userId && r.status === '대여중');
-    if (userActiveRentals.length === 0) return;
-
-    const rentalIds = userActiveRentals.map(r => r.rentalId);
-    const gameIds = userActiveRentals.map(r => r.gameId);
-    const nowStr = new Date().toISOString();
-
-    await supabase.from('rentals').update({ status: '반납완료', returned_at: nowStr }).in('rental_id', rentalIds);
-    await supabase.from('games').update({ status: '대여가능' }).in('game_id', gameIds);
-
-    let totalOverdueDays = 0;
-    userActiveRentals.forEach((r) => {
-      if (today > r.endDate) {
-        totalOverdueDays += getDaysDifference(today, r.endDate);
-      }
-    });
-
-    if (totalOverdueDays > 0) {
-      const newPoints = currentUser.penaltyPoints + totalOverdueDays;
-
-      const penaltyEnd = new Date();
-      penaltyEnd.setDate(penaltyEnd.getDate() + totalOverdueDays - 1);
-      const penaltyEndStr = penaltyEnd.toISOString().split('T')[0];
-
-      await supabase.from('users').update({ 
-        penalty_count: newPoints, 
-        penalty_end_date: penaltyEndStr 
-      }).eq('user_id', currentUser.userId);
-
-      alert(`모든 보드게임이 반납되었습니다.\n[연체 발생] 총 연체일수(${totalOverdueDays}일)만큼 패널티 +${totalOverdueDays}점이 부여되었습니다.`);
-    } else {
-      alert('모든 보드게임이 반납되었습니다.');
-    }
-
-    await fetchInitialData();
-  };
-
   const handleToggleGenre = (genreName: string) => {
     if (!editingGame) return;
     const exists = editingGame.genres.includes(genreName);
@@ -1016,7 +880,7 @@ export default function App() {
     if (exists) {
       setEditingGame({
         ...editingGame,
-        genres: editingGame.genres.filter(g => g !== genreName)
+        genres: editingGame.genres.filter((g: string) => g !== genreName)
       });
     } else {
       if (editingGame.genres.length >= 4) {
@@ -1129,6 +993,169 @@ export default function App() {
       await fetchInitialData();
     }
   };
+
+  const handleSendReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    if (!reportForm.category || reportForm.category === '선택') {
+      alert('카테고리를 선택해 주세요.');
+      return;
+    }
+
+    if (!reportForm.title.trim() || !reportForm.content.trim()) {
+      alert('제목과 상세 내용을 입력해 주세요.');
+      return;
+    }
+
+    const { error } = await supabase.from('reports').insert([
+      {
+        user_id: currentUser.userId,
+        category: reportForm.category,
+        title: reportForm.title.trim(),
+        content: reportForm.content.trim(),
+        is_read: false
+      }
+    ]);
+
+    if (error) {
+      alert('신고/건의 접수 실패: ' + error.message);
+    } else {
+      alert('운영진에게 성공적으로 전달되었습니다.\n감사합니다.');
+      setReportForm({ title: '', content: '', category: '' });
+      setIsReportModalOpen(false);
+      await fetchInitialData();
+    }
+  };
+
+  const handleNoticeClick = (notice: Notice) => {
+    setSelectedNotice(notice);
+    setIsNoticeDrawerOpen(true);
+  };
+
+  const getReleaseBonus = (year: number) => {
+    const diff = currentYear - year;
+    if (diff === 0) return 3;
+    if (diff === 1) return 2;
+    if (diff === 2) return 1;
+    return 0;
+  };
+
+  // ⭕ 가공 변수 리스트 정의
+  const hotRankedGamesList = [...games]
+    .map(game => {
+      const recentScore = (game.recentRentalCount || 0) * 0.5;
+      const releaseBonus = getReleaseBonus(game.releaseYear);
+      const userRatingScore = (game.userAvgRating || 0) * 0.5;
+      const totalScore = Number((recentScore + releaseBonus + game.bggRating + userRatingScore).toFixed(2));
+      return { ...game, totalScore, recentScore, releaseBonus, userRatingScore };
+    })
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .slice(0, 30);
+
+  const hallOfFameRankedGamesList = [...games]
+    .map(game => {
+      const rentalScore = (game.rentalCount || 0) * 0.1;
+      const userRatingScore = (game.userAvgRating || 0) * 0.5;
+      const totalScore = Number((rentalScore + game.bggRating + userRatingScore).toFixed(2));
+      return { ...game, totalScore, rentalScore, userRatingScore };
+    })
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .slice(0, 30);
+
+  const filteredGameList = [...games]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .filter((g: Game) => g.isVisible === 'Y')
+    .filter((g: Game) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
+    .filter((g: Game) => {
+      if (playerFilter === 0) return true;
+      if (playerFilter === 5) return g.maxPlayers >= 5;
+      return g.minPlayers <= playerFilter && g.maxPlayers >= playerFilter;
+    })
+    .filter((g: Game) => {
+      if (!genreFilter) return true;
+      return g.genres.includes(genreFilter);
+    })
+    .filter((g: Game) => {
+      if (difficultyFilter === 'all') return true;
+      if (difficultyFilter === 'easy') return g.difficulty < 2.3;
+      if (difficultyFilter === 'normal') return g.difficulty >= 2.3 && g.difficulty <= 3.5;
+      if (difficultyFilter === 'hard') return g.difficulty > 3.5;
+      return true;
+    });
+
+  const filteredGameAdminList = [...games]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .filter((g: Game) => g.title.toLowerCase().includes(gameAdminSearch.trim().toLowerCase()));
+
+  const filteredUserAdminList = [...users]
+    .sort((a: UserData, b: UserData) => {
+      if (b.createdAt !== a.createdAt) {
+        return b.createdAt.localeCompare(a.createdAt);
+      }
+      return b.userId.localeCompare(a.userId);
+    })
+    .filter((u: UserData) => {
+      const query = userAdminSearch.trim().toLowerCase();
+      if (!query) return true;
+      return (
+        u.name.toLowerCase().includes(query) ||
+        u.userId.toLowerCase().includes(query)
+      );
+    });
+
+  const returnedRentalsList = rentals
+    .filter((r: Rental) => currentUser && r.userId === currentUser.userId && r.status === '반납완료')
+    .sort((a: Rental, b: Rental) => {
+      const dateA = a.returnedAt || a.startDate;
+      const dateB = b.returnedAt || b.startDate;
+      if (dateB !== dateA) {
+        return dateB.localeCompare(dateA);
+      }
+      return b.rentalId - a.rentalId;
+    });
+
+  const allReturnedRentalsAdminList = rentals
+    .filter((r: Rental) => r.status === '반납완료')
+    .sort((a: Rental, b: Rental) => {
+      const dateA = a.returnedAt || a.startDate;
+      const dateB = b.returnedAt || b.startDate;
+      if (dateB !== dateA) {
+        return dateB.localeCompare(dateA);
+      }
+      return b.rentalId - a.rentalId;
+    });
+
+  const visibleSitesList = sites.filter((s: BoardSite) => s.isVisible === 'Y');
+  const favoriteGamesList = games.filter((g: Game) => userFavorites.includes(g.gameId));
+
+  const myRatingGamesList = games
+    .map((g: Game) => {
+      const myRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === g.gameId);
+      return { ...g, myScore: myRating ? myRating.score : null };
+    })
+    .filter(g => g.myScore !== null);
+
+  const isFilterActive = playerFilter > 0 || genreFilter !== '' || difficultyFilter !== 'all';
+
+  const resetFilters = () => {
+    setPlayerFilter(0);
+    setGenreFilter('');
+    setDifficultyFilter('all');
+  };
+
+  const calculateEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + rentalDays);
+    return d.toISOString().split('T')[0];
+  };
+
+  const activeRentalsCount = currentUser 
+    ? rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').length 
+    : 0;
+
+  const isAdmin = currentUser?.role === '운영자';
+  const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
   if (loading) {
     return (
@@ -1300,7 +1327,7 @@ export default function App() {
                       }}
                       className="border border-slate-300 p-2.5 rounded-xl text-slate-900 bg-slate-50/50 focus:outline-none focus:border-slate-800 text-[11px] font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_10px_center] pr-6"
                     >
-                      {ALLOWED_EMAIL_DOMAINS.map((domain) => (
+                      {ALLOWED_EMAIL_DOMAINS.map((domain: string) => (
                         <option key={domain} value={domain}>
                           {domain}
                         </option>
@@ -1539,7 +1566,7 @@ export default function App() {
                       className={`flex flex-col ${isNoticeTransition ? 'transition-transform duration-500 ease-in-out' : ''}`}
                       style={{ transform: `translateY(-${noticeIndex * 20}px)` }}
                     >
-                      {[...recentNoticesList, recentNoticesList[0]].map((notice, idx) => (
+                      {[...recentNoticesList, recentNoticesList[0]].map((notice: Notice, idx: number) => (
                         <div key={`${notice.noticeId}-${idx}`} className="h-5 flex items-center justify-between">
                           <span className="text-[#FEE500] font-extrabold truncate">
                             {notice.title}
@@ -1621,7 +1648,7 @@ export default function App() {
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">인원수</span>
                     <div className="flex flex-wrap gap-1 flex-1">
-                      {[0, 1, 2, 3, 4, 5].map((count) => (
+                      {[0, 1, 2, 3, 4, 5].map((count: number) => (
                         <button
                           key={count}
                           onClick={() => setPlayerFilter(count)}
@@ -1655,7 +1682,7 @@ export default function App() {
                       >
                         전체
                       </button>
-                      {PRESET_GENRES.map((preset) => (
+                      {PRESET_GENRES.map((preset: string) => (
                         <button
                           key={preset}
                           onClick={() => setGenreFilter(preset)}
@@ -1708,15 +1735,15 @@ export default function App() {
                     검색 조건에 해당되는 보드게임이 없습니다.
                   </div>
                 ) : (
-                  filteredGameList.map((game) => {
+                  filteredGameList.map((game: Game) => {
                     const isAvailable = game.status === '대여가능';
-                    const isSelectedInCart = cart.some((item) => item.gameId === game.gameId);
-                    const activeRental = rentals.find((r) => r.gameId === game.gameId && r.status === '대여중');
+                    const isSelectedInCart = cart.some((item: Game) => item.gameId === game.gameId);
+                    const activeRental = rentals.find((r: Rental) => r.gameId === game.gameId && r.status === '대여중');
                     const isOverdue = activeRental ? today > activeRental.endDate : false;
                     const overdueDays = (activeRental && isOverdue) ? getDaysDifference(today, activeRental.endDate) : 0;
                     
                     const isFav = userFavorites.includes(game.gameId);
-                    const userRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === game.gameId);
+                    const userRating = allRatings.find((r: UserRating) => currentUser && r.userId === currentUser.userId && r.gameId === game.gameId);
 
                     return (
                       <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm transition ${
@@ -1725,7 +1752,6 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
-                          {/* 5. 이미지 테두리 색상 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -1755,7 +1781,7 @@ export default function App() {
 
                             {/* 장르 영역 간격 조율 */}
                             <div className={`pt-1.5 border-t mt-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
-                              {game.genres.map((genre) => (
+                              {game.genres.map((genre: string) => (
                                 <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
                                   isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-800'
                                 }`}>
@@ -1862,10 +1888,10 @@ export default function App() {
                   <span className="w-1.5 h-3.5 bg-slate-900 rounded-full inline-block"></span>
                   대여중인 게임
                 </h3>
-                {rentals.filter((r) => r.userId === currentUser.userId && r.status === '대여중').length === 0 ? (
+                {rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').length === 0 ? (
                   <div className="text-center py-8 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl">대여 중인 보드게임이 없습니다.</div>
                 ) : (
-                  rentals.filter((r) => r.userId === currentUser.userId && r.status === '대여중').map((rental) => {
+                  rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').map((rental: Rental) => {
                     const isOverdue = today > rental.endDate;
                     const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
 
@@ -1918,7 +1944,7 @@ export default function App() {
                 {returnedRentalsList.length === 0 ? (
                   <div className="text-center py-8 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl">반납 이력이 없습니다.</div>
                 ) : (
-                  returnedRentalsList.map((rental) => {
+                  returnedRentalsList.map((rental: Rental) => {
                     const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
                     const isLateReturn = returnedDate > rental.endDate;
                     const overdueDays = isLateReturn ? getDaysDifference(returnedDate, rental.endDate) : 0;
@@ -1989,13 +2015,13 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 4. 랭킹 - 요즘 핫한 게임: 줄바꿈(break-keep) 및 요구 노출 순서 재배치 */}
+              {/* 요즘 핫한 게임 */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
                     * 최근 30일 대여 횟수 + 신작 가산점 + BGG & 회원 평점 합산 기준
                   </p>
-                  {hotRankedGamesList.map((game, index) => {
+                  {hotRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
                     return (
                       <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
@@ -2024,7 +2050,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 5. 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2033,15 +2058,12 @@ export default function App() {
                         />
 
                         <div className="flex-1 min-w-0">
-                          {/* 4. 게임명 줄바꿈 처리 */}
                           <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
-                            {/* 4. 1행: 출시년도 & BGG 평점 */}
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>출시: {game.releaseYear}년</span>
                               <span>BGG: {game.bggRating}점</span>
                             </div>
-                            {/* 4. 2행: 최근 대여 횟수 & 회원 평점 */}
                             <div className="whitespace-nowrap flex gap-2">
                               <span>최근 대여: <strong className="text-rose-500 font-bold">{game.recentRentalCount || 0}회</strong></span>
                               <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
@@ -2059,13 +2081,13 @@ export default function App() {
                 </div>
               )}
 
-              {/* 4. 랭킹 - 명예의 전당: 줄바꿈(break-keep) 및 요구 노출 순서 재배치 */}
+              {/* 명예의 전당 */}
               {rankingTab === 'hall' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
                     * 전체 누적 대여 횟수 + BGG & 회원 평점 기준 (스테디셀러)
                   </p>
-                  {hallOfFameRankedGamesList.map((game, index) => {
+                  {hallOfFameRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
                     return (
                       <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
@@ -2094,7 +2116,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 5. 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2103,15 +2124,12 @@ export default function App() {
                         />
 
                         <div className="flex-1 min-w-0">
-                          {/* 4. 게임명 줄바꿈 처리 */}
                           <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
-                            {/* 4. 1행: 출시년도 & BGG 평점 */}
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>출시: {game.releaseYear}년</span>
                               <span>BGG: {game.bggRating}점</span>
                             </div>
-                            {/* 4. 2행: 총 대여 횟수 & 회원 평점 */}
                             <div className="whitespace-nowrap flex gap-2">
                               <span>총 대여: <strong className="text-amber-500 font-bold">{game.rentalCount || 0}회</strong></span>
                               <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
@@ -2147,7 +2165,7 @@ export default function App() {
               </div>
 
               <div className="grid gap-3.5">
-                {visibleSitesList.map((site) => (
+                {visibleSitesList.map((site: BoardSite) => (
                   <a
                     key={site.siteId}
                     href={site.url}
@@ -2188,7 +2206,7 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
-              {/* ⭕ 3. 운영자 서브메뉴 순서: 게임관리, 대여/반납, 사이트관리, 회원관리, 공지사항 */}
+              {/* 운영자 서브메뉴 순서: 게임관리, 대여/반납, 사이트관리, 회원관리, 공지사항 */}
               <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
@@ -2278,12 +2296,11 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {filteredGameAdminList.map((game) => (
+                    {filteredGameAdminList.map((game: Game) => (
                       <div key={game.gameId} className={`border p-3 rounded-2xl flex justify-between items-center shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {/* 5. 이미지 테두리 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2291,7 +2308,7 @@ export default function App() {
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
                           <div className="min-w-0 flex-1">
-                            {/* ⭕ 1. 게임명 줄바꿈, 게임ID 괄호 배치, 노출 아이콘 연속 노출 */}
+                            {/* 1. 게임명 줄바꿈, 게임ID 괄호 배치, 노출 아이콘 연속 노출 */}
                             <div className="font-bold leading-snug break-keep text-xs mb-0.5">
                               <span className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{game.title}</span>
                               <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
@@ -2350,7 +2367,7 @@ export default function App() {
                           : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      대여중 ({rentals.filter((r) => r.status === '대여중').length})
+                      대여중 ({rentals.filter((r: Rental) => r.status === '대여중').length})
                     </button>
                     <button
                       onClick={() => setAdminRentalTab('completed')}
@@ -2366,7 +2383,7 @@ export default function App() {
 
                   {adminRentalTab === 'active' && (
                     <div className="space-y-2.5">
-                      {rentals.filter((r) => r.status === '대여중').map((rental) => {
+                      {rentals.filter((r: Rental) => r.status === '대여중').map((rental: Rental) => {
                         const isOverdue = today > rental.endDate;
                         const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
 
@@ -2381,7 +2398,7 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                {/* ⭕ 2. 대여중 게임명 뒤에 {게임ID} 노출 */}
+                                {/* 2. 대여중 게임명 뒤에 {게임ID} 노출 */}
                                 <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{rental.gameTitle}</span>
                                   <span className="text-slate-400 font-mono font-normal ml-1">({rental.gameId})</span>
@@ -2405,7 +2422,7 @@ export default function App() {
 
                   {adminRentalTab === 'completed' && (
                     <div className="space-y-2.5">
-                      {allReturnedRentalsAdminList.map((rental) => {
+                      {allReturnedRentalsAdminList.map((rental: Rental) => {
                         const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
 
                         return (
@@ -2415,7 +2432,7 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                {/* ⭕ 2. 반납완료 게임명 뒤에 {게임ID} 노출 */}
+                                {/* 2. 반납완료 게임명 뒤에 {게임ID} 노출 */}
                                 <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
                                   <span>{rental.gameTitle}</span>
@@ -2464,7 +2481,7 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {sites.map((s) => (
+                    {sites.map((s: BoardSite) => (
                       <div key={s.siteId} className={`border p-3.5 rounded-2xl shadow-sm space-y-2 ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
@@ -2533,7 +2550,7 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {filteredUserAdminList.map((user) => {
+                    {filteredUserAdminList.map((user: UserData) => {
                       const isWithdrawn = user.role === '탈퇴회원';
 
                       return (
@@ -2609,7 +2626,7 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {notices.map((n) => (
+                    {notices.map((n: Notice) => (
                       <div key={n.noticeId} className={`border p-3.5 rounded-2xl shadow-sm space-y-1.5 ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
@@ -2895,12 +2912,12 @@ export default function App() {
                 {favoriteGamesList.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">찜한 보드게임이 없습니다.</div>
                 ) : (
-                  favoriteGamesList.map((game) => (
+                  favoriteGamesList.map((game: Game) => (
                     <div key={game.gameId} className={`p-3 rounded-2xl border flex items-center justify-between gap-3 shadow-sm ${
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {/* 5. 이미지 테두리 보정 */}
+                        {/* 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2969,12 +2986,12 @@ export default function App() {
                 {myRatingGamesList.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">평가를 남긴 보드게임이 없습니다.</div>
                 ) : (
-                  myRatingGamesList.map((game) => (
+                  myRatingGamesList.map((game: any) => (
                     <div key={game.gameId} className={`p-3 rounded-2xl border flex items-center justify-between gap-3 shadow-sm ${
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
-                        {/* 5. 내 평점 모달 이미지 테두리 보정 */}
+                        {/* 내 평점 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -3140,7 +3157,7 @@ export default function App() {
                   {reports.length === 0 ? (
                     <div className="text-center py-12 text-slate-400 text-xs">접수 내역이 없습니다.</div>
                   ) : (
-                    reports.map((report) => {
+                    reports.map((report: ReportData) => {
                       const isSelected = selectedReport?.reportId === report.reportId;
                       return (
                         <div
@@ -3201,7 +3218,7 @@ export default function App() {
               <form onSubmit={handleSendReport} className="space-y-3.5">
                 <div>
                   <label className="font-bold block mb-1.5">카테고리 선택</label>
-                  {/* 3. 선택 기본값 및 5종 선택지 구성 */}
+                  {/* 선택 기본값 및 5종 선택지 구성 */}
                   <select
                     value={reportForm.category}
                     onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
@@ -3261,7 +3278,7 @@ export default function App() {
                   >
                     취소
                   </button>
-                  {/* 3. 제출하기 버튼 아이콘 제거 */}
+                  {/* 제출하기 버튼 아이콘 제거 */}
                   <button
                     type="submit"
                     className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm text-xs"
@@ -3290,7 +3307,7 @@ export default function App() {
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-3.5">
-                {/* 6. 입력 불가능 필드 딤드 시인성 보정 */}
+                {/* 입력 불가능 필드 딤드 시인성 보정 */}
                 <div>
                   <label className="font-bold block mb-1 text-slate-400">아이디 (LDAP)</label>
                   <input
@@ -3412,7 +3429,7 @@ export default function App() {
 
                 <div className="text-slate-400 font-medium flex justify-between items-center pt-0.5">
                   <span>반납 예정일:</span>
-                  <strong className={isDarkMode ? 'text-slate-100 font-extrabold' : 'text-slate-900 font-extrabold'}>{calculatedCalculatedEndDate()}</strong>
+                  <strong className={isDarkMode ? 'text-slate-100 font-extrabold' : 'text-slate-900 font-extrabold'}>{calculateEndDate()}</strong>
                 </div>
               </div>
 
@@ -3420,7 +3437,7 @@ export default function App() {
                 {cart.length === 0 ? (
                   <div className="text-center py-16 text-slate-400 font-medium">담긴 게임이 없습니다.</div>
                 ) : (
-                  cart.map((game) => (
+                  cart.map((game: Game) => (
                     <div key={game.gameId} className={`flex justify-between items-center border p-3 rounded-xl shadow-sm ${
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200/80'
                     }`}>
@@ -3485,7 +3502,7 @@ export default function App() {
 
                 <div className="space-y-2 pt-1">
                   <h4 className="font-bold text-slate-400 px-0.5">전체 공지 목록 ({notices.length})</h4>
-                  {notices.map((notice) => {
+                  {notices.map((notice: Notice) => {
                     const isSelected = selectedNotice?.noticeId === notice.noticeId;
                     return (
                       <div
@@ -3614,7 +3631,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5. 게임 등록/수정 모달 (장르 4개 확대 & 다크모드 선택 장르 시인성 강조 & 보드게임 ID 딤드 보정) */}
+        {/* 5. 게임 등록/수정 모달 (장르 4개 확대 & 다크모드 선택 장르 시인성 강조 & 보드게임 ID 딤드 보정) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3660,7 +3677,6 @@ export default function App() {
                 <div className="flex gap-2">
                   <div className="w-[30%]">
                     <label className="font-bold block mb-1 truncate text-slate-400">보드게임 ID</label>
-                    {/* 5. 보드게임 ID 입력 불가 항목 딤드 명암 처리 */}
                     <input
                       type="text"
                       required
@@ -3796,7 +3812,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 4, 5. 장르 선택 최대 4개 및 다크모드 선택 장르 시인성 강화 */}
+                {/* 장르 선택 최대 4개 및 다크모드 선택 장르 시인성 강조 */}
                 <div className="pt-1">
                   <label className="font-bold block mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 4개)</span>
@@ -3804,7 +3820,7 @@ export default function App() {
                   </label>
                   
                   <div className="flex flex-wrap gap-1.5">
-                    {PRESET_GENRES.map((preset) => {
+                    {PRESET_GENRES.map((preset: string) => {
                       const isSelected = editingGame.genres.includes(preset);
                       const isMaxReached = editingGame.genres.length >= 4 && !isSelected;
 
