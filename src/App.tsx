@@ -32,7 +32,6 @@ import {
   Siren,
   ShieldCheck,
   Bell,
-  Send,
   CalendarDays,
   Flame,
   Award,
@@ -1010,7 +1009,6 @@ export default function App() {
     await fetchInitialData();
   };
 
-  // 장르 선택 최대 4개 확대
   const handleToggleGenre = (genreName: string) => {
     if (!editingGame) return;
     const exists = editingGame.genres.includes(genreName);
@@ -1130,162 +1128,6 @@ export default function App() {
       else alert('공지사항이 삭제되었습니다.');
       await fetchInitialData();
     }
-  };
-
-  // 신고 및 건의하기 카테고리 필수값 체크
-  const handleSendReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
-
-    if (!reportForm.category || reportForm.category === '선택') {
-      alert('카테고리를 선택해 주세요.');
-      return;
-    }
-
-    if (!reportForm.title.trim() || !reportForm.content.trim()) {
-      alert('제목과 상세 내용을 입력해 주세요.');
-      return;
-    }
-
-    const { error } = await supabase.from('reports').insert([
-      {
-        user_id: currentUser.userId,
-        category: reportForm.category,
-        title: reportForm.title.trim(),
-        content: reportForm.content.trim(),
-        is_read: false
-      }
-    ]);
-
-    if (error) {
-      alert('신고/건의 접수 실패: ' + error.message);
-    } else {
-      alert('운영진에게 성공적으로 전달되었습니다.\n감사합니다.');
-      setReportForm({ title: '', content: '', category: '' });
-      setIsReportModalOpen(false);
-      await fetchInitialData();
-    }
-  };
-
-  const handleNoticeClick = (notice: Notice) => {
-    setSelectedNotice(notice);
-    setIsNoticeDrawerOpen(true);
-  };
-
-  const getReleaseBonus = (year: number) => {
-    const diff = currentYear - year;
-    if (diff === 0) return 3;
-    if (diff === 1) return 2;
-    if (diff === 2) return 1;
-    return 0;
-  };
-
-  const hotRankedGamesList = [...games]
-    .map(game => {
-      const recentScore = (game.recentRentalCount || 0) * 0.5;
-      const releaseBonus = getReleaseBonus(game.releaseYear);
-      const userRatingScore = (game.userAvgRating || 0) * 0.5;
-      const totalScore = Number((recentScore + releaseBonus + game.bggRating + userRatingScore).toFixed(2));
-      return { ...game, totalScore, recentScore, releaseBonus, userRatingScore };
-    })
-    .sort((a, b) => b.totalScore - a.totalScore)
-    .slice(0, 30);
-
-  const hallOfFameRankedGamesList = [...games]
-    .map(game => {
-      const rentalScore = (game.rentalCount || 0) * 0.1;
-      const userRatingScore = (game.userAvgRating || 0) * 0.5;
-      const totalScore = Number((rentalScore + game.bggRating + userRatingScore).toFixed(2));
-      return { ...game, totalScore, rentalScore, userRatingScore };
-    })
-    .sort((a, b) => b.totalScore - a.totalScore)
-    .slice(0, 30);
-
-  const filteredGameList = [...games]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .filter((g) => g.isVisible === 'Y')
-    .filter((g) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
-    .filter((g) => {
-      if (playerFilter === 0) return true;
-      if (playerFilter === 5) return g.maxPlayers >= 5;
-      return g.minPlayers <= playerFilter && g.maxPlayers >= playerFilter;
-    })
-    .filter((g) => {
-      if (!genreFilter) return true;
-      return g.genres.includes(genreFilter);
-    })
-    .filter((g) => {
-      if (difficultyFilter === 'all') return true;
-      if (difficultyFilter === 'easy') return g.difficulty < 2.3;
-      if (difficultyFilter === 'normal') return g.difficulty >= 2.3 && g.difficulty <= 3.5;
-      if (difficultyFilter === 'hard') return g.difficulty > 3.5;
-      return true;
-    });
-
-  const filteredGameAdminList = [...games]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .filter((g) => g.title.toLowerCase().includes(gameAdminSearch.trim().toLowerCase()));
-
-  const filteredUserAdminList = [...users]
-    .sort((a, b) => {
-      if (b.createdAt !== a.createdAt) {
-        return b.createdAt.localeCompare(a.createdAt);
-      }
-      return b.userId.localeCompare(a.userId);
-    })
-    .filter((u) => {
-      const query = userAdminSearch.trim().toLowerCase();
-      if (!query) return true;
-      return (
-        u.name.toLowerCase().includes(query) ||
-        u.userId.toLowerCase().includes(query)
-      );
-    });
-
-  const returnedRentalsList = rentals
-    .filter((r) => currentUser && r.userId === currentUser.userId && r.status === '반납완료')
-    .sort((a, b) => {
-      const dateA = a.returnedAt || a.startDate;
-      const dateB = b.returnedAt || b.startDate;
-      if (dateB !== dateA) {
-        return dateB.localeCompare(dateA);
-      }
-      return b.rentalId - a.rentalId;
-    });
-
-  const allReturnedRentalsAdminList = rentals
-    .filter((r) => r.status === '반납완료')
-    .sort((a, b) => {
-      const dateA = a.returnedAt || a.startDate;
-      const dateB = b.returnedAt || b.startDate;
-      if (dateB !== dateA) {
-        return dateB.localeCompare(dateA);
-      }
-      return b.rentalId - a.rentalId;
-    });
-
-  const visibleSitesList = sites.filter(s => s.isVisible === 'Y');
-  const favoriteGamesList = games.filter(g => userFavorites.includes(g.gameId));
-
-  const myRatingGamesList = games
-    .map(g => {
-      const myRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === g.gameId);
-      return { ...g, myScore: myRating ? myRating.score : null };
-    })
-    .filter(g => g.myScore !== null);
-
-  const isFilterActive = playerFilter > 0 || genreFilter !== '' || difficultyFilter !== 'all';
-
-  const resetFilters = () => {
-    setPlayerFilter(0);
-    setGenreFilter('');
-    setDifficultyFilter('all');
-  };
-
-  const calculatedCalculatedEndDate = () => {
-    const d = new Date();
-    d.setDate(d.getDate() + rentalDays);
-    return d.toISOString().split('T')[0];
   };
 
   if (loading) {
@@ -1883,7 +1725,7 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start">
-                          {/* 5. 이미지 테두리 라이트/다크 분리 보정 */}
+                          {/* 5. 이미지 테두리 색상 보정 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -3034,7 +2876,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2. 찜한 보드게임 확인 모달 (게임명(ID) 노출, 줄바꿈, 인원수|시간|난이도|BGG 노출) */}
+        {/* 찜한 보드게임 확인 모달 (게임명(ID) 노출, 줄바꿈, 인원수|시간|난이도|BGG 노출) */}
         {isFavoritesModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border max-h-[85vh] flex flex-col ${
@@ -3066,12 +2908,12 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0 flex-1">
-                          {/* 2. 게임명 (게임ID) 줄바꿈 노출 */}
+                          {/* 게임명 (게임ID) 줄바꿈 노출 */}
                           <h4 className="font-bold break-keep leading-tight text-xs">
                             <span>{game.title}</span>
                             <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
                           </h4>
-                          {/* 2. 인원수 | 플레이시간 | 난이도 | BGG 노출 */}
+                          {/* 인원수 | 플레이시간 | 난이도 | BGG 노출 */}
                           <p className="text-[10px] text-slate-400 mt-1 font-semibold flex flex-wrap items-center gap-1">
                             <span>{game.minPlayers}~{game.maxPlayers}인</span>
                             <span>|</span>
@@ -3341,7 +3183,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 신고 및 건의하기 독립 팝업 모달 ('선택' 기본값 & 카테고리 추가 & 제출 아이콘 제거) */}
+        {/* 3. 신고 및 건의하기 독립 팝업 모달 ('선택' 기본값 & 카테고리 추가 & 제출 아이콘 제거) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3432,7 +3274,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 6. 내 정보 수정 및 비밀번호 변경 모달 (입력 가능/불가능 공통 딤드 스타일 적용) */}
+        {/* 6. 내 정보 수정 및 비밀번호 변경 모달 (입력 가능/불가능 공통 딤드 스타일 적용) */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3772,7 +3614,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5. 게임 등록/수정 모달 (장르 4개로 확대 & 다크모드/라이트모드 딤드 시인성 완전 개선) */}
+        {/* ⭕ 5. 게임 등록/수정 모달 (장르 4개 확대 & 다크모드 선택 장르 시인성 강조 & 보드게임 ID 딤드 보정) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3818,7 +3660,7 @@ export default function App() {
                 <div className="flex gap-2">
                   <div className="w-[30%]">
                     <label className="font-bold block mb-1 truncate text-slate-400">보드게임 ID</label>
-                    {/* 5. 게임 수정 페이지 내 보드게임 ID 딤드 색상 시인성 강화 */}
+                    {/* 5. 보드게임 ID 입력 불가 항목 딤드 명암 처리 */}
                     <input
                       type="text"
                       required
@@ -3954,7 +3796,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ⭕ 4, 5. 장르 선택 최대 4개 및 다크모드 선택 대비 강렬한 명암 대비 처리 */}
+                {/* 4, 5. 장르 선택 최대 4개 및 다크모드 선택 장르 시인성 강화 */}
                 <div className="pt-1">
                   <label className="font-bold block mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 4개)</span>
