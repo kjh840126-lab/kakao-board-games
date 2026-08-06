@@ -100,6 +100,16 @@ export interface Notice {
   createdAt: string;
 }
 
+export interface ReportData {
+  reportId: number;
+  userId: string;
+  category: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  isRead: boolean;
+}
+
 const PRESET_GENRES = ['전략게임', '파티게임', '추상전략', '타일 놓기', '카드게임', '가족게임', '협동게임', '마피아'];
 const LOGIN_LOGO_URL = '/logo.png'; 
 const ALLOWED_EMAIL_DOMAINS = [
@@ -138,9 +148,10 @@ export default function App() {
   const [games, setGames] = useState<Game[]>([]);
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [notices, setNoticeList] = useState<Notice[]>([]);
+  const [reports, setReportList] = useState<ReportData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 설정 관련 State (LocalStorage 연동)
+  // 설정 관련 State
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
   });
@@ -149,13 +160,9 @@ export default function App() {
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem('kakao_bg_theme', themeMode);
-  }, [themeMode]);
-
-  useEffect(() => {
-    localStorage.setItem('kakao_bg_fontSize', fontSize);
-  }, [fontSize]);
+  // ⭕ 관리자용 신고/건의 우측 드로어 State
+  const [isAdminReportDrawerOpen, setIsAdminReportDrawerOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
 
   // 내 정보 수정 / 비밀번호 변경 모달 State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -247,6 +254,14 @@ export default function App() {
       fetchInitialData();
     }
   }, [activeTab, adminSubTab]);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_theme', themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_fontSize', fontSize);
+  }, [fontSize]);
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -393,6 +408,21 @@ export default function App() {
           createdAt: n.created_at?.split('T')[0] || today
         })));
       }
+
+      // ⭕ 신고 및 건의 데이터 가져오기
+      const { data: reportsData } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
+      if (reportsData) {
+        setReportList(reportsData.map(r => ({
+          reportId: r.report_id || r.id,
+          userId: r.user_id,
+          category: r.category || '신고/건의',
+          title: r.title,
+          content: r.content,
+          createdAt: r.created_at?.replace('T', ' ').substring(0, 16) || today,
+          isRead: !!r.is_read
+        })));
+      }
+
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
     } finally {
@@ -576,6 +606,7 @@ export default function App() {
     setCart([]);
     setIsCartOpen(false);
     setIsSettingsOpen(false);
+    setIsAdminReportDrawerOpen(false);
   };
 
   const handleUserRoleChange = async (targetUser: UserData, newRole: Role) => {
@@ -595,11 +626,32 @@ export default function App() {
     }
   };
 
+  // ⭕ 개별 신고글 읽음 처리 및 DB 업데이트
+  const handleMarkReportAsRead = async (report: ReportData) => {
+    setSelectedReport(report);
+    if (!report.isRead) {
+      await supabase.from('reports').update({ is_read: true }).eq('report_id', report.reportId);
+      setReportList(prev => prev.map(r => r.reportId === report.reportId ? { ...r, isRead: true } : r));
+    }
+  };
+
+  // ⭕ 모든 신고글 읽음 일괄 처리
+  const handleMarkAllReportsAsRead = async () => {
+    const unreadIds = reports.filter(r => !r.isRead).map(r => r.reportId);
+    if (unreadIds.length === 0) return;
+
+    await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
+    setReportList(prev => prev.map(r => ({ ...r, isRead: true })));
+  };
+
   const activeRentalsCount = currentUser 
     ? rentals.filter((r) => r.userId === currentUser.userId && r.status === '대여중').length 
     : 0;
 
   const isAdmin = currentUser?.role === '운영자';
+
+  // ⭕ 읽지 않은 신규 신고/건의 개수
+  const unreadReportsCount = reports.filter(r => !r.isRead).length;
 
   const toggleCartItem = (game: Game) => {
     const isAlreadyInCart = cart.some((item) => item.gameId === game.gameId);
@@ -882,6 +934,7 @@ export default function App() {
         category: reportForm.category,
         title: reportForm.title.trim(),
         content: reportForm.content.trim(),
+        is_read: false
       }
     ]);
 
@@ -891,6 +944,7 @@ export default function App() {
       alert('운영진에게 성공적으로 전달되었습니다.\n감사합니다.');
       setReportForm({ title: '', content: '', category: '장애/오류 신고' });
       setIsReportModalOpen(false);
+      await fetchInitialData();
     }
   };
 
@@ -1322,17 +1376,29 @@ export default function App() {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            title="설정"
-            className={`p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm ${
-              isHeaderAdminTheme 
-                ? 'bg-sky-300 hover:bg-sky-200 text-slate-900' 
-                : 'bg-amber-400/80 hover:bg-amber-400 text-slate-900'
-            }`}
-          >
-            <Settings size={18} />
-          </button>
+          {/* ⭕ 1, 4, 5. 관리자 페이지 진입 시 신고 아이콘으로 변경 & 신규 글 있을 경우 N 뱃지 표시 */}
+          {isHeaderAdminTheme ? (
+            <button
+              onClick={() => setIsAdminReportDrawerOpen(true)}
+              title="신고/건의 확인"
+              className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-sky-300 hover:bg-sky-200 text-slate-900 relative"
+            >
+              <Siren size={18} />
+              {unreadReportsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm animate-pulse">
+                  N
+                </span>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              title="설정"
+              className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-amber-400/80 hover:bg-amber-400 text-slate-900"
+            >
+              <Settings size={18} />
+            </button>
+          )}
         </header>
 
         {/* 메인 스크롤 영역 */}
@@ -1344,7 +1410,7 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* 7. 다크모드 공지사항 시인성 개선 */}
+              {/* 수직 롤링 공지사항 배너 */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
@@ -1437,13 +1503,10 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
-                            {/* ⭕ 4. 메타 순서: 인원수 ➔ 플레이시간 ➔ 난이도 ➔ BGG 평점 순서 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
-                              {/* 5. 난이도 아이콘 & 폰트색 통일 */}
                               <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
-                              {/* 6. BGG 커스텀 아이콘 및 평점 노출 */}
                               <span className="flex items-center gap-0.5"><BggIcon size={11} className="text-slate-400" /> BGG {game.bggRating}</span>
                             </div>
                           </div>
@@ -1501,7 +1564,6 @@ export default function App() {
           {/* 2. 반납/히스토리 탭 */}
           {activeTab === 'returns' && (
             <div className="space-y-5 mt-0.5">
-              {/* ⭕ 7. 다크모드 시 현재 대여중인 게임 배너 시인성 개선 */}
               <div className={`p-4 rounded-2xl flex justify-between items-center shadow-sm ${
                 isDarkMode ? 'bg-slate-800 border-2 border-slate-700 text-white' : 'bg-slate-900 text-white'
               }`}>
@@ -1662,7 +1724,6 @@ export default function App() {
                       <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
-                        {/* ⭕ 7. 랭킹 1, 2, 3등 메달 아이콘 노출 */}
                         <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
                           {rank === 1 ? (
                             <div className="relative flex items-center justify-center">
@@ -1725,7 +1786,6 @@ export default function App() {
                       <div key={game.gameId} className={`border p-3.5 rounded-2xl flex items-center gap-3.5 shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
-                        {/* ⭕ 랭킹 1, 2, 3등 메달 아이콘 노출 */}
                         <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
                           {rank === 1 ? (
                             <div className="relative flex items-center justify-center">
@@ -2095,7 +2155,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 6, 7. 공지사항 작성 버튼명 '공지 작성'으로 원복 및 타이틀 밑 설명 제거 */}
+              {/* ⭕ 6, 7. '공지 작성' 버튼명 원복 및 설명 문구 제거 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2153,7 +2213,7 @@ export default function App() {
           )}
         </main>
 
-        {/* ⭕ 2. 다크모드/라이트모드 장바구니 아이콘 색상 차별화 */}
+        {/* ⭕ 2. 다크모드/라이트모드 플로팅 장바구니 버튼 색상 차별화 (다크: 옐로우, 라이트: 어두운 톤) */}
         {activeTab === 'games' && (
           <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
             <button
@@ -2199,14 +2259,13 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 1, 3, 5. 설정 드로어 (왼쪽 오버레이 클릭 닫기, 관리자모드 하늘색 헤더, 최하단 로그아웃) */}
+        {/* ⭕ 1, 3, 5. 설정 드로어 (왼쪽 오버레이 클릭 닫기 적용, 최하단 로그아웃) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
               className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
-              onClick={(e) => e.stopPropagation()} // 클릭 이벤트 전파 차단
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* ⭕ 5. 관리자 페이지 시 설정 드로어 헤더 배경도 하늘색 연동 */}
               <div className={`p-4 flex justify-between items-center font-bold text-sm ${
                 isHeaderAdminTheme ? 'bg-sky-400 text-slate-900' : 'bg-[#FEE500] text-slate-900'
               }`}>
@@ -2317,7 +2376,7 @@ export default function App() {
 
               </div>
 
-              {/* ⭕ 3. 로그아웃 버튼 위치를 최하단(닫기 버튼 위치)으로 이동 */}
+              {/* ⭕ 3. 로그아웃 버튼을 최하단 위치에 배치 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={handleLogout}
@@ -2330,7 +2389,109 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2, 3. 신고 및 건의하기 독립 팝업 모달 (3. 다크모드 시 테두리 고대비 border-slate-600 처리) */}
+        {/* ⭕ 1, 2, 3, 4, 5. 관리자용 신고/건의 내역 우측 슬라이딩 Drawer 모달 */}
+        {isAdminReportDrawerOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
+            <div 
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-sm">
+                <span className="flex items-center gap-2">
+                  <Siren size={18} /> 신고 및 건의 접수함
+                </span>
+                <button onClick={() => setIsAdminReportDrawerOpen(false)}><X size={18} /></button>
+              </div>
+
+              <div className="p-3 bg-slate-100 dark:bg-slate-800/80 flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                  총 {reports.length}건 (안읽음: <strong className="text-rose-500 font-extrabold">{unreadReportsCount}</strong>건)
+                </span>
+                {unreadReportsCount > 0 && (
+                  <button 
+                    onClick={handleMarkAllReportsAsRead}
+                    className="text-[10px] font-bold bg-slate-900 text-white px-2 py-1 rounded-md hover:bg-slate-800 transition"
+                  >
+                    모두 읽음
+                  </button>
+                )}
+              </div>
+
+              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                {selectedReport && (
+                  <div className={`p-4 rounded-2xl space-y-2 border shadow-sm ${
+                    isDarkMode ? 'bg-slate-800 border-sky-500/40' : 'bg-sky-50 border-sky-300'
+                  }`}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-sky-800 font-extrabold bg-sky-200 px-2 py-0.5 rounded-md inline-block">
+                        {selectedReport.category}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        작성자: {selectedReport.userId}
+                      </span>
+                    </div>
+                    <h3 className={`font-extrabold leading-snug ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
+                    <p className={`whitespace-pre-wrap leading-relaxed pt-1.5 border-t ${
+                      isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-sky-200'
+                    }`}>
+                      {selectedReport.content}
+                    </p>
+                    <span className="text-[10px] text-slate-400 block text-right pt-0.5">{selectedReport.createdAt}</span>
+                  </div>
+                )}
+
+                <div className="space-y-2 pt-1">
+                  <h4 className="font-bold text-slate-400 px-0.5">전체 접수 목록 ({reports.length})</h4>
+                  {reports.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400">접수된 신고/건의 내역이 없습니다.</div>
+                  ) : (
+                    reports.map((report) => {
+                      const isSelected = selectedReport?.reportId === report.reportId;
+                      return (
+                        <div
+                          key={report.reportId}
+                          onClick={() => handleMarkReportAsRead(report)}
+                          className={`p-3 rounded-xl border cursor-pointer transition relative ${
+                            isSelected
+                              ? 'border-sky-500 bg-sky-500 text-slate-900 font-bold shadow-sm'
+                              : isDarkMode
+                              ? 'border-slate-800 bg-slate-800/60 text-slate-200 hover:border-slate-700'
+                              : 'border-slate-200/80 bg-white text-slate-800 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start gap-1">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                              {!report.isRead && (
+                                <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 animate-pulse">
+                                  N
+                                </span>
+                              )}
+                              <span className="truncate font-semibold">{report.title}</span>
+                            </div>
+                            <span className={`text-[10px] font-mono flex-shrink-0 ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
+                              {report.userId}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className={`p-4 border-t ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <button
+                  onClick={() => setIsAdminReportDrawerOpen(false)}
+                  className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⭕ 2, 3. 신고 및 건의하기 독립 팝업 모달 (다크모드 시 테두리 고대비 border-slate-600 처리) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -2417,7 +2578,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 내 정보 수정 및 비밀번호 변경 모달 (다크모드 시 테두리 고대비 border-slate-600 처리) */}
+        {/* 내 정보 수정 및 비밀번호 변경 모달 */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -2503,7 +2664,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 장바구니 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
+        {/* 1. 장바구니 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsCartOpen(false)}>
             <div 
@@ -2582,7 +2743,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 공지사항 우측 슬라이딩 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
+        {/* 1. 공지사항 우측 슬라이딩 Drawer 모달 (왼쪽 배경 클릭 시 닫기 적용) */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
