@@ -572,7 +572,7 @@ export default function App() {
 
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
-    } font-sans finally {
+    } finally {
       setLoading(false);
     }
   };
