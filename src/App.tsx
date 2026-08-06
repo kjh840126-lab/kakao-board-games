@@ -120,10 +120,10 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 공지사항 롤링 인덱스 State
+  // ⭕ 자연스러운 무한 롤링을 위한 State
   const [noticeIndex, setNoticeIndex] = useState(0);
+  const [isNoticeTransition, setIsNoticeTransition] = useState(true);
 
-  // ⭕ 공지사항 우측 드로어 모달 State & 클릭한 공지사항 State
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
 
@@ -201,13 +201,34 @@ export default function App() {
     }
   }, [activeTab, adminSubTab]);
 
+  // ⭕ 최근 공지 최대 5개 추출
+  const recentNoticesList = notices.slice(0, 5);
+
+  // ⭕ 공지사항 4초 타이머
   useEffect(() => {
-    if (notices.length <= 1) return;
+    if (recentNoticesList.length <= 1) return;
+
     const interval = setInterval(() => {
-      setNoticeIndex((prev) => (prev + 1) % Math.min(notices.length, 5));
+      setIsNoticeTransition(true);
+      setNoticeIndex((prev) => prev + 1);
     }, 4000);
+
     return () => clearInterval(interval);
-  }, [notices]);
+  }, [recentNoticesList.length]);
+
+  // ⭕ 복사본 1번에 도달하면 트랜지션을 끄고 즉시 진짜 1번(index 0)으로 위치 리셋 (되감기 현상 차단)
+  useEffect(() => {
+    if (recentNoticesList.length <= 1) return;
+
+    if (noticeIndex === recentNoticesList.length) {
+      const timer = setTimeout(() => {
+        setIsNoticeTransition(false);
+        setNoticeIndex(0);
+      }, 500); // 500ms(CSS Transition 소요시간) 후 실행
+
+      return () => clearTimeout(timer);
+    }
+  }, [noticeIndex, recentNoticesList.length]);
 
   const fetchInitialData = async () => {
     try {
@@ -791,7 +812,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 롤링 공지사항 클릭 시 우측 드로어 모달 오픈 처리
   const handleNoticeClick = (notice: Notice) => {
     setSelectedNotice(notice);
     setIsNoticeDrawerOpen(true);
@@ -876,8 +896,6 @@ export default function App() {
     d.setDate(d.getDate() + rentalDays);
     return d.toISOString().split('T')[0];
   };
-
-  const recentNoticesList = notices.slice(0, 5);
 
   if (loading) {
     return (
@@ -1241,11 +1259,11 @@ export default function App() {
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
               
-              {/* ⭕ 수직 롤링 공지사항 배너 (클릭 시 우측 공지사항 드로어 열림) */}
+              {/* ⭕ 자연스러운 무한 수직 롤링 공지사항 배너 (되감기 없이 순방향 연속 루프) */}
               <div 
                 onClick={() => {
                   if (recentNoticesList.length > 0) {
-                    const activeNotice = recentNoticesList[noticeIndex] || recentNoticesList[0];
+                    const activeNotice = recentNoticesList[noticeIndex % recentNoticesList.length] || recentNoticesList[0];
                     handleNoticeClick(activeNotice);
                   }
                 }}
@@ -1255,11 +1273,12 @@ export default function App() {
                 <div className="flex-1 h-5 overflow-hidden relative">
                   {recentNoticesList.length > 0 ? (
                     <div 
-                      className="transition-transform duration-500 ease-in-out flex flex-col"
+                      className={`flex flex-col ${isNoticeTransition ? 'transition-transform duration-500 ease-in-out' : ''}`}
                       style={{ transform: `translateY(-${noticeIndex * 20}px)` }}
                     >
-                      {recentNoticesList.map((notice) => (
-                        <div key={notice.noticeId} className="h-5 flex items-center justify-between">
+                      {/* 무한 연속 흐름을 위해 맨 뒤에 1번째 공지를 복사해 연결 */}
+                      {[...recentNoticesList, recentNoticesList[0]].map((notice, idx) => (
+                        <div key={`${notice.noticeId}-${idx}`} className="h-5 flex items-center justify-between">
                           <span className="text-[#FEE500] font-extrabold text-xs truncate">
                             {notice.title}
                           </span>
@@ -2138,7 +2157,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 신규 추가: 공지사항 우측 슬라이딩 Drawer 모달 */}
+        {/* 공지사항 우측 슬라이딩 Drawer 모달 */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
             <div className="w-full max-w-xs bg-white h-full flex flex-col shadow-2xl">
@@ -2152,7 +2171,6 @@ export default function App() {
               </div>
 
               <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {/* 1) 클릭해서 선택한 공지사항의 상세 내용 우선 노출 */}
                 {selectedNotice && (
                   <div className="p-4 bg-amber-50/80 border border-amber-300/80 rounded-2xl space-y-2 shadow-sm">
                     <span className="text-[10px] text-amber-800 font-extrabold bg-amber-200/80 px-2 py-0.5 rounded-md inline-block">
@@ -2166,7 +2184,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 2) 전체 공지사항 리스트 */}
                 <div className="space-y-2 pt-1">
                   <h4 className="text-[11px] font-bold text-slate-500 px-0.5">전체 공지 목록 ({notices.length})</h4>
                   {notices.map((notice) => {
