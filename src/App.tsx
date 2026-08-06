@@ -157,7 +157,7 @@ const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: str
     className={`inline-block flex-shrink-0 ${className}`}
   >
     <path d="M 12 0 L 22 6 L 20 18 L 12 22 L 4 18 L 2 6 Z" />
-    <path d="M 4 20 L 12 24 L 20 20 L 18 32 L 12 28 L 6 32 Z" />
+    <path d="M 4 20 L 12 24 L 20 20 L 18 32 L 6 32 Z" />
   </svg>
 );
 
@@ -1944,18 +1944,18 @@ export default function App() {
                             />
                           </div>
 
-                          {/* ⭕ 우측 정렬 그룹: [대여가능 버튼 높이/핏과 정확히 연동된 찜하기 버튼 p-1 w-[31px] h-[31px]] + [대여가능 알약 버튼] */}
+                          {/* 우측 정렬 그룹: [대여가능 버튼 높이/핏과 정확히 연동된 찜하기 버튼 (하트 size=16 고정, 안쪽 여백 최소화)] + [대여가능 버튼] */}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <button
                               onClick={() => toggleFavorite(game.gameId)}
-                              className={`p-1 min-w-[31px] w-[31px] h-[31px] rounded-xl font-bold border transition flex items-center justify-center ${
+                              className={`p-1 rounded-xl font-bold border transition flex items-center justify-center ${
                                 isDarkMode
                                   ? 'border-slate-700 bg-slate-800/80 hover:bg-slate-700'
                                   : 'border-slate-200 bg-slate-50/80 hover:bg-slate-100'
                               }`}
                               title={isFav ? "찜 해제" : "찜하기"}
                             >
-                              <Heart size={15} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
+                              <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
                             {isAvailable ? (
@@ -2147,7 +2147,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 랭킹 페이지: 나의 평점 별표 제외/점수만 노출, 출시년도 가산점 문구 제외 */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
@@ -2830,7 +2829,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 */}
+        {/* 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -3887,6 +3886,7 @@ export default function App() {
                     />
                   </div>
                   <div>
+                    {/* 모바일 OS 높이 왜곡 방지 h-[38px] min-h-[38px] -webkit-appearance */}
                     <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
