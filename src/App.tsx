@@ -119,6 +119,9 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ⭕ 공지사항 롤링 인덱스 State (최대 5개 공지 4초 간격 자동 전환)
+  const [noticeIndex, setNoticeIndex] = useState(0);
+
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('kakao_boardgame_user');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -192,6 +195,15 @@ export default function App() {
       fetchInitialData();
     }
   }, [activeTab, adminSubTab]);
+
+  // ⭕ 공지사항 4초(4000ms) 주기 수직 롤링 자동 타이머
+  useEffect(() => {
+    if (notices.length <= 1) return;
+    const interval = setInterval(() => {
+      setNoticeIndex((prev) => (prev + 1) % Math.min(notices.length, 5));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [notices]);
 
   const fetchInitialData = async () => {
     try {
@@ -855,7 +867,8 @@ export default function App() {
     return d.toISOString().split('T')[0];
   };
 
-  const latestNotice = notices.length > 0 ? notices[0] : null;
+  // ⭕ 최근 공지사항 최대 5개 추출
+  const recentNoticesList = notices.slice(0, 5);
 
   if (loading) {
     return (
@@ -1218,13 +1231,30 @@ export default function App() {
           {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
-              <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
-                <Bell size={16} className="text-[#FEE500] flex-shrink-0" />
-                <div className="leading-tight">
-                  {latestNotice ? (
-                    <span className="text-[#FEE500] font-extrabold text-xs block">{latestNotice.title}</span>
+              
+              {/* ⭕ 수직 롤링 공지사항 배너 (최신 5개 수직 슬라이딩) */}
+              <div className="bg-slate-900 text-white px-3.5 py-3 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm overflow-hidden h-11">
+                <Bell size={16} className="text-[#FEE500] flex-shrink-0 z-10" />
+                <div className="flex-1 h-5 overflow-hidden relative">
+                  {recentNoticesList.length > 0 ? (
+                    <div 
+                      className="transition-transform duration-500 ease-in-out flex flex-col"
+                      style={{ transform: `translateY(-${noticeIndex * 20}px)` }}
+                    >
+                      {recentNoticesList.map((notice) => (
+                        <div key={notice.noticeId} className="h-5 flex items-center">
+                          <span className="text-[#FEE500] font-extrabold text-xs truncate">
+                            {notice.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
-                    <span>1인당 최대 <strong className="text-[#FEE500] font-bold">3개</strong>까지 대여하실 수 있습니다.</span>
+                    <div className="h-5 flex items-center">
+                      <span className="text-slate-300 text-xs">
+                        1인당 최대 <strong className="text-[#FEE500] font-bold">3개</strong>까지 대여하실 수 있습니다.
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1345,7 +1375,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* ⭕ 소타이틀 변경: 대여중인 게임 */}
               <section className="space-y-2.5">
                 <h3 className="font-extrabold text-slate-900 text-sm tracking-tight flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-slate-900 rounded-full inline-block"></span>
@@ -1361,7 +1390,6 @@ export default function App() {
                     return (
                       <div key={rental.rentalId} className={`border p-3.5 rounded-2xl flex justify-between items-center ${isOverdue ? 'border-rose-300 bg-rose-50/40' : 'border-amber-300/60 bg-amber-50/40'}`}>
                         <div>
-                          {/* ⭕ 게임명 옆에 (게임ID) 표기 추가 */}
                           <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                             <span>{rental.gameTitle}</span>
                             <span className="text-xs text-slate-400 font-mono font-normal">({rental.gameId})</span>
@@ -1410,7 +1438,6 @@ export default function App() {
                     return (
                       <div key={rental.rentalId} className="border border-slate-200/80 p-3.5 rounded-2xl flex justify-between items-center bg-white">
                         <div>
-                          {/* ⭕ 게임명 옆에 (게임ID) 표기 추가 */}
                           <div className="flex items-center gap-1.5">
                             <CheckCircle2 size={15} className="text-emerald-600 flex-shrink-0" />
                             <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1">
