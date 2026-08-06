@@ -356,7 +356,7 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // ⭕ 3. 스크롤 최상단 처리 보정 (대여 탭 제외)
+  // 스크롤 최상단 이동 처리 (대여 탭 제외)
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
     if (newTab !== 'games') {
@@ -1881,41 +1881,38 @@ export default function App() {
                     const userRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === game.gameId);
 
                     return (
-                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex gap-3.5 shadow-sm transition ${
+                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm transition ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                       }`}>
                         
-                        {/* 이미지 영역 */}
-                        <div className="flex flex-col items-center flex-shrink-0">
+                        {/* 상단 2열 영역: [이미지] + [정보 영역] */}
+                        <div className="flex gap-3.5">
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200/40"
+                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200/40 flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
-                        </div>
 
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          <div>
-                            <div className="flex justify-between items-start">
-                              <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                                <span>{game.title}</span>
-                                <span className="text-[11px] text-slate-400 font-mono font-normal ml-1">({game.releaseYear}년)</span>
-                              </h3>
-                              <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            <div>
+                              <div className="flex justify-between items-start">
+                                <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                  <span>{game.title}</span>
+                                  <span className="text-[11px] text-slate-400 font-mono font-normal ml-1">({game.releaseYear}년)</span>
+                                </h3>
+                                <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
+                              </div>
+                              
+                              <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
+                                <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
+                                <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
+                                <span className="flex items-center gap-0.5"><BggIcon size={11} className="text-slate-400" /> BGG {game.bggRating}</span>
+                              </div>
                             </div>
-                            
-                            {/* 회원 평점 평균 항목 제거 */}
-                            <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                              <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
-                              <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
-                              <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
-                              <span className="flex items-center gap-0.5"><BggIcon size={11} className="text-slate-400" /> BGG {game.bggRating}</span>
-                            </div>
-                          </div>
 
-                          <div className={`mt-3 pt-2.5 border-t space-y-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+                            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pt-2">
                               {game.genres.map((genre) => (
                                 <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
                                   isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-800'
@@ -1924,68 +1921,68 @@ export default function App() {
                                 </span>
                               ))}
                             </div>
+                          </div>
+                        </div>
 
-                            {/* ⭕ 1. 이미지 요구 구도와 100% 동일하게 배치 (좌측: 나의 평점 ☆☆☆☆☆, 우측: 투명 하트 + 대여가능 버튼) */}
-                            <div className="flex justify-between items-center gap-2 pt-0.5">
-                              
-                              {/* 1. 나의 평점 1줄 노출 및 좌측 정렬 */}
-                              <div 
-                                onClick={() => {
-                                  setSelectedScore(userRating ? userRating.score : 5.0);
-                                  setRatingModalGame(game);
-                                }}
-                                className="cursor-pointer group flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-rose-500 transition"
-                                title="나의 평점 등록/수정"
-                              >
-                                <span className="whitespace-nowrap">나의 평점</span>
-                                <StarRating 
-                                  rating={userRating ? userRating.score : 0} 
-                                  size={12} 
-                                  colorClass={userRating ? "text-rose-500" : "text-slate-300 dark:text-slate-600"} 
-                                />
-                              </div>
-
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {/* ⭕ 2. 배경/외곽선 없는 투명 찜하기 아이콘 버튼 (선택 시 빨간색 하트 채움) */}
-                                <button
-                                  onClick={() => toggleFavorite(game.gameId)}
-                                  className="p-1 rounded-full transition flex items-center justify-center bg-transparent hover:scale-110 active:scale-95"
-                                  title={isFav ? "찜 해제" : "찜하기"}
-                                >
-                                  <Heart size={20} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-300 dark:text-slate-600"} />
-                                </button>
-
-                                {isAvailable ? (
-                                  <button
-                                    onClick={() => toggleCartItem(game)}
-                                    className={`w-auto px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
-                                      isSelectedInCart
-                                        ? 'bg-slate-900 text-white hover:bg-slate-800'
-                                        : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400'
-                                    }`}
-                                  >
-                                    {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
-                                  </button>
-                                ) : (
-                                  <div>
-                                    {isOverdue ? (
-                                      <span className="px-2.5 py-1 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block text-xs">
-                                        대여중 (연체 {overdueDays}일)
-                                      </span>
-                                    ) : (
-                                      <span className={`px-2.5 py-1 rounded-xl font-bold border inline-block text-xs ${
-                                        isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-slate-100 text-slate-600 border-slate-200'
-                                      }`}>
-                                        대여중 ({activeRental?.endDate?.substring(5)} 반납예정)
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                        {/* ⭕ 1, 2. 카드 맨 하단 영역: [좌측: 나의 평점 ☆☆☆☆☆ (이미지 열까지 바짝 정렬)] | [우측: 투명 하트 + 대여가능 알약 버튼] */}
+                        <div className={`pt-2.5 border-t flex justify-between items-center ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                          
+                          {/* 1. 나의 평점 1줄 노출 및 이미지 시작 열 바짝 정렬 */}
+                          <div 
+                            onClick={() => {
+                              setSelectedScore(userRating ? userRating.score : 5.0);
+                              setRatingModalGame(game);
+                            }}
+                            className="cursor-pointer group flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-rose-500 transition"
+                            title="나의 평점 등록/수정"
+                          >
+                            <span className="whitespace-nowrap">나의 평점</span>
+                            <StarRating 
+                              rating={userRating ? userRating.score : 0} 
+                              size={13} 
+                              colorClass={userRating ? "text-rose-500" : "text-slate-300 dark:text-slate-600"} 
+                            />
                           </div>
 
+                          {/* 2. 우측 정렬 그룹: [배경/외곽선 없는 하트] + [대여가능 알약 버튼] */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => toggleFavorite(game.gameId)}
+                              className="p-1 rounded-full transition flex items-center justify-center bg-transparent hover:scale-110 active:scale-95"
+                              title={isFav ? "찜 해제" : "찜하기"}
+                            >
+                              <Heart size={20} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
+                            </button>
+
+                            {isAvailable ? (
+                              <button
+                                onClick={() => toggleCartItem(game)}
+                                className={`w-auto px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
+                                  isSelectedInCart
+                                    ? 'bg-slate-900 text-white hover:bg-slate-800'
+                                    : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400'
+                                }`}
+                              >
+                                {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
+                              </button>
+                            ) : (
+                              <div>
+                                {isOverdue ? (
+                                  <span className="px-2.5 py-1 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block text-xs">
+                                    대여중 (연체 {overdueDays}일)
+                                  </span>
+                                ) : (
+                                  <span className={`px-2.5 py-1 rounded-xl font-bold border inline-block text-xs ${
+                                    isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-slate-100 text-slate-600 border-slate-200'
+                                  }`}>
+                                    대여중 ({activeRental?.endDate?.substring(5)} 반납예정)
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
+
                       </div>
                     );
                   })
@@ -2146,7 +2143,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 랭킹 페이지: 나의 평점 별표 제외/점수만 노출, 출시년도 가산점 문구 제외 */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
@@ -2829,7 +2825,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 4. 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
+        {/* 설정 드로어 */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -3886,7 +3882,6 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    {/* 모바일 OS 높이 왜곡 방지 h-[38px] min-h-[38px] -webkit-appearance */}
                     <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
