@@ -356,10 +356,15 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
+  // ⭕ 3. 스크롤 확실히 최상단 조작 (대여 탭 제외)
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
-    if (newTab !== 'games' && mainScrollRef.current) {
-      mainScrollRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    if (newTab !== 'games') {
+      setTimeout(() => {
+        if (mainScrollRef.current) {
+          mainScrollRef.current.scrollTop = 0;
+        }
+      }, 0);
     }
   };
 
@@ -616,7 +621,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 복구: 관리자 신고 읽음 처리 핸들러 선언
   const handleMarkReportAsRead = async (report: ReportData) => {
     setSelectedReport(report);
     if (!report.isRead) {
@@ -1921,10 +1925,10 @@ export default function App() {
                               ))}
                             </div>
 
-                            {/* 나의 평점 좌측 정렬 / 찜하기 버튼 대여가능 버튼 유사 라운드 디자인 및 하트 색상 변경 */}
+                            {/* 1. 나의 평점 이미지 구도대로 배치 (하단 1줄, 좌측 나의 평점 ☆☆☆☆☆, 우측 투명 찜하트 + 대여버튼) */}
                             <div className="flex justify-between items-center gap-2 pt-0.5">
                               
-                              {/* 나의 평점 1줄 노출 및 좌측 정렬 */}
+                              {/* 1. 나의 평점 1줄 노출 및 좌측 정렬 */}
                               <div 
                                 onClick={() => {
                                   setSelectedScore(userRating ? userRating.score : 5.0);
@@ -1942,19 +1946,13 @@ export default function App() {
                               </div>
 
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {/* 대여가능 버튼과 유사한 외곽선 라운드 디자인의 찜하기 버튼 */}
+                                {/* 2. 배경/외곽선 없는 투명 찜하기 아이콘 버튼 */}
                                 <button
                                   onClick={() => toggleFavorite(game.gameId)}
-                                  className={`px-2.5 py-1.5 rounded-xl font-bold border transition flex items-center justify-center gap-1 text-xs ${
-                                    isFav 
-                                      ? 'border-rose-200 bg-rose-50 dark:bg-rose-950/40 dark:border-rose-800 text-rose-500' 
-                                      : isDarkMode
-                                      ? 'border-slate-700 bg-slate-800 text-slate-400 hover:text-slate-200'
-                                      : 'border-slate-200 bg-slate-50 text-slate-400 hover:text-slate-600'
-                                  }`}
+                                  className="p-1 rounded-full transition flex items-center justify-center bg-transparent hover:scale-110 active:scale-95"
                                   title={isFav ? "찜 해제" : "찜하기"}
                                 >
-                                  <Heart size={14} className={isFav ? "fill-rose-500 text-rose-500" : ""} />
+                                  <Heart size={20} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-300 dark:text-slate-600"} />
                                 </button>
 
                                 {isAvailable ? (
@@ -2831,7 +2829,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 4. 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
+        {/* 4. 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -2872,7 +2870,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* 5. 나의 활동: 찜한 보드게임 & 내가 평가한 보드게임 메뉴 */}
+                {/* 나의 활동: 찜한 보드게임 & 내가 평가한 보드게임 메뉴 */}
                 <div className="space-y-2 pt-2 border-t border-slate-200/20">
                   <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                     <Heart size={13} className="text-rose-500" /> 나의 활동
@@ -3725,7 +3723,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 8. 게임 등록/수정 모달 (노출 여부 모바일/PC 높이 완벽 고정) */}
+        {/* ⭕ 게임 등록/수정 모달 (8. 노출 여부 모바일/PC 높이 완벽 고정) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
