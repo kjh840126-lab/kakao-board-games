@@ -578,6 +578,136 @@ export default function App() {
     }
   };
 
+  // ⭕ 장바구니 및 대여/반납 관련 주요 함수 복구
+  const toggleCartItem = (game: Game) => {
+    const isAlreadyInCart = cart.some((item: Game) => item.gameId === game.gameId);
+    if (isAlreadyInCart) {
+      setCart(cart.filter((item: Game) => item.gameId !== game.gameId));
+    } else {
+      if (cart.length >= 3) {
+        alert('장바구니에는 최대 3개까지만 담을 수 있습니다.');
+        return;
+      }
+      setCart([...cart, game]);
+    }
+  };
+
+  const removeFromCart = (gameId: string) => {
+    setCart(cart.filter((item: Game) => item.gameId !== gameId));
+  };
+
+  const processCheckout = async () => {
+    if (!currentUser) return;
+
+    if (currentUser.penaltyEndDate && currentUser.penaltyEndDate >= today) {
+      alert(`패널티로 인해 대여할 수 없습니다.\n(대여 정지 종료일: ${currentUser.penaltyEndDate})`);
+      return;
+    }
+
+    if (activeRentalsCount + cart.length > 3) {
+      alert(`한 회원당 최대 3개까지만 대여 가능합니다.\n(현재 대여중: ${activeRentalsCount}개, 신청: ${cart.length}개)`);
+      return;
+    }
+
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + rentalDays);
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    const newRentals = cart.map((game: Game) => ({
+      user_id: currentUser.userId,
+      game_id: game.gameId,
+      game_title: game.title,
+      status: '대여중',
+      start_date: today,
+      end_date: endDateStr
+    }));
+
+    const { error: rentalError } = await supabase.from('rentals').insert(newRentals);
+    if (rentalError) {
+      alert('대여 처리 실패: ' + rentalError.message);
+      return;
+    }
+
+    const rentedGameIds = cart.map((g: Game) => g.gameId);
+    await supabase.from('games').update({ status: '대여중' }).in('game_id', rentedGameIds);
+
+    alert(`보드게임 ${cart.length}건이 ${rentalDays}일간 대여되었습니다. (~${endDateStr} 반납)`);
+    await fetchInitialData();
+    setCart([]);
+    setIsCartOpen(false);
+  };
+
+  const returnGame = async (rentalId: number, gameId: string) => {
+    if (!currentUser) return;
+    const targetRental = rentals.find((r: Rental) => r.rentalId === rentalId);
+    if (!targetRental) return;
+
+    const nowStr = new Date().toISOString();
+
+    await supabase.from('rentals').update({ status: '반납완료', returned_at: nowStr }).eq('rental_id', rentalId);
+    await supabase.from('games').update({ status: '대여가능' }).eq('game_id', gameId);
+
+    const isOverdue = today > targetRental.endDate;
+    if (isOverdue) {
+      const overdueDays = getDaysDifference(today, targetRental.endDate);
+      const newPoints = currentUser.penaltyPoints + overdueDays;
+
+      const penaltyEnd = new Date();
+      penaltyEnd.setDate(penaltyEnd.getDate() + newPoints - 1);
+      const penaltyEndStr = penaltyEnd.toISOString().split('T')[0];
+
+      await supabase.from('users').update({ 
+        penalty_count: newPoints, 
+        penalty_end_date: penaltyEndStr 
+      }).eq('user_id', currentUser.userId);
+
+      alert(`반납이 완료되었습니다.\n[연체 발생] 연체일수(${overdueDays}일)만큼 패널티 +${overdueDays}점이 부여되었습니다.`);
+    } else {
+      alert('반납이 완료되었습니다.');
+    }
+
+    await fetchInitialData();
+  };
+
+  const returnAllGames = async () => {
+    if (!currentUser) return;
+    const userActiveRentals = rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중');
+    if (userActiveRentals.length === 0) return;
+
+    const rentalIds = userActiveRentals.map((r: Rental) => r.rentalId);
+    const gameIds = userActiveRentals.map((r: Rental) => r.gameId);
+    const nowStr = new Date().toISOString();
+
+    await supabase.from('rentals').update({ status: '반납완료', returned_at: nowStr }).in('rental_id', rentalIds);
+    await supabase.from('games').update({ status: '대여가능' }).in('game_id', gameIds);
+
+    let totalOverdueDays = 0;
+    userActiveRentals.forEach((r: Rental) => {
+      if (today > r.endDate) {
+        totalOverdueDays += getDaysDifference(today, r.endDate);
+      }
+    });
+
+    if (totalOverdueDays > 0) {
+      const newPoints = currentUser.penaltyPoints + totalOverdueDays;
+
+      const penaltyEnd = new Date();
+      penaltyEnd.setDate(penaltyEnd.getDate() + totalOverdueDays - 1);
+      const penaltyEndStr = penaltyEnd.toISOString().split('T')[0];
+
+      await supabase.from('users').update({ 
+        penalty_count: newPoints, 
+        penalty_end_date: penaltyEndStr 
+      }).eq('user_id', currentUser.userId);
+
+      alert(`모든 보드게임이 반납되었습니다.\n[연체 발생] 총 연체일수(${totalOverdueDays}일)만큼 패널티 +${totalOverdueDays}점이 부여되었습니다.`);
+    } else {
+      alert('모든 보드게임이 반납되었습니다.');
+    }
+
+    await fetchInitialData();
+  };
+
   const handleSaveRating = async () => {
     if (!currentUser || !ratingModalGame) return;
 
@@ -1041,7 +1171,6 @@ export default function App() {
     return 0;
   };
 
-  // ⭕ 가공 변수 리스트 정의
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
@@ -1144,6 +1273,7 @@ export default function App() {
     setDifficultyFilter('all');
   };
 
+  // ⭕ 오타 정리된 반납 예정일 계산 함수
   const calculateEndDate = () => {
     const d = new Date();
     d.setDate(d.getDate() + rentalDays);
@@ -2308,7 +2438,7 @@ export default function App() {
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
                           <div className="min-w-0 flex-1">
-                            {/* 1. 게임명 줄바꿈, 게임ID 괄호 배치, 노출 아이콘 연속 노출 */}
+                            {/* 게임명 줄바꿈, 게임ID 괄호 배치, 노출 아이콘 연속 노출 */}
                             <div className="font-bold leading-snug break-keep text-xs mb-0.5">
                               <span className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{game.title}</span>
                               <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
@@ -2398,7 +2528,7 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                {/* 2. 대여중 게임명 뒤에 {게임ID} 노출 */}
+                                {/* 대여중 게임명 뒤에 {게임ID} 노출 */}
                                 <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{rental.gameTitle}</span>
                                   <span className="text-slate-400 font-mono font-normal ml-1">({rental.gameId})</span>
@@ -2432,7 +2562,7 @@ export default function App() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
-                                {/* 2. 반납완료 게임명 뒤에 {게임ID} 노출 */}
+                                {/* 반납완료 게임명 뒤에 {게임ID} 노출 */}
                                 <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
                                   <span>{rental.gameTitle}</span>
@@ -3200,7 +3330,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. 신고 및 건의하기 독립 팝업 모달 ('선택' 기본값 & 카테고리 추가 & 제출 아이콘 제거) */}
+        {/* 신고 및 건의하기 독립 팝업 모달 ('선택' 기본값 & 카테고리 추가 & 제출 아이콘 제거) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3291,7 +3421,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 6. 내 정보 수정 및 비밀번호 변경 모달 (입력 가능/불가능 공통 딤드 스타일 적용) */}
+        {/* 내 정보 수정 및 비밀번호 변경 모달 (입력 가능/불가능 공통 딤드 스타일 적용) */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3410,7 +3540,7 @@ export default function App() {
                 </div>
                 
                 <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
-                  {Array.from({ length: 14 }, (_, i) => i + 1).map((days) => (
+                  {Array.from({ length: 14 }, (_, i) => i + 1).map((days: number) => (
                     <button
                       key={days}
                       onClick={() => setRentalDays(days)}
@@ -3631,7 +3761,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 5. 게임 등록/수정 모달 (장르 4개 확대 & 다크모드 선택 장르 시인성 강조 & 보드게임 ID 딤드 보정) */}
+        {/* 게임 등록/수정 모달 */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3812,7 +3942,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 장르 선택 최대 4개 및 다크모드 선택 장르 시인성 강조 */}
+                {/* 장르 선택 최대 4개 및 다크모드 선택 장르 시인성 강화 */}
                 <div className="pt-1">
                   <label className="font-bold block mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 4개)</span>
