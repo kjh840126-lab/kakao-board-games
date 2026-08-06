@@ -1944,19 +1944,18 @@ export default function App() {
                             />
                           </div>
 
-                          {/* 우측 정렬 그룹: [대여가능 버튼 곡률(rounded-xl)과 동일한 가로/세로 비율 찜하기 버튼] + [대여가능 버튼] */}
+                          {/* ⭕ 우측 정렬 그룹: [대여가능 버튼 높이/핏과 정확히 연동된 찜하기 버튼 p-1 w-[31px] h-[31px]] + [대여가능 알약 버튼] */}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {/* ⭕ 찜하기 버튼: 대여가능 버튼 높이와 일치하며 둥근 라운드(rounded-xl) 적용 및 고정 외곽선 스타일 */}
                             <button
                               onClick={() => toggleFavorite(game.gameId)}
-                              className={`p-1.5 min-w-[34px] h-[31px] rounded-xl font-bold border transition flex items-center justify-center ${
+                              className={`p-1 min-w-[31px] w-[31px] h-[31px] rounded-xl font-bold border transition flex items-center justify-center ${
                                 isDarkMode
                                   ? 'border-slate-700 bg-slate-800/80 hover:bg-slate-700'
                                   : 'border-slate-200 bg-slate-50/80 hover:bg-slate-100'
                               }`}
                               title={isFav ? "찜 해제" : "찜하기"}
                             >
-                              <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
+                              <Heart size={15} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
                             {isAvailable ? (
@@ -2148,6 +2147,7 @@ export default function App() {
                 </button>
               </div>
 
+              {/* 랭킹 페이지: 나의 평점 별표 제외/점수만 노출, 출시년도 가산점 문구 제외 */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
@@ -2830,7 +2830,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
+        {/* 설정 드로어 */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
