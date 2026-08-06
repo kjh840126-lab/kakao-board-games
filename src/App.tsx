@@ -150,8 +150,6 @@ export default function App() {
   const [rentalDays, setRentalDays] = useState<number>(7);
   
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'report' | 'admin'>('games');
-  
-  // ⭕ 랭킹 서브 탭 State ('hot': 요즘 핫한 게임, 'hall': 명예의 전당)
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin'>('gameAdmin');
@@ -167,7 +165,12 @@ export default function App() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
 
-  const [reportForm, setReportForm] = useState({ title: '', content: '', category: '불량 보드게임' });
+  // ⭕ 신고/건의 폼 State (카테고리 지정 및 최대 1,000자 제한)
+  const [reportForm, setReportForm] = useState({ 
+    title: '', 
+    content: '', 
+    category: '장애/오류 신고' 
+  });
 
   const [gameListSearch, setGameListSearch] = useState('');
   const [gameAdminSearch, setGameAdminSearch] = useState('');
@@ -175,7 +178,6 @@ export default function App() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // 최근 30일 이전 날짜 계산
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -283,8 +285,6 @@ export default function App() {
 
           const gameRentalList = rentalList.filter(r => r.gameId === g.game_id);
           const totalRentalCount = gameRentalList.length;
-          
-          // ⭕ 최근 30일 이내 대여 건수 계산
           const recentRentalCount = gameRentalList.filter(r => r.startDate >= thirtyDaysAgoStr).length;
 
           return {
@@ -754,14 +754,31 @@ export default function App() {
     }
   };
 
-  const handleSendReport = (e: React.FormEvent) => {
+  // ⭕ 신고/건의사항 DB 저장 연동 함수 (회원ID, 카테고리, 제목, 내용, 등록일)
+  const handleSendReport = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) return;
+
     if (!reportForm.title.trim() || !reportForm.content.trim()) {
-      alert('신고 제목과 내용을 입력해 주세요.');
+      alert('제목과 상세 내용을 입력해 주세요.');
       return;
     }
-    alert('신고가 성공적으로 접수되었습니다.\n운영진이 확인 후 조치하겠습니다.');
-    setReportForm({ title: '', content: '', category: '불량 보드게임' });
+
+    const { error } = await supabase.from('reports').insert([
+      {
+        user_id: currentUser.userId,
+        category: reportForm.category,
+        title: reportForm.title.trim(),
+        content: reportForm.content.trim(),
+      }
+    ]);
+
+    if (error) {
+      alert('신고/건의 접수 실패: ' + error.message);
+    } else {
+      alert('운영진에게 성공적으로 전달되었습니다.\n감사합니다.');
+      setReportForm({ title: '', content: '', category: '장애/오류 신고' });
+    }
   };
 
   const getReleaseBonus = (year: number) => {
@@ -772,7 +789,6 @@ export default function App() {
     return 0;
   };
 
-  // ⭕ 1) 🔥 요즘 핫한 게임 랭킹 (최근 30일 대여 횟수 가중치 0.5 + 신작 가산점 + BGG 평점)
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
@@ -783,7 +799,6 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ 2) 🏆 명예의 전당 랭킹 (전체 누적 대여 횟수 0.1 + BGG 평점)
   const hallOfFameRankedGamesList = [...games]
     .map(game => {
       const rentalScore = (game.rentalCount || 0) * 0.1;
@@ -1427,7 +1442,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ⭕ 3. 랭킹 탭 (서브 탭 적용: 🔥 요즘 핫한 게임 vs 🏆 명예의 전당) */}
+          {/* 3. 랭킹 탭 */}
           {activeTab === 'ranking' && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80 flex justify-between items-end">
@@ -1439,7 +1454,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 랭킹 서브 탭 버튼 2개 */}
               <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
                 <button
                   onClick={() => setRankingTab('hot')}
@@ -1459,7 +1473,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 1) 🔥 요즘 핫한 게임 (최근 30일 대여 중심) */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-[11px] text-slate-500 font-medium px-1">
@@ -1505,7 +1518,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* 2) 🏆 명예의 전당 (누적 대여 + BGG 평점) */}
               {rankingTab === 'hall' && (
                 <div className="space-y-2.5">
                   <p className="text-[11px] text-slate-500 font-medium px-1">
@@ -1553,30 +1565,31 @@ export default function App() {
             </div>
           )}
 
-          {/* 4. 신고 탭 */}
+          {/* ⭕ 4. 신고 및 건의 전용 탭 (작성 및 제출 전용, 이력/답변 기능 제거, 최대 1,000자 제한) */}
           {activeTab === 'report' && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
                 <h2 className="font-black text-slate-900 text-base tracking-tight flex items-center gap-2">
                   <Siren size={18} className="text-rose-600" />
-                  신고 및 문의하기
+                  신고 및 건의하기
                 </h2>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  훼손된 보드게임이나 서비스 이용 중 발생한 문제점을 신고해 주세요.
+                  서비스 이용 중 발생한 불편사항이나 건의하고 싶은 내용을 전달해 주세요.
                 </p>
               </div>
 
-              <form onSubmit={handleSendReport} className="space-y-3.5 text-xs bg-slate-50/50 p-4 rounded-2xl border border-slate-200/80">
+              <form onSubmit={handleSendReport} className="space-y-3.5 text-xs bg-slate-50/50 p-4 rounded-2xl border border-slate-200/80 shadow-sm">
                 <div>
-                  <label className="block text-slate-900 font-bold mb-1.5">신고 유형</label>
+                  <label className="block text-slate-900 font-bold mb-1.5">카테고리 선택</label>
                   <select
                     value={reportForm.category}
                     onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
-                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800"
+                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800 font-semibold text-xs"
                   >
-                    <option value="불량 보드게임">불량/구성품 분실 보드게임</option>
-                    <option value="연체 및 대여 오류">연체 및 대여 관련 오류</option>
-                    <option value="기타 문의">기타 서비스 개선 의견</option>
+                    <option value="장애/오류 신고">장애/오류 신고</option>
+                    <option value="이용제한">이용제한 문의</option>
+                    <option value="개선사항 건의">개선사항 건의</option>
+                    <option value="기타">기타</option>
                   </select>
                 </div>
 
@@ -1585,7 +1598,8 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="신고 내용을 요약해 주세요"
+                    maxLength={100}
+                    placeholder="제목을 입력해 주세요"
                     value={reportForm.title}
                     onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
                     className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800"
@@ -1593,22 +1607,28 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-900 font-bold mb-1.5">상세 내용</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-slate-900 font-bold">상세 내용</label>
+                    <span className={`text-[10px] font-bold ${reportForm.content.length >= 1000 ? 'text-rose-600' : 'text-slate-400'}`}>
+                      {reportForm.content.length} / 1000자
+                    </span>
+                  </div>
                   <textarea
                     required
-                    rows={4}
-                    placeholder="상세한 상황을 작성해 주시면 조치에 도움이 됩니다."
+                    rows={6}
+                    maxLength={1000}
+                    placeholder="운영진에게 전달할 내용을 상세히 작성해 주세요. (최대 1,000자)"
                     value={reportForm.content}
                     onChange={(e) => setReportForm({ ...reportForm, content: e.target.value })}
-                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800"
+                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800 leading-relaxed resize-none"
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+                  className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm mt-2"
                 >
-                  <Send size={15} /> 접수하기
+                  <Send size={15} /> 제출하기
                 </button>
               </form>
             </div>
