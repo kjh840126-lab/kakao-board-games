@@ -2746,7 +2746,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* 3. 관리자 > 공지사항 관리: 타이틀 및 내용 자동 줄바꿈(break-all) 적용 */}
+              {/* E. 공지사항 관리 (타이틀 및 내용 자동 줄바꿈 break-all) */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2804,9 +2804,9 @@ export default function App() {
           )}
         </main>
 
-        {/* 장바구니 플로팅 버튼 테마별 차별화 */}
+        {/* ⭕ 장바구니 플로팅 버튼 (Safe Area 및 하단 네비게이션 높이 자동 반영 계산) */}
         {activeTab === 'games' && (
-          <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
+          <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] max-w-md mx-auto right-4 pointer-events-none z-30 transition-all">
             <button
               onClick={() => setIsCartOpen(true)}
               className={`pointer-events-auto relative p-3.5 rounded-full active:scale-95 transition-all shadow-xl flex items-center justify-center ${
@@ -3035,7 +3035,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 찜한 보드게임 확인 모달 (게임명(ID) 노출, 줄바꿈, 인원수|시간|난이도|BGG 노출) */}
+        {/* 찜한 보드게임 확인 모달 */}
         {isFavoritesModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border max-h-[85vh] flex flex-col ${
@@ -3066,12 +3066,10 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="min-w-0 flex-1">
-                          {/* 게임명 (게임ID) 줄바꿈 노출 */}
                           <h4 className="font-bold break-keep leading-tight text-xs">
                             <span>{game.title}</span>
                             <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
                           </h4>
-                          {/* 인원수 | 플레이시간 | 난이도 | BGG 노출 */}
                           <p className="text-[10px] text-slate-400 mt-1 font-semibold flex flex-wrap items-center gap-1">
                             <span>{game.minPlayers}~{game.maxPlayers}인</span>
                             <span>|</span>
@@ -3132,7 +3130,6 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
-                        {/* 내 평점 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -3242,7 +3239,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (화면 잘림 완벽 해결) */}
+        {/* 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (화면 잘림 완벽 해결) */}
         {isAdminReportDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
             <div 
@@ -3283,9 +3280,7 @@ export default function App() {
                         {selectedReport.userId}
                       </span>
                     </div>
-                    {/* 접수함 상세 제목 break-all 적용 */}
                     <h3 className={`font-extrabold leading-snug break-all text-xs ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
-                    {/* 접수함 상세 내용 break-all 적용 */}
                     <p className={`whitespace-pre-wrap break-all leading-relaxed text-xs pt-1.5 border-t ${
                       isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-sky-200'
                     }`}>
@@ -3321,7 +3316,6 @@ export default function App() {
                                   N
                                 </span>
                               )}
-                              {/* 접수함 리스트 제목 break-all 적용 */}
                               <span className="font-semibold text-xs leading-snug break-all">{report.title}</span>
                             </div>
                           </div>
@@ -3607,7 +3601,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2, 3. 공지사항 우측 슬라이딩 Drawer 모달 (인라인 아코디언 펼치기 구조로 동선 개선 & break-all 적용) */}
+        {/* 공지사항 우측 슬라이딩 Drawer 모달 */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
@@ -3641,13 +3635,11 @@ export default function App() {
                           : 'border-slate-200/80 bg-white hover:border-slate-300'
                       }`}
                     >
-                      {/* 목록 클릭 시 인라인으로 상세 내용이 바로 펼쳐짐 */}
                       <div 
                         onClick={() => handleNoticeClick(notice)}
                         className="p-3.5 cursor-pointer flex justify-between items-start gap-2"
                       >
                         <div className="flex-1 min-w-0 pr-1">
-                          {/* 2. 공지 제목 break-all 적용 */}
                           <h3 className={`font-bold leading-snug break-all text-xs ${
                             isExpanded ? (isDarkMode ? 'text-amber-300' : 'text-slate-900') : ''
                           }`}>
@@ -3665,7 +3657,6 @@ export default function App() {
                         />
                       </div>
 
-                      {/* 2. 상세 본문 영역 (아코디언 인라인 노출 & break-all 적용) */}
                       {isExpanded && (
                         <div className={`px-3.5 pb-4 pt-2 border-t text-xs leading-relaxed break-all ${
                           isDarkMode ? 'border-slate-700/80 text-slate-200' : 'border-amber-200/60 text-slate-700'

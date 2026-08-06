@@ -2,20 +2,22 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     
-    <!-- 모바일 브라우저/웹뷰 상단 상태바 테마 색상을 카카오 노란색(#FEE500)으로 통일 -->
-    <meta name="theme-color" content="#FEE500" />
+    <!-- ⭕ iOS Safe Area 확장 및 Full Screen을 위한 Viewport 설정 -->
+    <meta 
+      name="viewport" 
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
+    />
+    
+    <!-- ⭕ iOS PWA (홈 화면에 추가) 전용 메타 태그 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-    <!-- 파비콘(즐겨찾기 탭 아이콘) 설정 -->
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
-
-    <title>KBG</title>
+    <meta name="apple-mobile-web-app-title" content="카카오 보드게임" />
+    
+    <title>카카오 보드게임 대여 서비스</title>
   </head>
-  <body class="bg-slate-50 antialiased">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
