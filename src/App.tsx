@@ -167,7 +167,7 @@ export default function App() {
   const [sites, setSiteList] = useState<BoardSite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 설정 관련 State (LocalStorage 연동)
+  // 설정 관련 State
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
   });
@@ -274,14 +274,8 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
+  // ⭕ 메인 영역 스크롤 Ref
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
-  const tabScrollPositions = useRef<{ [key: string]: number }>({
-    games: 0,
-    returns: 0,
-    ranking: 0,
-    sites: 0,
-    admin: 0
-  });
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -321,23 +315,12 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  const handleScroll = () => {
+  // ⭕ 핵심 해결책: 하단 메뉴(activeTab)를 변경할 때마다 메인 스크롤을 맨 위(0)로 강제 초기화
+  useEffect(() => {
     if (mainScrollRef.current) {
-      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
+      mainScrollRef.current.scrollTop = 0;
     }
-  };
-
-  const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
-    if (mainScrollRef.current) {
-      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
-    }
-    setActiveTab(newTab);
-    setTimeout(() => {
-      if (mainScrollRef.current) {
-        mainScrollRef.current.scrollTop = tabScrollPositions.current[newTab] || 0;
-      }
-    }, 0);
-  };
+  }, [activeTab]);
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -1575,7 +1558,7 @@ export default function App() {
           )}
         </header>
 
-        {/* 탭별 독립 스크롤 분리를 위한 메인 컨테이너 영역 */}
+        {/* ⭕ 탭별 독립 스크롤 분리를 위한 메인 영역 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -1626,7 +1609,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* 필터 버튼 (아이콘만 깔끔히 노출) */}
+              {/* 필터 버튼 (아이콘만 노출) */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -2052,7 +2035,7 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* 수치 항목 줄바꿈 없이 한 줄(whitespace-nowrap)로 노출 */}
+                        {/* ⭕ 수치 항목 줄바꿈 없이 한 줄(whitespace-nowrap) 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -2115,7 +2098,7 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* 수치 항목 한 줄 노출 */}
+                        {/* ⭕ 수치 항목 한 줄 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -2689,11 +2672,11 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 */}
+        {/* ⭕ 1. 설정 드로어 (가로폭 원복 max-w-xs) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
-              className={`w-1/2 min-w-[220px] max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className={`p-4 flex justify-between items-center font-bold text-sm ${
@@ -2835,11 +2818,11 @@ export default function App() {
           </div>
         )}
 
-        {/* 관리자용 신고/건의 내역 우측 슬라이딩 Drawer */}
+        {/* ⭕ 1. 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (가로폭 원복 max-w-xs) */}
         {isAdminReportDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
             <div 
-              className={`w-1/2 min-w-[220px] max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-sm">
@@ -2934,7 +2917,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2. 신고 및 건의하기 모달 (우측 상단 X 닫기 버튼 추가 & 폰트크기 동기화) */}
+        {/* ⭕ 2. 신고 및 건의하기 모달 (우측 상단 X 닫기 버튼 추가) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3112,7 +3095,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. 장바구니 Drawer 모달 (가로폭 원복 max-w-xs) */}
+        {/* ⭕ 1. 장바구니 Drawer 모달 (가로폭 원복 max-w-xs) */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsCartOpen(false)}>
             <div 
@@ -3265,7 +3248,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2, 5, 6, 7. 추천 사이트 등록/수정 모달 (X 버튼, 폰트크기 동기화, 셀렉트 박스 스타일) */}
+        {/* ⭕ 2. 추천 사이트 등록/수정 모달 (우측 상단 X 버튼 추가) */}
         {isSiteModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
@@ -3280,65 +3263,65 @@ export default function App() {
 
               <form onSubmit={saveSite} className="space-y-3">
                 <div>
-                  <label className="font-bold block mb-1">사이트명</label>
+                  <label className="font-bold block mb-1.5">사이트명</label>
                   <input
                     type="text"
                     required
                     placeholder="예: 보드라이프"
                     value={editingSite.name}
                     onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
-                    className={`w-full border p-2 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">사이트 URL</label>
+                  <label className="font-bold block mb-1.5">사이트 URL</label>
                   <input
                     type="url"
                     required
                     placeholder="https://boardlife.co.kr"
                     value={editingSite.url}
                     onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })}
-                    className={`w-full border p-2 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">배너 이미지 URL</label>
+                  <label className="font-bold block mb-1.5">배너 이미지 URL</label>
                   <input
                     type="url"
                     placeholder="https://example.com/banner.jpg"
                     value={editingSite.bannerUrl}
                     onChange={(e) => setEditingSite({ ...editingSite, bannerUrl: e.target.value })}
-                    className={`w-full border p-2 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">사이트 설명</label>
+                  <label className="font-bold block mb-1.5">사이트 설명</label>
                   <textarea
                     rows={3}
                     placeholder="사이트에 대한 간단한 설명을 입력하세요"
                     value={editingSite.description}
                     onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
-                    className={`w-full border p-2 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   ></textarea>
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">노출 여부</label>
+                  <label className="font-bold block mb-1.5">노출 여부</label>
                   <select
                     value={editingSite.isVisible}
                     onChange={(e) => setEditingSite({ ...editingSite, isVisible: e.target.value as 'Y' | 'N' })}
-                    className={`w-full border p-2 rounded-xl focus:outline-none font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900'
                     }`}
                   >
@@ -3348,8 +3331,8 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-xl font-bold hover:bg-slate-200 transition text-xs">취소</button>
-                  <button type="submit" className="flex-1 bg-slate-900 text-white py-2 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
+                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition text-xs">취소</button>
+                  <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
                 </div>
               </form>
             </div>
@@ -3607,7 +3590,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2. 공지사항 작성 모달 (우측 상단 X 버튼 추가) */}
+        {/* ⭕ 2. 공지사항 작성 모달 (우측 상단 X 닫기 버튼 추가) */}
         {isNoticeModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
