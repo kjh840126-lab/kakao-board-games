@@ -51,7 +51,8 @@ import {
   Filter,
   RotateCcw as ResetIcon,
   Heart,
-  Star
+  Star,
+  ChevronDown
 } from 'lucide-react';
 
 export type Role = '일반회원' | '관리자' | '탈퇴회원';
@@ -229,9 +230,7 @@ export default function App() {
   const [isNoticeTransition, setIsNoticeTransition] = useState(true);
 
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
-  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
-
-  const noticeDrawerScrollRef = useRef<HTMLDivElement | null>(null);
+  const [expandedNoticeId, setExpandedNoticeId] = useState<number | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserData | null>(() => {
     const savedUser = localStorage.getItem('kakao_boardgame_user');
@@ -1163,15 +1162,14 @@ export default function App() {
     }
   };
 
-  // ⭕ 2. 공지사항 선택 시 최상단 스크롤 자동 이동
+  // ⭕ 공지사항 토글 펼치기/접기 (목록 내 인라인 아코디언)
   const handleNoticeClick = (notice: Notice) => {
-    setSelectedNotice(notice);
+    if (expandedNoticeId === notice.noticeId) {
+      setExpandedNoticeId(null);
+    } else {
+      setExpandedNoticeId(notice.noticeId);
+    }
     setIsNoticeDrawerOpen(true);
-    setTimeout(() => {
-      if (noticeDrawerScrollRef.current) {
-        noticeDrawerScrollRef.current.scrollTop = 0;
-      }
-    }, 50);
   };
 
   const getReleaseBonus = (year: number) => {
@@ -1294,7 +1292,6 @@ export default function App() {
     ? rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').length 
     : 0;
 
-  // ⭕ 4. 관리자 접근 권한 '관리자' 변경
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
@@ -2192,7 +2189,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 이미지 테두리 보정 */}
+                        {/* 이미지 테두리 라이트/다크 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2259,7 +2256,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* 이미지 테두리 보정 */}
+                        {/* 이미지 테두리 라이트/다크 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2749,7 +2746,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* E. 공지사항 관리 */}
+              {/* ⭕ 3. 관리자 > 공지사항 관리: 타이틀 및 내용 자동 줄바꿈(break-all) 적용 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2776,8 +2773,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start gap-2">
-                          {/* 공지사항 타이틀 줄바꿈 처리 */}
-                          <h3 className={`font-bold break-keep leading-snug ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
+                          <h3 className={`font-bold break-all leading-snug ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               onClick={() => {
@@ -2796,8 +2792,7 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                        {/* 공지사항 내용 줄바꿈 처리 */}
-                        <p className={`whitespace-pre-wrap break-keep leading-relaxed text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
+                        <p className={`whitespace-pre-wrap break-all leading-relaxed text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
                         <span className="text-slate-400 block pt-1 text-[11px]">{n.createdAt} 작성</span>
                       </div>
                     ))}
@@ -3137,7 +3132,6 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200/80'
                     }`}>
                       <div className="flex items-center gap-3 min-w-0">
-                        {/* 내 평점 모달 이미지 테두리 보정 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -3247,11 +3241,11 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (제목/내용 자동 줄바꿈) */}
+        {/* ⭕ 1. 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (화면 잘림 완벽 해결) */}
         {isAdminReportDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
             <div 
-              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors overflow-x-hidden ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-sm">
@@ -3275,23 +3269,23 @@ export default function App() {
                 )}
               </div>
 
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              <div className="flex-1 p-4 overflow-y-auto space-y-4 overflow-x-hidden">
                 {selectedReport && (
-                  <div className={`p-3.5 rounded-2xl space-y-2 border shadow-sm ${
+                  <div className={`p-3.5 rounded-2xl space-y-2 border shadow-sm max-w-full ${
                     isDarkMode ? 'bg-slate-800 border-sky-500/40' : 'bg-sky-50 border-sky-300'
                   }`}>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center gap-2">
                       <span className="text-[10px] text-sky-800 font-extrabold bg-sky-200 px-2 py-0.5 rounded-md inline-block">
                         {selectedReport.category}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <span className="text-[10px] text-slate-400 font-mono truncate">
                         {selectedReport.userId}
                       </span>
                     </div>
-                    {/* 접수함 상세 제목 줄바꿈 처리 */}
-                    <h3 className={`font-extrabold leading-snug break-keep text-xs ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
-                    {/* 접수함 상세 내용 줄바꿈 처리 */}
-                    <p className={`whitespace-pre-wrap break-keep leading-relaxed text-xs pt-1.5 border-t ${
+                    {/* 1. 접수함 상세 제목 break-all 적용 */}
+                    <h3 className={`font-extrabold leading-snug break-all text-xs ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
+                    {/* 1. 접수함 상세 내용 break-all 적용 */}
+                    <p className={`whitespace-pre-wrap break-all leading-relaxed text-xs pt-1.5 border-t ${
                       isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-sky-200'
                     }`}>
                       {selectedReport.content}
@@ -3311,7 +3305,7 @@ export default function App() {
                         <div
                           key={report.reportId}
                           onClick={() => handleMarkReportAsRead(report)}
-                          className={`p-2.5 rounded-xl border cursor-pointer transition relative ${
+                          className={`p-2.5 rounded-xl border cursor-pointer transition relative max-w-full ${
                             isSelected
                               ? 'border-sky-500 bg-sky-500 text-slate-900 font-bold shadow-sm'
                               : isDarkMode
@@ -3326,8 +3320,8 @@ export default function App() {
                                   N
                                 </span>
                               )}
-                              {/* 접수함 리스트 제목 줄바꿈 처리 */}
-                              <span className="font-semibold text-xs leading-snug break-keep">{report.title}</span>
+                              {/* 1. 접수함 리스트 제목 break-all 적용 */}
+                              <span className="font-semibold text-xs leading-snug break-all">{report.title}</span>
                             </div>
                           </div>
                         </div>
@@ -3349,7 +3343,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 신고 및 건의하기 독립 팝업 모달 ('선택' 기본값 & 카테고리 추가 & 제출 아이콘 제거) */}
+        {/* 신고 및 건의하기 독립 팝업 모달 */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3367,7 +3361,6 @@ export default function App() {
               <form onSubmit={handleSendReport} className="space-y-3.5">
                 <div>
                   <label className="font-bold block mb-1.5">카테고리 선택</label>
-                  {/* 선택 기본값 및 5종 선택지 구성 */}
                   <select
                     value={reportForm.category}
                     onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
@@ -3427,7 +3420,6 @@ export default function App() {
                   >
                     취소
                   </button>
-                  {/* 제출하기 버튼 아이콘 제거 */}
                   <button
                     type="submit"
                     className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm text-xs"
@@ -3440,7 +3432,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 내 정보 수정 및 비밀번호 변경 모달 (입력 가능/불가능 공통 딤드 스타일 적용) */}
+        {/* 내 정보 수정 및 비밀번호 변경 모달 */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -3456,7 +3448,6 @@ export default function App() {
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-3.5">
-                {/* 입력 불가능 필드 딤드 시인성 보정 */}
                 <div>
                   <label className="font-bold block mb-1 text-slate-400">아이디 (LDAP)</label>
                   <input
@@ -3615,11 +3606,11 @@ export default function App() {
           </div>
         )}
 
-        {/* 공지사항 우측 슬라이딩 Drawer 모달 (타이틀/내용 줄바꿈 & 선택 시 스크롤 최상단 이동) */}
+        {/* ⭕ 2, 3. 공지사항 우측 슬라이딩 Drawer 모달 (인라인 아코디언 펼치기 구조로 동선 개선 & 화면 잘림 방지) */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
-              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors overflow-x-hidden ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 bg-slate-900 flex justify-between items-center font-bold text-white text-sm">
@@ -3631,53 +3622,59 @@ export default function App() {
                 </button>
               </div>
 
-              <div ref={noticeDrawerScrollRef} className="flex-1 p-4 overflow-y-auto space-y-4">
-                {selectedNotice && (
-                  <div className={`p-4 rounded-2xl space-y-2 border shadow-sm ${
-                    isDarkMode ? 'bg-slate-800 border-amber-500/40' : 'bg-amber-50/80 border-amber-300/80'
-                  }`}>
-                    <span className="text-amber-800 font-extrabold bg-amber-200/80 px-2 py-0.5 rounded-md inline-block">
-                      선택한 공지사항
-                    </span>
-                    {/* 공지사항 타이틀 줄바꿈 처리 */}
-                    <h3 className={`font-extrabold leading-snug break-keep ${isDarkMode ? 'text-amber-300' : 'text-slate-900'}`}>{selectedNotice.title}</h3>
-                    {/* 공지사항 내용 줄바꿈 처리 */}
-                    <p className={`whitespace-pre-wrap break-keep leading-relaxed pt-1 border-t text-xs ${
-                      isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-amber-200/60'
-                    }`}>
-                      {selectedNotice.content}
-                    </p>
-                    <span className="text-slate-400 block text-right pt-0.5 text-[11px]">{selectedNotice.createdAt}</span>
-                  </div>
-                )}
+              <div ref={noticeDrawerScrollRef} className="flex-1 p-4 overflow-y-auto space-y-3 overflow-x-hidden">
+                <h4 className="font-bold text-slate-400 px-0.5 text-[11px]">전체 공지 목록 ({notices.length})</h4>
+                {notices.map((notice: Notice) => {
+                  const isExpanded = expandedNoticeId === notice.noticeId;
 
-                <div className="space-y-2 pt-1">
-                  <h4 className="font-bold text-slate-400 px-0.5">전체 공지 목록 ({notices.length})</h4>
-                  {notices.map((notice: Notice) => {
-                    const isSelected = selectedNotice?.noticeId === notice.noticeId;
-                    return (
-                      <div
-                        key={notice.noticeId}
+                  return (
+                    <div
+                      key={notice.noticeId}
+                      className={`rounded-2xl border transition overflow-hidden ${
+                        isExpanded
+                          ? isDarkMode 
+                            ? 'border-amber-500/80 bg-slate-800' 
+                            : 'border-amber-400 bg-amber-50/60'
+                          : isDarkMode
+                          ? 'border-slate-800 bg-slate-800/60 hover:border-slate-700'
+                          : 'border-slate-200/80 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      {/* 목록 클릭 시 인라인으로 상세 내용이 바로 펼쳐짐 */}
+                      <div 
                         onClick={() => handleNoticeClick(notice)}
-                        className={`p-3 rounded-xl border cursor-pointer transition ${
-                          isSelected
-                            ? 'border-slate-900 bg-slate-900 text-white font-bold shadow-sm'
-                            : isDarkMode
-                            ? 'border-slate-800 bg-slate-800/60 text-slate-200 hover:border-slate-700'
-                            : 'border-slate-200/80 bg-white text-slate-800 hover:border-slate-300'
-                        }`}
+                        className="p-3.5 cursor-pointer flex justify-between items-start gap-2"
                       >
-                        <div className="flex justify-between items-start gap-2">
-                          {/* 공지사항 리스트 제목 줄바꿈 처리 */}
-                          <span className="break-keep font-semibold text-xs leading-snug">{notice.title}</span>
-                          <span className={`font-mono flex-shrink-0 text-[10px] ${isSelected ? 'text-amber-300' : 'text-slate-400'}`}>
-                            {notice.createdAt.substring(5)}
+                        <div className="flex-1 min-w-0 pr-1">
+                          {/* 2. 공지 제목 break-all 적용 */}
+                          <h3 className={`font-bold leading-snug break-all text-xs ${
+                            isExpanded ? (isDarkMode ? 'text-amber-300' : 'text-slate-900') : ''
+                          }`}>
+                            {notice.title}
+                          </h3>
+                          <span className="text-[10px] text-slate-400 font-mono mt-1 block">
+                            {notice.createdAt}
                           </span>
                         </div>
+                        <ChevronDown 
+                          size={16} 
+                          className={`text-slate-400 flex-shrink-0 transition-transform duration-300 mt-0.5 ${
+                            isExpanded ? 'rotate-180 text-amber-500' : ''
+                          }`} 
+                        />
                       </div>
-                    );
-                  })}
-                </div>
+
+                      {/* 2. 상세 본문 영역 (아코디언 인라인 노출 & break-all 적용) */}
+                      {isExpanded && (
+                        <div className={`px-3.5 pb-4 pt-2 border-t text-xs leading-relaxed break-all ${
+                          isDarkMode ? 'border-slate-700/80 text-slate-200' : 'border-amber-200/60 text-slate-700'
+                        }`}>
+                          <p className="whitespace-pre-wrap">{notice.content}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div className={`p-4 border-t ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -3783,7 +3780,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 게임 등록/수정 모달 (장르 4개 확대 & 다크모드 선택 장르 시인성 강조 & 보드게임 ID 딤드 보정) */}
+        {/* 게임 등록/수정 모달 */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
