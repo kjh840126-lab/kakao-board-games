@@ -269,14 +269,12 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
-  // 새로고침 시 메인 탭 유지
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'sites' | 'admin'>(() => {
     const savedTab = localStorage.getItem('kakao_bg_activeTab');
     return (savedTab as 'games' | 'returns' | 'ranking' | 'sites' | 'admin') || 'games';
   });
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
-  // 운영자 서브탭 새로고침 시 유지
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>(() => {
     const savedAdminTab = localStorage.getItem('kakao_bg_adminSubTab');
     return (savedAdminTab as any) || 'gameAdmin';
@@ -292,7 +290,6 @@ export default function App() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
 
-  // 관리자 사이트 등록/수정 모달 State
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<BoardSite>({
     siteId: 0,
@@ -359,7 +356,6 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // ⭕ 6. 대여 탭을 제외한 나머지 하단 메뉴 이동 시 최상단 스크롤 강제 적용
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
     if (newTab !== 'games' && mainScrollRef.current) {
@@ -589,7 +585,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 2. 얼럿 삭제 및 즉시 평점 반영
   const handleSaveRating = async () => {
     if (!currentUser || !ratingModalGame) return;
 
@@ -613,13 +608,29 @@ export default function App() {
     await fetchInitialData();
   };
 
-  // ⭕ 내가 남긴 평점 삭제
   const handleDeleteMyRating = async (gameId: string) => {
     if (!currentUser) return;
     if (window.confirm('해당 보드게임에 남긴 평점을 삭제하시겠습니까?')) {
       await supabase.from('ratings').delete().eq('user_id', currentUser.userId).eq('game_id', gameId);
       await fetchInitialData();
     }
+  };
+
+  // ⭕ 복구: 관리자 신고 읽음 처리 핸들러 선언
+  const handleMarkReportAsRead = async (report: ReportData) => {
+    setSelectedReport(report);
+    if (!report.isRead) {
+      setReportList(prev => prev.map(r => r.reportId === report.reportId ? { ...r, isRead: true } : r));
+      await supabase.from('reports').update({ is_read: true }).eq('report_id', report.reportId);
+    }
+  };
+
+  const handleMarkAllReportsAsRead = async () => {
+    const unreadIds = reports.filter(r => !r.isRead).map(r => r.reportId);
+    if (unreadIds.length === 0) return;
+
+    setReportList(prev => prev.map(r => ({ ...r, isRead: true })));
+    await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -1256,7 +1267,6 @@ export default function App() {
   const visibleSitesList = sites.filter(s => s.isVisible === 'Y');
   const favoriteGamesList = games.filter(g => userFavorites.includes(g.gameId));
 
-  // ⭕ 내가 평점을 남긴 보드게임 목록
   const myRatingGamesList = games
     .map(g => {
       const myRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === g.gameId);
@@ -1891,7 +1901,7 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
-                            {/* ⭕ 1. 회원 평점 평균 항목 제거 완료 */}
+                            {/* 회원 평점 평균 항목 제거 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
@@ -1911,10 +1921,10 @@ export default function App() {
                               ))}
                             </div>
 
-                            {/* ⭕ 2, 3. 하단 행: 나의 평점 좌측 정렬 / 찜하기 버튼 대여가능 버튼 유사 라운드 디자인 및 하트 색상 변경 */}
+                            {/* 나의 평점 좌측 정렬 / 찜하기 버튼 대여가능 버튼 유사 라운드 디자인 및 하트 색상 변경 */}
                             <div className="flex justify-between items-center gap-2 pt-0.5">
                               
-                              {/* ⭕ 2. 나의 평점 1줄 노출 및 좌측 정렬 */}
+                              {/* 나의 평점 1줄 노출 및 좌측 정렬 */}
                               <div 
                                 onClick={() => {
                                   setSelectedScore(userRating ? userRating.score : 5.0);
@@ -1932,7 +1942,7 @@ export default function App() {
                               </div>
 
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {/* ⭕ 3. 대여가능 버튼과 유사한 외곽선 라운드 디자인의 찜하기 버튼 */}
+                                {/* 대여가능 버튼과 유사한 외곽선 라운드 디자인의 찜하기 버튼 */}
                                 <button
                                   onClick={() => toggleFavorite(game.gameId)}
                                   className={`px-2.5 py-1.5 rounded-xl font-bold border transition flex items-center justify-center gap-1 text-xs ${
@@ -2138,7 +2148,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* ⭕ 7. 랭킹 페이지: 나의 평점 별표 제외/점수만 노출, 출시년도 가산점 문구 제외 */}
+              {/* 랭킹 페이지: 나의 평점 별표 제외/점수만 노출, 출시년도 가산점 문구 제외 */}
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5">
                   <p className="text-slate-400 font-medium px-1">
@@ -2862,7 +2872,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* ⭕ 5. 나의 활동: 찜한 보드게임 & 내가 평가한 보드게임 메뉴 */}
+                {/* 5. 나의 활동: 찜한 보드게임 & 내가 평가한 보드게임 메뉴 */}
                 <div className="space-y-2 pt-2 border-t border-slate-200/20">
                   <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                     <Heart size={13} className="text-rose-500" /> 나의 활동
@@ -3061,7 +3071,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5. 내가 평가한 보드게임 목록 확인 모달 */}
+        {/* 내가 평가한 보드게임 목록 확인 모달 */}
         {isMyRatingsModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border max-h-[85vh] flex flex-col ${
@@ -3715,7 +3725,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 게임 등록/수정 모달 (8. 모바일/PC 셀렉트 박스 높이 완벽 통일 h-[38px] min-h-[38px]) */}
+        {/* ⭕ 8. 게임 등록/수정 모달 (노출 여부 모바일/PC 높이 완벽 고정) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3878,12 +3888,12 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    {/* ⭕ 8. 모바일 OS 기기별 크기 왜곡 현상 방지: h-[38px] min-h-[38px] -webkit-appearance 처리 */}
+                    {/* 8. 모바일 OS 높이 왜곡 방지 h-[38px] min-h-[38px] -webkit-appearance */}
                     <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
                       onChange={(e) => setEditingGame({ ...editingGame, isVisible: e.target.value as 'Y' | 'N' })}
-                      className={`w-full border px-2 py-0 h-[38px] min-h-[38px] rounded-xl font-semibold text-xs leading-none appearance-none -webkit-appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_8px] bg-no-repeat bg-[right_6px_center] pr-5 ${
+                      className={`w-full border px-2 h-[38px] min-h-[38px] rounded-xl font-semibold text-xs leading-none appearance-none -webkit-appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_8px] bg-no-repeat bg-[right_6px_center] pr-5 ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     >
