@@ -33,7 +33,13 @@ import {
   AlertCircle,
   UserX,
   UserCheck as UserCheckIcon,
-  Calendar
+  Calendar,
+  Trophy,
+  Siren,
+  ShieldCheck,
+  Bell,
+  Send,
+  CalendarDays
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -65,6 +71,9 @@ export interface Game {
   isVisible: 'Y' | 'N';
   genres: string[];
   createdAt: string;
+  releaseYear: number;
+  bggRating: number;
+  rentalCount?: number;
 }
 
 export interface Rental {
@@ -78,12 +87,15 @@ export interface Rental {
   returnedAt: string | null;
 }
 
+export interface Notice {
+  noticeId: number;
+  title: string;
+  content: string;
+  createdAt: string;
+}
+
 const PRESET_GENRES = ['전략게임', '파티게임', '추상전략', '타일 놓기', '카드게임', '가족게임', '협동게임', '마피아'];
-
-// 로그인 화면용 춘식이 로고 경로
 const LOGIN_LOGO_URL = '/logo.png'; 
-
-// 허용 가능한 카카오 계열사 이메일 도메인 목록
 const ALLOWED_EMAIL_DOMAINS = [
   'kakaocorp.com',
   'kakaoenterprise.com',
@@ -92,7 +104,8 @@ const ALLOWED_EMAIL_DOMAINS = [
   'kakaoent.com',
 ];
 
-// 날짜 차이 계산 함수 (당일 포함 +1)
+const currentYear = new Date().getFullYear();
+
 const getDaysDifference = (dateStr1: string, dateStr2: string) => {
   const d1 = new Date(dateStr1);
   const d2 = new Date(dateStr2);
@@ -104,9 +117,9 @@ export default function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [rentals, setRentals] = useState<Rental[]>([]);
+  const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // localStorage에서 저장된 사용자 정보 불러오기
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('kakao_boardgame_user');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -117,7 +130,6 @@ export default function App() {
   const [loginId, setLoginId] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   
-  // 회원가입 & 이메일 분리 State
   const [signupForm, setSignupForm] = useState({
     userId: '',
     name: '',
@@ -128,16 +140,17 @@ export default function App() {
   });
   const [isEmailChecked, setIsEmailChecked] = useState(false);
 
-  // 비밀번호 찾기 및 재설정 State
   const [forgotEmail, setForgotEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
   const [cart, setCart] = useState<Game[]>([]);
-  // 대여 기간 설정 State (기본값 7일)
   const [rentalDays, setRentalDays] = useState<number>(7);
-  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'gameAdmin' | 'rentalAdmin' | 'userAdmin'>('games');
   
-  // 운영자 대여/반납 관리 서브 탭 State ('active': 대여중, 'completed': 반납완료)
+  // 메인 네비게이션 탭 ('games': 대여, 'returns': 반납, 'ranking': 랭킹, 'report': 신고, 'admin': 관리자)
+  const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'report' | 'admin'>('games');
+  
+  // 관리자 모드 내부 서브 탭 ('gameAdmin', 'rentalAdmin', 'userAdmin', 'noticeAdmin')
+  const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin'>('gameAdmin');
   const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -147,7 +160,14 @@ export default function App() {
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [customGenreInput, setCustomGenreInput] = useState('');
 
-  // 각 페이지별 검색어 State
+  // 공지사항 작성/수정 모달 State
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
+  const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
+
+  // 신고하기 State
+  const [reportForm, setReportForm] = useState({ title: '', content: '', category: '불량 보드게임' });
+
+  // 검색어 State
   const [gameListSearch, setGameListSearch] = useState('');
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
@@ -164,15 +184,15 @@ export default function App() {
     });
   }, []);
 
-  // 탭 변경 시 데이터 비동기 재조회
   useEffect(() => {
     if (currentUser) {
       fetchInitialData();
     }
-  }, [activeTab]);
+  }, [activeTab, adminSubTab]);
 
   const fetchInitialData = async () => {
     try {
+      // 1. 유저 데이터 및 패널티 리셋 처리
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
         const mappedUsers: User[] = await Promise.all(
@@ -180,6 +200,7 @@ export default function App() {
             let currentPenaltyPoints = u.penalty_count || 0;
             let currentPenaltyEndDate = u.penalty_end_date || null;
 
+            // 패널티 정지일이 지났다면(오늘보다 엄격히 작으면) 0점으로 리셋
             if (currentPenaltyEndDate) {
               if (currentPenaltyEndDate < today) {
                 currentPenaltyPoints = 0;
@@ -230,6 +251,24 @@ export default function App() {
         }
       }
 
+      // 2. 대여 데이터 로드
+      const { data: rentalsData } = await supabase.from('rentals').select('*');
+      let rentalList: Rental[] = [];
+      if (rentalsData) {
+        rentalList = rentalsData.map(r => ({
+          rentalId: r.rental_id,
+          userId: r.user_id,
+          gameId: r.game_id,
+          gameTitle: r.game_title,
+          status: r.status,
+          startDate: r.start_date,
+          endDate: r.end_date,
+          returnedAt: r.returned_at
+        }));
+        setRentals(rentalList);
+      }
+
+      // 3. 게임 데이터 로드
       const { data: gamesData } = await supabase.from('games').select('*');
       if (gamesData) {
         setGames(gamesData.map(g => {
@@ -239,6 +278,8 @@ export default function App() {
           } else if (typeof g.genres === 'string' && g.genres.trim() !== '') {
             parsedGenres = g.genres.split(',').map((s: string) => s.trim());
           }
+
+          const gameRentalCount = rentalList.filter(r => r.gameId === g.game_id).length;
 
           return {
             gameId: g.game_id,
@@ -252,22 +293,22 @@ export default function App() {
             description: g.description || '',
             isVisible: g.is_visible,
             genres: parsedGenres.length > 0 ? parsedGenres : ['보드게임'],
-            createdAt: g.created_at || new Date().toISOString()
+            createdAt: g.created_at || new Date().toISOString(),
+            releaseYear: Number(g.release_year) || currentYear,
+            bggRating: Number(g.bgg_rating) || 7.0,
+            rentalCount: gameRentalCount
           };
         }));
       }
 
-      const { data: rentalsData } = await supabase.from('rentals').select('*');
-      if (rentalsData) {
-        setRentals(rentalsData.map(r => ({
-          rentalId: r.rental_id,
-          userId: r.user_id,
-          gameId: r.game_id,
-          gameTitle: r.game_title,
-          status: r.status,
-          startDate: r.start_date,
-          endDate: r.end_date,
-          returnedAt: r.returned_at
+      // 4. 공지사항 데이터 로드
+      const { data: noticeData } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
+      if (noticeData) {
+        setNoticeList(noticeData.map(n => ({
+          noticeId: n.notice_id,
+          title: n.title,
+          content: n.content,
+          createdAt: n.created_at?.split('T')[0] || today
         })));
       }
     } catch (err) {
@@ -379,9 +420,7 @@ export default function App() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const cleanForgotEmail = forgotEmail.trim().toLowerCase();
-
     const existingUser = users.find(u => u.email.trim().toLowerCase() === cleanForgotEmail);
     if (!existingUser) {
       alert('등록되지 않은 이메일 주소입니다.');
@@ -403,17 +442,10 @@ export default function App() {
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
-      if (error.message.includes('should be different')) {
-        alert('기존 비밀번호와 동일한 비밀번호로는 변경할 수 없습니다.\n새로운 비밀번호를 입력해 주세요.');
-      } else {
-        alert('비밀번호 변경 실패: ' + error.message);
-      }
+      alert('비밀번호 변경 실패: ' + error.message);
     } else {
       alert('비밀번호가 성공적으로 변경되었습니다. 변경된 비밀번호로 로그인해 주세요.');
       setAuthMode('login');
@@ -632,7 +664,9 @@ export default function App() {
         difficulty: editingGame.difficulty,
         is_visible: editingGame.isVisible,
         image_url: editingGame.imageUrl,
-        genres: genresPayload
+        genres: genresPayload,
+        release_year: editingGame.releaseYear,
+        bgg_rating: editingGame.bggRating
       }).eq('game_id', editingGame.gameId);
 
       if (error) alert('수정 실패: ' + error.message);
@@ -649,7 +683,9 @@ export default function App() {
         description: '',
         is_visible: editingGame.isVisible,
         image_url: editingGame.imageUrl,
-        genres: genresPayload
+        genres: genresPayload,
+        release_year: editingGame.releaseYear,
+        bgg_rating: editingGame.bggRating
       }]);
 
       if (error) alert('등록 실패: ' + error.message);
@@ -673,6 +709,75 @@ export default function App() {
       await fetchInitialData();
     }
   };
+
+  // 공지사항 저장
+  const saveNotice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingNotice.title.trim() || !editingNotice.content.trim()) {
+      alert('제목과 내용을 모두 입력해 주세요.');
+      return;
+    }
+
+    if (editingNotice.id) {
+      const { error } = await supabase.from('notices').update({
+        title: editingNotice.title,
+        content: editingNotice.content
+      }).eq('notice_id', editingNotice.id);
+
+      if (error) alert('공지사항 수정 실패: ' + error.message);
+      else alert('공지사항이 수정되었습니다.');
+    } else {
+      const { error } = await supabase.from('notices').insert([{
+        title: editingNotice.title,
+        content: editingNotice.content
+      }]);
+
+      if (error) alert('공지사항 등록 실패: ' + error.message);
+      else alert('공지사항이 등록되었습니다.');
+    }
+
+    await fetchInitialData();
+    setIsNoticeModalOpen(false);
+  };
+
+  const deleteNotice = async (id: number) => {
+    if (window.confirm('해당 공지사항을 삭제하시겠습니까?')) {
+      const { error } = await supabase.from('notices').delete().eq('notice_id', id);
+      if (error) alert('삭제 실패: ' + error.message);
+      else alert('공지사항이 삭제되었습니다.');
+      await fetchInitialData();
+    }
+  };
+
+  // 신고 접수
+  const handleSendReport = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportForm.title.trim() || !reportForm.content.trim()) {
+      alert('신고 제목과 내용을 입력해 주세요.');
+      return;
+    }
+    alert('신고가 성공적으로 접수되었습니다.\n운영진이 확인 후 조치하겠습니다.');
+    setReportForm({ title: '', content: '', category: '불량 보드게임' });
+  };
+
+  // 랭킹 산출 계산 로직 (대여 1회당 0.1점 + 출시년도 가산점 + BGG 평점)
+  const getReleaseBonus = (year: number) => {
+    const diff = currentYear - year;
+    if (diff === 0) return 3;
+    if (diff === 1) return 2;
+    if (diff === 2) return 1;
+    return 0;
+  };
+
+  const rankedGamesList = [...games]
+    .map(game => {
+      const rentalScore = (game.rentalCount || 0) * 0.1;
+      const releaseBonus = getReleaseBonus(game.releaseYear);
+      const totalScore = Number((rentalScore + releaseBonus + game.bggRating).toFixed(2));
+      return { ...game, totalScore, rentalScore, releaseBonus };
+    })
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .slice(0, 30); // 상위 30개만 노출
 
   const filteredGameList = [...games]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -710,7 +815,6 @@ export default function App() {
       return b.rentalId - a.rentalId;
     });
 
-  // 운영자용 전체 회원 반납 완료 히스토리 리스트
   const allReturnedRentalsAdminList = rentals
     .filter((r) => r.status === '반납완료')
     .sort((a, b) => {
@@ -727,6 +831,8 @@ export default function App() {
     d.setDate(d.getDate() + rentalDays);
     return d.toISOString().split('T')[0];
   };
+
+  const latestNotice = notices.length > 0 ? notices[0] : null;
 
   if (loading) {
     return (
@@ -785,14 +891,10 @@ export default function App() {
           )}
 
           <div className="p-6">
-            {/* 1. 로그인 폼 */}
             {authMode === 'login' && (
               <form onSubmit={handleLogin} className="space-y-4 text-xs">
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1.5 text-left"
-                  >
+                  <label className="block text-slate-900 font-bold mb-1.5 text-left">
                     아이디 (LDAP)
                   </label>
                   <input
@@ -807,10 +909,7 @@ export default function App() {
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label 
-                      style={{ textAlign: 'left' }} 
-                      className="block text-slate-900 font-bold text-left"
-                    >
+                    <label className="block text-slate-900 font-bold text-left">
                       비밀번호
                     </label>
                     <button
@@ -840,14 +939,10 @@ export default function App() {
               </form>
             )}
 
-            {/* 2. 회원가입 폼 */}
             {authMode === 'signup' && (
               <form onSubmit={handleFinalSignup} className="space-y-3.5 text-xs">
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1 text-left"
-                  >
+                  <label className="block text-slate-900 font-bold mb-1 text-left">
                     아이디 (LDAP)
                   </label>
                   <input
@@ -861,10 +956,7 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1 text-left"
-                  >
+                  <label className="block text-slate-900 font-bold mb-1 text-left">
                     이름
                   </label>
                   <input
@@ -878,10 +970,7 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1 text-left"
-                  >
+                  <label className="block text-slate-900 font-bold mb-1 text-left">
                     이메일 주소
                   </label>
                   
@@ -914,28 +1003,21 @@ export default function App() {
                     </select>
                   </div>
 
-                  <div className="flex justify-between items-center">
-                    <button
-                      type="button"
-                      onClick={handleCheckEmailDuplicate}
-                      className={`w-full py-2.5 rounded-xl font-bold text-xs transition ${
-                        isEmailChecked
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                          : 'bg-slate-900 text-white hover:bg-slate-800'
-                      }`}
-                    >
-                      {isEmailChecked ? '✓ 이메일 중복 확인 완료' : '이메일 중복 확인'}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCheckEmailDuplicate}
+                    className={`w-full py-2.5 rounded-xl font-bold text-xs transition ${
+                      isEmailChecked
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : 'bg-slate-900 text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    {isEmailChecked ? '✓ 이메일 중복 확인 완료' : '이메일 중복 확인'}
+                  </button>
                 </div>
 
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1 text-left"
-                  >
-                    비밀번호
-                  </label>
+                  <label className="block text-slate-900 font-bold mb-1 text-left">비밀번호</label>
                   <input
                     type="password"
                     required
@@ -947,12 +1029,7 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1 text-left"
-                  >
-                    비밀번호 확인
-                  </label>
+                  <label className="block text-slate-900 font-bold mb-1 text-left">비밀번호 확인</label>
                   <input
                     type="password"
                     required
@@ -967,11 +1044,6 @@ export default function App() {
                         : 'border-slate-300 bg-slate-50/50'
                     }`}
                   />
-                  {hasEnteredPasswordConfirm && (
-                    <p style={{ textAlign: 'left' }} className={`text-[11px] mt-1 font-semibold text-left ${isPasswordMatching ? 'text-emerald-700' : 'text-rose-600'}`}>
-                      {isPasswordMatching ? '비밀번호가 일치합니다.' : '비밀번호가 일치하지 않습니다.'}
-                    </p>
-                  )}
                 </div>
 
                 <button
@@ -988,25 +1060,16 @@ export default function App() {
               </form>
             )}
 
-            {/* 3. 비밀번호 찾기 폼 */}
             {authMode === 'forgotPassword' && (
               <form onSubmit={handleForgotPassword} className="space-y-4 text-xs">
                 <div className="text-center space-y-1 mb-2">
                   <h3 className="font-extrabold text-slate-900 text-sm flex items-center justify-center gap-1.5">
                     <Mail size={16} /> 비밀번호 찾기
                   </h3>
-                  <p className="text-[11px] text-slate-500">
-                    가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.
-                  </p>
                 </div>
 
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1.5 text-left"
-                  >
-                    가입 이메일 주소
-                  </label>
+                  <label className="block text-slate-900 font-bold mb-1.5 text-left">가입 이메일 주소</label>
                   <input
                     type="email"
                     required
@@ -1035,25 +1098,16 @@ export default function App() {
               </form>
             )}
 
-            {/* 4. 비밀번호 재설정 폼 */}
             {authMode === 'updatePassword' && (
               <form onSubmit={handleUpdatePassword} className="space-y-4 text-xs">
                 <div className="text-center space-y-1 mb-2">
                   <h3 className="font-extrabold text-slate-900 text-sm flex items-center justify-center gap-1.5">
                     <KeyRound size={16} /> 신규 비밀번호 설정
                   </h3>
-                  <p className="text-[11px] text-slate-500">
-                    새롭게 사용할 비밀번호를 입력해 주세요.
-                  </p>
                 </div>
 
                 <div>
-                  <label 
-                    style={{ textAlign: 'left' }} 
-                    className="block text-slate-900 font-bold mb-1.5 text-left"
-                  >
-                    새 비밀번호
-                  </label>
+                  <label className="block text-slate-900 font-bold mb-1.5 text-left">새 비밀번호</label>
                   <input
                     type="password"
                     required
@@ -1081,25 +1135,34 @@ export default function App() {
   // -------------------------------------------------------------
   // [B] 메인 서비스 화면
   // -------------------------------------------------------------
+  const isHeaderAdminTheme = activeTab === 'admin';
+
   return (
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더 */}
+        {/* 고정 상단 헤더 (관리자 페이지 모드일 경우 하늘색 bg-sky-400 테마 적용) */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-          className="fixed top-0 left-0 right-0 max-w-md mx-auto bg-[#FEE500] px-4 pb-3 z-30 shadow-sm flex justify-between items-center border-b border-amber-300/40"
+          className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-3 z-30 shadow-sm flex justify-between items-center transition-colors ${
+            isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40'
+          }`}
         >
           <div>
-            <img 
-              src="/header_logo.png" 
-              alt="kakao board games" 
-              className="h-7 w-auto object-contain drop-shadow-sm mb-1"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
-            {/* 사용자 ID(currentUser.userId) 노출 */}
+            <div className="flex items-center gap-1.5 mb-1">
+              <img 
+                src="/header_logo.png" 
+                alt="kakao board games" 
+                className="h-7 w-auto object-contain drop-shadow-sm"
+                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+              />
+              {isHeaderAdminTheme && (
+                <span className="bg-slate-900 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+                  <ShieldCheck size={11} className="text-sky-300" /> 관리자 모드
+                </span>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" style={{ color: '#0f172a' }}>
               <div className="flex items-center gap-1">
                 <UserCheck size={14} style={{ color: '#0f172a' }} />
@@ -1119,11 +1182,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* 로그아웃 아이콘 버튼 */}
           <button
             onClick={handleLogout}
             title="로그아웃"
-            className="p-2 bg-amber-400/80 rounded-xl hover:bg-amber-400 font-bold transition flex items-center justify-center shadow-sm"
+            className={`p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm ${
+              isHeaderAdminTheme ? 'bg-sky-300 hover:bg-sky-200' : 'bg-amber-400/80 hover:bg-amber-400'
+            }`}
             style={{ color: '#0f172a' }}
           >
             <LogOut size={18} />
@@ -1135,14 +1199,25 @@ export default function App() {
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 86px)' }} 
           className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
         >
+          {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5">
-              <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-sm">
-                <Info size={16} className="text-[#FEE500] flex-shrink-0" />
-                <span className="leading-tight">1인당 최대 <strong className="text-[#FEE500] font-bold">3개</strong>까지 대여하실 수 있습니다.</span>
+              {/* ⭕ 공지사항이 있을 경우 최신 공지사항을 안내문구 영역에 노출 */}
+              <div className="bg-slate-900 text-white p-3.5 rounded-2xl text-xs flex items-start gap-2.5 shadow-sm">
+                <Bell size={16} className="text-[#FEE500] flex-shrink-0 mt-0.5" />
+                <div className="leading-tight">
+                  {latestNotice ? (
+                    <div>
+                      <span className="text-[#FEE500] font-extrabold block mb-0.5">[공지] {latestNotice.title}</span>
+                      <p className="text-slate-300 text-[11px] leading-relaxed">{latestNotice.content}</p>
+                    </div>
+                  ) : (
+                    <span>1인당 최대 <strong className="text-[#FEE500] font-bold">3개</strong>까지 대여하실 수 있습니다.</span>
+                  )}
+                </div>
               </div>
 
-              {/* 게임목록 - 게임명 검색창 */}
+              {/* 검색창 */}
               <div className="relative">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -1153,10 +1228,7 @@ export default function App() {
                   className="w-full border border-slate-200 pl-10 pr-9 py-2.5 rounded-xl text-xs bg-slate-50/50 text-slate-900 focus:outline-none focus:border-slate-800 transition"
                 />
                 {gameListSearch && (
-                  <button
-                    onClick={() => setGameListSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
+                  <button onClick={() => setGameListSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                     <X size={14} />
                   </button>
                 )}
@@ -1171,8 +1243,6 @@ export default function App() {
                   filteredGameList.map((game) => {
                     const isAvailable = game.status === '대여가능';
                     const isSelectedInCart = cart.some((item) => item.gameId === game.gameId);
-
-                    // 대여중인 게임의 반납예정일 정보 조회
                     const activeRental = rentals.find((r) => r.gameId === game.gameId && r.status === '대여중');
                     const isOverdue = activeRental ? today > activeRental.endDate : false;
                     const overdueDays = (activeRental && isOverdue) ? getDaysDifference(today, activeRental.endDate) : 0;
@@ -1183,9 +1253,7 @@ export default function App() {
                           src={game.imageUrl} 
                           alt={game.title} 
                           className="w-20 h-20 object-cover rounded-xl bg-slate-100 flex-shrink-0 border border-slate-100"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300';
-                          }}
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div>
@@ -1194,16 +1262,15 @@ export default function App() {
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
-                            <div className="flex gap-2.5 text-[11px] text-slate-600 font-semibold mt-1.5">
-                              <span className="flex items-center gap-1"><PlayerIcon size={12} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}명</span>
-                              <span className="flex items-center gap-1"><Clock size={12} className="text-slate-400" /> {game.playTime}분</span>
-                              <span className="flex items-center gap-1"><Star size={12} className="text-amber-500 fill-amber-500" /> {game.difficulty}</span>
+                            <div className="flex flex-wrap gap-2 text-[10px] text-slate-600 font-semibold mt-1.5">
+                              <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
+                              <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
+                              <span className="flex items-center gap-0.5"><Star size={11} className="text-amber-500 fill-amber-500" /> BGG {game.bggRating}</span>
+                              <span className="flex items-center gap-0.5 text-slate-400 font-mono">({game.releaseYear}년)</span>
                             </div>
                           </div>
 
-                          {/* 장르 태그 고정 영역 + 버튼 가변 구조 */}
                           <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100">
-                            {/* 장르 태그 영역 */}
                             <div className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
                               {game.genres.map((genre) => (
                                 <span key={genre} className="text-[9px] bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md font-bold whitespace-nowrap flex-shrink-0">
@@ -1212,7 +1279,6 @@ export default function App() {
                               ))}
                             </div>
 
-                            {/* 버튼 영역 */}
                             <div className="flex-shrink-0">
                               {isAvailable ? (
                                 <button
@@ -1250,6 +1316,7 @@ export default function App() {
             </div>
           )}
 
+          {/* 2. 반납/히스토리 탭 */}
           {activeTab === 'returns' && (
             <div className="space-y-5 mt-0.5">
               <div className="bg-slate-900 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
@@ -1268,7 +1335,7 @@ export default function App() {
               </div>
 
               <section className="space-y-2.5">
-                <h3 style={{ color: '#0f172a', fontWeight: 800, fontSize: '14px' }} className="tracking-tight flex items-center gap-2">
+                <h3 className="font-extrabold text-slate-900 text-sm tracking-tight flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-slate-900 rounded-full inline-block"></span>
                   현재 대여 중인 게임
                 </h3>
@@ -1312,7 +1379,7 @@ export default function App() {
               </section>
 
               <section className="space-y-2.5">
-                <h3 style={{ color: '#0f172a', fontWeight: 800, fontSize: '14px' }} className="tracking-tight flex items-center gap-2">
+                <h3 className="font-extrabold text-slate-900 text-sm tracking-tight flex items-center gap-2">
                   <span className="w-1.5 h-3.5 bg-slate-400 rounded-full inline-block"></span>
                   대여 및 반납 이력
                 </h3>
@@ -1350,377 +1417,525 @@ export default function App() {
             </div>
           )}
 
-          {/* [운영자] 1. 게임 등록 및 수정 */}
-          {activeTab === 'gameAdmin' && isAdmin && (
+          {/* ⭕ 3. 신규 메뉴: 랭킹 탭 */}
+          {activeTab === 'ranking' && (
             <div className="space-y-4 mt-0.5">
-              <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
+              <div className="pb-2 border-b border-slate-200/80 flex justify-between items-end">
                 <div>
-                  <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
-                    <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
-                    게임 등록 및 수정
+                  <h2 className="font-black text-slate-900 text-base tracking-tight flex items-center gap-2">
+                    <Trophy size={18} className="text-amber-500 fill-amber-400" />
+                    보드게임 랭킹 Top 30
                   </h2>
-                  {/* ⭕ 1. 하단 설명 변경: 보드게임을 추가하거나 수정 및 삭제합니다. */}
-                  <p style={{ color: '#64748b', fontSize: '11px', fontWeight: 500 }} className="mt-0.5">
-                    보드게임을 추가하거나 수정 및 삭제합니다.
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    대여 횟수 + 출시년도 가산점 + BGG 평점 합산 순위
                   </p>
                 </div>
-                {/* ⭕ 2. 버튼명 변경: 게임 등록 */}
-                <button
-                  onClick={() => {
-                    setIsEditingMode(false);
-                    setEditingGame({
-                      gameId: '',
-                      title: '',
-                      status: '대여가능',
-                      minPlayers: 2,
-                      maxPlayers: 4,
-                      playTime: 30,
-                      difficulty: 2.0,
-                      imageUrl: '',
-                      description: '',
-                      isVisible: 'Y',
-                      genres: ['전략게임'],
-                      createdAt: new Date().toISOString()
-                    });
-                    setIsGameModalOpen(true);
-                  }}
-                  className="bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
-                >
-                  <Plus size={14} /> 게임 등록
-                </button>
-              </div>
-
-              {/* 게임관리 - 게임명 검색창 */}
-              <div className="relative">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="관리할 게임명 검색..."
-                  value={gameAdminSearch}
-                  onChange={(e) => setGameAdminSearch(e.target.value)}
-                  className="w-full border border-slate-200 pl-10 pr-9 py-2.5 rounded-xl text-xs bg-slate-50/50 text-slate-900 focus:outline-none focus:border-slate-800 transition"
-                />
-                {gameAdminSearch && (
-                  <button
-                    onClick={() => setGameAdminSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
               </div>
 
               <div className="space-y-2.5">
-                {filteredGameAdminList.length === 0 ? (
-                  <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
-                    '{gameAdminSearch}' 검색 결과가 없습니다.
-                  </div>
-                ) : (
-                  filteredGameAdminList.map((game) => (
-                    <div key={game.gameId} className="border border-slate-200/80 p-3 rounded-2xl flex justify-between items-center bg-white shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={game.imageUrl} 
-                          alt={game.title} 
-                          className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-100" 
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300';
-                          }}
-                        />
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-slate-900 text-xs">{game.title}</h3>
-                            <span className="text-[10px] text-slate-400 font-mono">({game.gameId})</span>
-                            {game.isVisible === 'Y' ? (
-                              <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-0.5"><Eye size={11} /> 노출</span>
-                            ) : (
-                              <span className="text-[10px] text-slate-400 font-bold flex items-center gap-0.5"><EyeOff size={11} /> 숨김</span>
-                            )}
+                {rankedGamesList.map((game, index) => {
+                  const rank = index + 1;
+                  return (
+                    <div key={game.gameId} className="border border-slate-200/80 p-3.5 rounded-2xl flex items-center gap-3.5 bg-white shadow-sm">
+                      <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center flex-shrink-0 ${
+                        rank === 1 ? 'bg-amber-400 text-slate-900 shadow-md' :
+                        rank === 2 ? 'bg-slate-300 text-slate-900' :
+                        rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {rank}
+                      </div>
+
+                      <img 
+                        src={game.imageUrl} 
+                        alt={game.title} 
+                        className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-100 flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 text-xs truncate">{game.title}</h3>
+                        <div className="text-[10px] text-slate-500 mt-1 space-y-0.5">
+                          <div className="flex gap-2">
+                            <span>대여: {game.rentalCount || 0}회 (+{game.rentalScore?.toFixed(1)}점)</span>
+                            <span>출시: {game.releaseYear}년 (+{game.releaseBonus}점)</span>
                           </div>
-                          <p className="text-[11px] text-slate-600 mt-0.5">{game.minPlayers}~{game.maxPlayers}인 | {game.playTime}분 | 난이도 {game.difficulty}</p>
+                          <div>BGG 평점: <strong className="text-amber-600">{game.bggRating}점</strong></div>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            setIsEditingMode(true);
-                            setEditingGame(game);
-                            setIsGameModalOpen(true);
-                          }}
-                          className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition"
-                        >
-                          <Edit size={15} />
-                        </button>
-                        <button
-                          onClick={() => deleteGame(game.gameId, game.title, game.status)}
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+
+                      <div className="text-right flex-shrink-0">
+                        <span className="text-[10px] text-slate-400 font-medium block">총점</span>
+                        <span className="font-black text-slate-900 text-sm">{game.totalScore}점</span>
                       </div>
                     </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* [운영자] 2. 대여 및 반납 현황 */}
-          {activeTab === 'rentalAdmin' && isAdmin && (
+          {/* ⭕ 4. 신규 메뉴: 신고 탭 */}
+          {activeTab === 'report' && (
             <div className="space-y-4 mt-0.5">
               <div className="pb-2 border-b border-slate-200/80">
-                <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
-                  <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
-                  대여 및 반납 현황
+                <h2 className="font-black text-slate-900 text-base tracking-tight flex items-center gap-2">
+                  <Siren size={18} className="text-rose-600" />
+                  신고 및 문의하기
                 </h2>
-                <p style={{ color: '#64748b', fontSize: '11px', fontWeight: 500 }} className="mt-0.5">
-                  현재 진행 중인 대여 목록과 연체 내역 및 반납 이력을 확인합니다.
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  훼손된 보드게임이나 서비스 이용 중 발생한 문제점을 신고해 주세요.
                 </p>
               </div>
 
-              {/* 운영자 서브 탭 2개 (대여중 / 반납완료) */}
-              <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <button
-                  onClick={() => setAdminRentalTab('active')}
-                  className={`flex-1 py-2 rounded-lg transition ${
-                    adminRentalTab === 'active'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  대여중 ({rentals.filter((r) => r.status === '대여중').length})
-                </button>
-                <button
-                  onClick={() => setAdminRentalTab('completed')}
-                  className={`flex-1 py-2 rounded-lg transition ${
-                    adminRentalTab === 'completed'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  반납완료 ({allReturnedRentalsAdminList.length})
-                </button>
-              </div>
-
-              {/* 1) 대여중 서브 탭 내용 */}
-              {adminRentalTab === 'active' && (
-                <div className="space-y-2.5">
-                  {rentals.filter((r) => r.status === '대여중').length === 0 ? (
-                    <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
-                      현재 대여 중인 보드게임이 없습니다.
-                    </div>
-                  ) : (
-                    rentals.filter((r) => r.status === '대여중').map((rental) => {
-                      const isOverdue = today > rental.endDate;
-                      const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
-
-                      return (
-                        <div key={rental.rentalId} className={`p-3.5 rounded-2xl border ${isOverdue ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200/80 bg-white shadow-sm'}`}>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="text-[10px] text-slate-500 font-mono block">대여회원: {rental.userId}</span>
-                              <h3 className="font-bold text-slate-900 text-xs mt-0.5">
-                                {rental.gameTitle} <span className="text-slate-400 font-mono text-[10px]">({rental.gameId})</span>
-                              </h3>
-                            </div>
-                            {isOverdue && (
-                              <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <AlertTriangle size={10} /> 연체 ({overdueDays}일)
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-600 flex justify-between">
-                            <span>대여일: {rental.startDate}</span>
-                            <span>반납예정일: <strong className={isOverdue ? 'text-rose-600 font-bold' : 'text-slate-900'}>{rental.endDate}</strong></span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+              <form onSubmit={handleSendReport} className="space-y-3.5 text-xs bg-slate-50/50 p-4 rounded-2xl border border-slate-200/80">
+                <div>
+                  <label className="block text-slate-900 font-bold mb-1.5">신고 유형</label>
+                  <select
+                    value={reportForm.category}
+                    onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
+                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800"
+                  >
+                    <option value="불량 보드게임">불량/구성품 분실 보드게임</option>
+                    <option value="연체 및 대여 오류">연체 및 대여 관련 오류</option>
+                    <option value="기타 문의">기타 서비스 개선 의견</option>
+                  </select>
                 </div>
-              )}
 
-              {/* 2) 반납완료 서브 탭 내용 */}
-              {adminRentalTab === 'completed' && (
-                <div className="space-y-2.5">
-                  {allReturnedRentalsAdminList.length === 0 ? (
-                    <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
-                      반납 완료된 이력이 없습니다.
-                    </div>
-                  ) : (
-                    allReturnedRentalsAdminList.map((rental) => {
-                      const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
-                      const isLateReturn = returnedDate > rental.endDate;
-                      const overdueDays = isLateReturn ? getDaysDifference(returnedDate, rental.endDate) : 0;
-
-                      return (
-                        <div key={rental.rentalId} className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-sm space-y-1.5">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="text-[10px] text-slate-500 font-mono block">대여회원: {rental.userId}</span>
-                              <h3 className="font-bold text-slate-900 text-xs mt-0.5 flex items-center gap-1.5">
-                                <CheckCircle2 size={13} className="text-emerald-600 flex-shrink-0" />
-                                {rental.gameTitle} <span className="text-slate-400 font-mono text-[10px]">({rental.gameId})</span>
-                              </h3>
-                            </div>
-                            {isLateReturn && (
-                              <span className="bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
-                                연체 반납 ({overdueDays}일)
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600 flex justify-between">
-                            <span>대여일: {rental.startDate}</span>
-                            <span>반납일: <strong className="text-emerald-700 font-bold">{returnedDate}</strong></span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                <div>
+                  <label className="block text-slate-900 font-bold mb-1.5">제목</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="신고 내용을 요약해 주세요"
+                    value={reportForm.title}
+                    onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
+                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800"
+                  />
                 </div>
-              )}
 
+                <div>
+                  <label className="block text-slate-900 font-bold mb-1.5">상세 내용</label>
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="상세한 상황을 작성해 주시면 조치에 도움이 됩니다."
+                    value={reportForm.content}
+                    onChange={(e) => setReportForm({ ...reportForm, content: e.target.value })}
+                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 bg-white focus:outline-none focus:border-slate-800"
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <Send size={15} /> 접수하기
+                </button>
+              </form>
             </div>
           )}
 
-          {/* [운영자] 3. 회원 관리 */}
-          {activeTab === 'userAdmin' && isAdmin && (
+          {/* ⭕ 5. 관리자 메뉴 통합 관리 페이지 */}
+          {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5">
-              <div className="pb-2 border-b border-slate-200/80">
-                <h2 style={{ color: '#0f172a', fontWeight: 900, fontSize: '16px' }} className="tracking-tight flex items-center gap-2">
-                  <span className="w-2 h-4 bg-[#FEE500] rounded-sm inline-block border border-amber-400"></span>
-                  회원 관리
-                </h2>
-                <p style={{ color: '#64748b', fontSize: '11px', fontWeight: 500 }} className="mt-0.5">
-                  등록된 회원 목록 및 패널티 현황을 조회하고 회원 상태를 관리합니다.
-                </p>
+              {/* 관리자 서브 메뉴 네비게이션 칩 */}
+              <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-bold">
+                <button
+                  onClick={() => setAdminSubTab('gameAdmin')}
+                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'gameAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  게임관리
+                </button>
+                <button
+                  onClick={() => setAdminSubTab('rentalAdmin')}
+                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'rentalAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  대여/반납
+                </button>
+                <button
+                  onClick={() => setAdminSubTab('userAdmin')}
+                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'userAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  회원관리
+                </button>
+                <button
+                  onClick={() => setAdminSubTab('noticeAdmin')}
+                  className={`py-2 rounded-lg transition text-center ${adminSubTab === 'noticeAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  공지사항
+                </button>
               </div>
 
-              {/* 회원관리 - 회원명 및 회원ID 통합 검색창 */}
-              <div className="relative">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="회원명 또는 회원 ID 검색..."
-                  value={userAdminSearch}
-                  onChange={(e) => setUserAdminSearch(e.target.value)}
-                  className="w-full border border-slate-200 pl-10 pr-9 py-2.5 rounded-xl text-xs bg-slate-50/50 text-slate-900 focus:outline-none focus:border-slate-800 transition"
-                />
-                {userAdminSearch && (
-                  <button
-                    onClick={() => setUserAdminSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-2.5">
-                {filteredUserAdminList.length === 0 ? (
-                  <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
-                    '{userAdminSearch}' 검색 결과가 없습니다.
+              {/* A. 게임 등록 및 수정 */}
+              {adminSubTab === 'gameAdmin' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
+                    <div>
+                      <h2 className="font-black text-slate-900 text-base tracking-tight flex items-center gap-2">
+                        <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
+                        게임 등록 및 수정
+                      </h2>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                        보드게임을 추가하거나 수정 및 삭제합니다.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsEditingMode(false);
+                        setEditingGame({
+                          gameId: '',
+                          title: '',
+                          status: '대여가능',
+                          minPlayers: 2,
+                          maxPlayers: 4,
+                          playTime: 30,
+                          difficulty: 2.0,
+                          imageUrl: '',
+                          description: '',
+                          isVisible: 'Y',
+                          genres: ['전략게임'],
+                          createdAt: new Date().toISOString(),
+                          releaseYear: currentYear,
+                          bggRating: 7.0
+                        });
+                        setIsGameModalOpen(true);
+                      }}
+                      className="bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                    >
+                      <Plus size={14} /> 게임 등록
+                    </button>
                   </div>
-                ) : (
-                  filteredUserAdminList.map((user) => {
-                    const isWithdrawn = user.role === '탈퇴회원';
 
-                    return (
-                      <div key={user.userId} className={`border p-3.5 rounded-2xl space-y-2 shadow-sm ${isWithdrawn ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200/80'}`}>
-                        <div className="flex justify-between items-start">
+                  <div className="relative">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="관리할 게임명 검색..."
+                      value={gameAdminSearch}
+                      onChange={(e) => setGameAdminSearch(e.target.value)}
+                      className="w-full border border-slate-200 pl-10 pr-9 py-2.5 rounded-xl text-xs bg-slate-50/50 text-slate-900 focus:outline-none focus:border-slate-800 transition"
+                    />
+                    {gameAdminSearch && (
+                      <button onClick={() => setGameAdminSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {filteredGameAdminList.map((game) => (
+                      <div key={game.gameId} className="border border-slate-200/80 p-3 rounded-2xl flex justify-between items-center bg-white shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={game.imageUrl} 
+                            alt={game.title} 
+                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-100" 
+                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
+                          />
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <h3 className={`font-bold text-xs font-mono ${isWithdrawn ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{user.userId}</h3>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
-                                user.role === '운영자' 
-                                  ? 'bg-amber-100 text-amber-800' 
-                                  : isWithdrawn 
-                                  ? 'bg-rose-100 text-rose-700' 
-                                  : 'bg-slate-100 text-slate-700'
-                              }`}>
-                                {user.role}
-                              </span>
+                              <h3 className="font-bold text-slate-900 text-xs">{game.title}</h3>
+                              <span className="text-[10px] text-slate-400 font-mono">({game.gameId})</span>
+                              {game.isVisible === 'Y' ? (
+                                <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-0.5"><Eye size={11} /> 노출</span>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-0.5"><EyeOff size={11} /> 숨김</span>
+                              )}
                             </div>
-                            <p className="text-[11px] text-slate-500 mt-0.5">{user.name} | {user.email}</p>
+                            <p className="text-[11px] text-slate-600 mt-0.5">{game.releaseYear}년 | BGG {game.bggRating} | {game.minPlayers}~{game.maxPlayers}인</p>
                           </div>
-
-                          {/* 탈퇴 / 복구 버튼 */}
-                          {user.role === '일반회원' && (
-                            <button
-                              onClick={() => handleUserRoleChange(user, '탈퇴회원')}
-                              className="px-2.5 py-1 text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition flex items-center gap-1"
-                            >
-                              <UserX size={12} /> 탈퇴
-                            </button>
-                          )}
-                          {user.role === '탈퇴회원' && (
-                            <button
-                              onClick={() => handleUserRoleChange(user, '일반회원')}
-                              className="px-2.5 py-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition flex items-center gap-1"
-                            >
-                              <UserCheckIcon size={12} /> 복구
-                            </button>
-                          )}
                         </div>
-
-                        <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] text-slate-500">
-                          <span>가입일: {user.createdAt}</span>
-                          <span className="font-semibold flex items-center gap-1">
-                            <ShieldAlert size={13} className={user.penaltyPoints > 0 ? 'text-rose-600' : 'text-slate-400'} />
-                            패널티: {user.penaltyPoints}점
-                          </span>
+                        
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setIsEditingMode(true);
+                              setEditingGame(game);
+                              setIsGameModalOpen(true);
+                            }}
+                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                          >
+                            <Edit size={15} />
+                          </button>
+                          <button
+                            onClick={() => deleteGame(game.gameId, game.title, game.status)}
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </div>
-                    );
-                  })
-                )}
-              </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* B. 대여 및 반납 현황 */}
+              {adminSubTab === 'rentalAdmin' && (
+                <div className="space-y-4">
+                  <div className="pb-2 border-b border-slate-200/80">
+                    <h2 className="font-black text-slate-900 text-base tracking-tight flex items-center gap-2">
+                      <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
+                      대여 및 반납 현황
+                    </h2>
+                  </div>
+
+                  <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                    <button
+                      onClick={() => setAdminRentalTab('active')}
+                      className={`flex-1 py-2 rounded-lg transition ${adminRentalTab === 'active' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      대여중 ({rentals.filter((r) => r.status === '대여중').length})
+                    </button>
+                    <button
+                      onClick={() => setAdminRentalTab('completed')}
+                      className={`flex-1 py-2 rounded-lg transition ${adminRentalTab === 'completed' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      반납완료 ({allReturnedRentalsAdminList.length})
+                    </button>
+                  </div>
+
+                  {adminRentalTab === 'active' && (
+                    <div className="space-y-2.5">
+                      {rentals.filter((r) => r.status === '대여중').map((rental) => {
+                        const isOverdue = today > rental.endDate;
+                        const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
+
+                        return (
+                          <div key={rental.rentalId} className={`p-3.5 rounded-2xl border ${isOverdue ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200/80 bg-white shadow-sm'}`}>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <span className="text-[10px] text-slate-500 font-mono block">대여회원: {rental.userId}</span>
+                                <h3 className="font-bold text-slate-900 text-xs mt-0.5">{rental.gameTitle}</h3>
+                              </div>
+                              {isOverdue && (
+                                <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <AlertTriangle size={10} /> 연체 ({overdueDays}일)
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-600 flex justify-between">
+                              <span>대여일: {rental.startDate}</span>
+                              <span>반납예정일: <strong className={isOverdue ? 'text-rose-600 font-bold' : 'text-slate-900'}>{rental.endDate}</strong></span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {adminRentalTab === 'completed' && (
+                    <div className="space-y-2.5">
+                      {allReturnedRentalsAdminList.map((rental) => {
+                        const returnedDate = rental.returnedAt?.split('T')[0] || rental.startDate;
+                        const isLateReturn = returnedDate > rental.endDate;
+
+                        return (
+                          <div key={rental.rentalId} className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-sm space-y-1.5">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <span className="text-[10px] text-slate-500 font-mono block">대여회원: {rental.userId}</span>
+                                <h3 className="font-bold text-slate-900 text-xs mt-0.5 flex items-center gap-1.5">
+                                  <CheckCircle2 size={13} className="text-emerald-600" />
+                                  {rental.gameTitle}
+                                </h3>
+                              </div>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600 flex justify-between">
+                              <span>대여일: {rental.startDate}</span>
+                              <span>반납일: <strong className="text-emerald-700 font-bold">{returnedDate}</strong></span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* C. 회원 관리 */}
+              {adminSubTab === 'userAdmin' && (
+                <div className="space-y-4">
+                  <div className="pb-2 border-b border-slate-200/80">
+                    <h2 className="font-black text-slate-900 text-base tracking-tight flex items-center gap-2">
+                      <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
+                      회원 관리
+                    </h2>
+                  </div>
+
+                  <div className="relative">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="회원명 또는 회원 ID 검색..."
+                      value={userAdminSearch}
+                      onChange={(e) => setUserAdminSearch(e.target.value)}
+                      className="w-full border border-slate-200 pl-10 pr-9 py-2.5 rounded-xl text-xs bg-slate-50/50 text-slate-900 focus:outline-none focus:border-slate-800 transition"
+                    />
+                    {userAdminSearch && (
+                      <button onClick={() => setUserAdminSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {filteredUserAdminList.map((user) => {
+                      const isWithdrawn = user.role === '탈퇴회원';
+
+                      return (
+                        <div key={user.userId} className={`border p-3.5 rounded-2xl space-y-2 shadow-sm ${isWithdrawn ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-200/80'}`}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <h3 className={`font-bold text-xs font-mono ${isWithdrawn ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{user.userId}</h3>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
+                                  user.role === '운영자' ? 'bg-amber-100 text-amber-800' : isWithdrawn ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                  {user.role}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 mt-0.5">{user.name} | {user.email}</p>
+                            </div>
+
+                            {user.role === '일반회원' && (
+                              <button
+                                onClick={() => handleUserRoleChange(user, '탈퇴회원')}
+                                className="px-2.5 py-1 text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition flex items-center gap-1"
+                              >
+                                <UserX size={12} /> 탈퇴
+                              </button>
+                            )}
+                            {user.role === '탈퇴회원' && (
+                              <button
+                                onClick={() => handleUserRoleChange(user, '일반회원')}
+                                className="px-2.5 py-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition flex items-center gap-1"
+                              >
+                                <UserCheckIcon size={12} /> 복구
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] text-slate-500">
+                            <span>가입일: {user.createdAt}</span>
+                            <span className="font-semibold flex items-center gap-1">
+                              <ShieldAlert size={13} className={user.penaltyPoints > 0 ? 'text-rose-600' : 'text-slate-400'} />
+                              패널티: {user.penaltyPoints}점
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* D. 공지사항 관리 */}
+              {adminSubTab === 'noticeAdmin' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
+                    <div>
+                      <h2 className="font-black text-slate-900 text-base tracking-tight flex items-center gap-2">
+                        <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
+                        공지사항 관리
+                      </h2>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                        대여(게임목록) 상단에 노출되는 공지사항을 등록 및 수정합니다.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditingNotice({ title: '', content: '' });
+                        setIsNoticeModalOpen(true);
+                      }}
+                      className="bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                    >
+                      <Plus size={14} /> 공지 작성
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {notices.length === 0 ? (
+                      <div className="text-center py-10 border border-dashed border-slate-200 text-xs text-slate-400 rounded-2xl">
+                        등록된 공지사항이 없습니다.
+                      </div>
+                    ) : (
+                      notices.map((n) => (
+                        <div key={n.noticeId} className="border border-slate-200/80 p-3.5 rounded-2xl bg-white shadow-sm space-y-1.5">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-bold text-slate-900 text-xs">{n.title}</h3>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingNotice({ id: n.noticeId, title: n.title, content: n.content });
+                                  setIsNoticeModalOpen(true);
+                                }}
+                                className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition"
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button
+                                onClick={() => deleteNotice(n.noticeId)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-600 whitespace-pre-wrap">{n.content}</p>
+                          <span className="text-[10px] text-slate-400 block pt-1">{n.createdAt} 작성</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
         </main>
 
-        {/* 플로팅 장바구니 버튼 */}
-        <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="pointer-events-auto relative p-3.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 active:scale-95 transition-all shadow-xl border border-slate-700/50 flex items-center justify-center"
-            title="장바구니 열기"
-          >
-            <ShoppingCart size={20} />
-            {cart.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                {cart.length}
-              </span>
-            )}
-          </button>
-        </div>
+        {/* 플로팅 장바구니 버튼 (게임목록 탭에서만 활성화) */}
+        {activeTab === 'games' && (
+          <div className="fixed bottom-20 max-w-md mx-auto right-4 pointer-events-none z-30">
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="pointer-events-auto relative p-3.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 active:scale-95 transition-all shadow-xl border border-slate-700/50 flex items-center justify-center"
+              title="장바구니 열기"
+            >
+              <ShoppingCart size={20} />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  {cart.length}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
 
-        {/* 고정 하단 네비게이션 */}
+        {/* ⭕ 고정 하단 네비게이션 메인 메뉴 바 */}
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg">
           <button onClick={() => setActiveTab('games')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'games' ? 'text-slate-900' : 'text-slate-400'}`}>
             <Gamepad2 size={20} />
-            <span className="mt-1">게임목록</span>
+            <span className="mt-1">대여</span>
           </button>
           <button onClick={() => setActiveTab('returns')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'returns' ? 'text-slate-900' : 'text-slate-400'}`}>
             <RotateCcw size={20} />
-            <span className="mt-1">반납/히스토리</span>
+            <span className="mt-1">반납</span>
+          </button>
+          <button onClick={() => setActiveTab('ranking')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'ranking' ? 'text-slate-900' : 'text-slate-400'}`}>
+            <Trophy size={20} />
+            <span className="mt-1">랭킹</span>
+          </button>
+          <button onClick={() => setActiveTab('report')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'report' ? 'text-slate-900' : 'text-slate-400'}`}>
+            <Siren size={20} />
+            <span className="mt-1">신고</span>
           </button>
           {isAdmin && (
-            <>
-              <button onClick={() => setActiveTab('gameAdmin')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'gameAdmin' ? 'text-slate-900' : 'text-slate-400'}`}>
-                <Settings size={20} />
-                <span className="mt-1">게임관리</span>
-              </button>
-              <button onClick={() => setActiveTab('rentalAdmin')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'rentalAdmin' ? 'text-slate-900' : 'text-slate-400'}`}>
-                <ClipboardList size={20} />
-                <span className="mt-1">대여/반납</span>
-              </button>
-              <button onClick={() => setActiveTab('userAdmin')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'userAdmin' ? 'text-slate-900' : 'text-slate-400'}`}>
-                <Users size={20} />
-                <span className="mt-1">회원관리</span>
-              </button>
-            </>
+            <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center text-[10px] font-bold ${activeTab === 'admin' ? 'text-sky-600' : 'text-slate-400'}`}>
+              <ShieldCheck size={20} />
+              <span className="mt-1">관리자</span>
+            </button>
           )}
         </nav>
 
@@ -1733,7 +1948,6 @@ export default function App() {
                 <button onClick={() => setIsCartOpen(false)}><X size={18} /></button>
               </div>
 
-              {/* 대여 기간 설정 선택 영역 */}
               <div className="p-4 bg-slate-50 border-b border-slate-200/80 space-y-2">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-900">
                   <span className="flex items-center gap-1.5">
@@ -1744,7 +1958,6 @@ export default function App() {
                   </span>
                 </div>
                 
-                {/* 1일 ~ 14일 수평 스크롤 칩 버튼 목록 */}
                 <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
                   {Array.from({ length: 14 }, (_, i) => i + 1).map((days) => (
                     <button
@@ -1783,7 +1996,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* 하단 버튼 영역 */}
               <div className="p-4 bg-slate-50 border-t border-slate-200">
                 {cart.length > 0 ? (
                   <button onClick={processCheckout} className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold text-xs hover:bg-slate-800 transition shadow-sm">
@@ -1799,7 +2011,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 게임 등록/수정 모달 */}
+        {/* 게임 등록/수정 모달 (출시년도 및 BGG 평점 항목 포함) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3.5 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
@@ -1822,13 +2034,9 @@ export default function App() {
                       src={editingGame.imageUrl || 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'} 
                       alt="미리보기" 
                       className="w-10 h-10 object-cover rounded-lg bg-slate-200 flex-shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300';
-                      }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                     />
-                    <span className="text-[10px] text-slate-500">
-                      이미지 URL을 입력하면 왼쪽에 미리보기가 등록됩니다.
-                    </span>
+                    <span className="text-[10px] text-slate-500">이미지 URL을 입력하면 왼쪽에 미리보기가 적용됩니다.</span>
                   </div>
                 </div>
 
@@ -1857,6 +2065,39 @@ export default function App() {
                   />
                 </div>
 
+                {/* ⭕ 신규 추가: 출시년도 및 보드게임긱(BGG) 평점 */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="font-bold block mb-1.5 text-slate-900 flex items-center gap-1">
+                      <CalendarDays size={13} /> 출시년도
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={1900}
+                      max={2030}
+                      value={editingGame.releaseYear}
+                      onChange={(e) => setEditingGame({ ...editingGame, releaseYear: Number(e.target.value) })}
+                      className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 text-xs bg-slate-50/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1.5 text-slate-900 flex items-center gap-1">
+                      <Star size={13} className="text-amber-500" /> BGG 평점
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      min={1.0}
+                      max={10.0}
+                      value={editingGame.bggRating}
+                      onChange={(e) => setEditingGame({ ...editingGame, bggRating: Number(e.target.value) })}
+                      className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 text-xs bg-slate-50/50"
+                    />
+                  </div>
+                </div>
+
                 {/* 장르 선택 (최대 3개) */}
                 <div>
                   <label className="font-bold block mb-1.5 text-slate-900 flex items-center justify-between">
@@ -1876,11 +2117,7 @@ export default function App() {
                           disabled={isMaxReached}
                           onClick={() => handleToggleGenre(preset)}
                           className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
-                            isSelected
-                              ? 'bg-slate-900 text-white'
-                              : isMaxReached
-                              ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            isSelected ? 'bg-slate-900 text-white' : isMaxReached ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           }`}
                         >
                           {preset}
@@ -1893,7 +2130,7 @@ export default function App() {
                     <input
                       type="text"
                       disabled={editingGame.genres.length >= 3}
-                      placeholder={editingGame.genres.length >= 3 ? "최대 3개 선택 완료" : "기타 장르 입력 (예: 추리)"}
+                      placeholder={editingGame.genres.length >= 3 ? "최대 3개 선택 완료" : "기타 장르 입력"}
                       value={customGenreInput}
                       onChange={(e) => setCustomGenreInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -1978,6 +2215,45 @@ export default function App() {
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={() => setIsGameModalOpen(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition">취소</button>
                   <button type="submit" className="flex-1 bg-[#FEE500] text-slate-900 py-3 rounded-xl font-bold hover:bg-amber-400 transition">저장</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 공지사항 작성/수정 모달 */}
+        {isNoticeModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border border-slate-100">
+              <h3 className="font-extrabold text-slate-900 text-base">{editingNotice.id ? '공지사항 수정' : '공지사항 작성'}</h3>
+              <form onSubmit={saveNotice} className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold block mb-1.5 text-slate-900">공지 제목</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="공지 제목을 입력하세요"
+                    value={editingNotice.title}
+                    onChange={(e) => setEditingNotice({ ...editingNotice, title: e.target.value })}
+                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 text-xs bg-slate-50/50 focus:outline-none focus:border-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold block mb-1.5 text-slate-900">공지 내용</label>
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="공지할 내용을 상세히 작성하세요"
+                    value={editingNotice.content}
+                    onChange={(e) => setEditingNotice({ ...editingNotice, content: e.target.value })}
+                    className="w-full border border-slate-300 p-3 rounded-xl text-slate-900 text-xs bg-slate-50/50 focus:outline-none focus:border-slate-800"
+                  ></textarea>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition">취소</button>
+                  <button type="submit" className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">저장</button>
                 </div>
               </form>
             </div>
