@@ -320,6 +320,18 @@ export default function App() {
     }
   }, [activeTab]);
 
+  // ⭕ 오류 해결: handleTabChange 및 handleScroll 함수 명확히 선언
+  const handleScroll = () => {
+    // 스크롤 이벤트 수신기
+  };
+
+  const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
+    setActiveTab(newTab);
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTop = 0;
+    }
+  };
+
   const recentNoticesList = notices.slice(0, 5);
 
   useEffect(() => {
@@ -1543,6 +1555,7 @@ export default function App() {
         {/* 탭별 독립 스크롤 분리를 위한 메인 컨테이너 영역 */}
         <main 
           ref={mainScrollRef}
+          onScroll={handleScroll}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
         >
@@ -2768,7 +2781,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 로그아웃 버튼 */}
+                {/* 로그아웃 버튼 (평범한 스타일) */}
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
@@ -3312,7 +3325,7 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition text-xs">취소</button>
+                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
                   <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
                 </div>
               </form>
@@ -3320,7 +3333,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 개편 반영: 게임 등록/수정 모달 (이미지 미리보기, 단독 1열 게임명, 기타 장르 추가 기능 삭제, 노출여부 텍스트 간소화 및 3열 배치) */}
+        {/* ⭕ 이미지 미리보기, 1열 게임명, 기타 장르 삭제, 노출여부 3열 배치 반영 게임 등록/수정 모달 */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3349,7 +3362,6 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
-                  {/* ⭕ 1. 이미지 미리보기 노출 */}
                   {editingGame.imageUrl && (
                     <div className="mt-2 flex items-center gap-2.5 p-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <img 
@@ -3379,7 +3391,7 @@ export default function App() {
                   />
                 </div>
 
-                {/* ⭕ 2. 게임명 한 줄(단독 1열) 노출 */}
+                {/* 게임명 단독 1열 배치 */}
                 <div>
                   <label className="font-bold block mb-1">게임명</label>
                   <input
@@ -3459,7 +3471,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ⭕ 5. 플레이타임 / 난이도 / 노출여부 3열 나란히 배치 */}
+                {/* 플레이타임 / 난이도 / 노출여부 3열 나란히 배치 */}
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="font-bold block mb-1 truncate">플레이타임(분)</label>
@@ -3490,7 +3502,6 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    {/* ⭕ 4. 노출여부 Y/N 문구 삭제 후 '노출', '숨김' 단독 노출 */}
                     <label className="font-bold block mb-1 truncate">노출 여부</label>
                     <select
                       value={editingGame.isVisible}
@@ -3505,7 +3516,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ⭕ 3. 장르 선택 (기타 장르 추가 기능 삭제) */}
+                {/* 장르 선택 (기타 장르 추가 기능 삭제) */}
                 <div className="pt-1">
                   <label className="font-bold block mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 3개)</span>
