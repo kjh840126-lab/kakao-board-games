@@ -88,8 +88,8 @@ export interface Game {
   bggRating: number;
   rentalCount?: number;
   recentRentalCount?: number;
-  userAvgRating?: number; // ⭕ 회원 평점 평균
-  userRatingCount?: number; // ⭕ 평점 남긴 회원 수
+  userAvgRating?: number;
+  userRatingCount?: number;
 }
 
 export interface Rental {
@@ -168,7 +168,7 @@ const getDaysDifference = (dateStr1: string, dateStr2: string) => {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 };
 
-// ⭕ 별점 5개 UI 표시 컴포넌트 (0.5점 반별 지원)
+// 별점 5개 UI 표시 컴포넌트
 const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { rating: number; size?: number; colorClass?: string }) => {
   return (
     <div className="flex items-center gap-0.5 inline-flex">
@@ -201,18 +201,18 @@ export default function App() {
   const [sites, setSiteList] = useState<BoardSite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ⭕ 찜(Favorites) 및 평점(Ratings) State
+  // 찜(Favorites) 및 평점(Ratings) State
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
   
-  // ⭕ 평점 등록/수정 모달 State
+  // 평점 등록/수정 모달 State
   const [ratingModalGame, setRatingModalGame] = useState<Game | null>(null);
   const [selectedScore, setSelectedScore] = useState<number>(5.0);
 
-  // ⭕ 찜한 보드게임 확인 모달 State
+  // 찜한 보드게임 확인 모달 State
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
 
-  // 설정 관련 State (LocalStorage 연동)
+  // 설정 관련 State
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
   });
@@ -268,14 +268,12 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
-  // 새로고침 시 메인 탭 유지
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'sites' | 'admin'>(() => {
     const savedTab = localStorage.getItem('kakao_bg_activeTab');
     return (savedTab as 'games' | 'returns' | 'ranking' | 'sites' | 'admin') || 'games';
   });
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
-  // 운영자 서브탭 새로고침 시 유지
   const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>(() => {
     const savedAdminTab = localStorage.getItem('kakao_bg_adminSubTab');
     return (savedAdminTab as any) || 'gameAdmin';
@@ -291,7 +289,6 @@ export default function App() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<{ id?: number; title: string; content: string }>({ title: '', content: '' });
 
-  // 관리자 사이트 등록/수정 모달 State
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<BoardSite>({
     siteId: 0,
@@ -318,6 +315,7 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
+  // ⭕ 스크롤 제어를 위한 Ref
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -358,14 +356,12 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // 하단 메뉴 변경 시 스크롤 초기화
+  // ⭕ 1. 메뉴 이동 시 무조건 스크롤 최상단(0)으로 이동
   useEffect(() => {
     if (mainScrollRef.current) {
       mainScrollRef.current.scrollTop = 0;
     }
-  }, [activeTab]);
-
-  const handleScroll = () => {};
+  }, [activeTab, adminSubTab]);
 
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     setActiveTab(newTab);
@@ -402,7 +398,6 @@ export default function App() {
 
   const fetchInitialData = async () => {
     try {
-      // 1. 유저 정보
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
         const mappedUsers: UserData[] = await Promise.all(
@@ -460,7 +455,6 @@ export default function App() {
         }
       }
 
-      // 2. 대여 정보
       const { data: rentalsData } = await supabase.from('rentals').select('*');
       let rentalList: Rental[] = [];
       if (rentalsData) {
@@ -477,7 +471,6 @@ export default function App() {
         setRentals(rentalList);
       }
 
-      // 3. 평점 데이터 조율
       const { data: ratingsData } = await supabase.from('ratings').select('*');
       let ratingList: UserRating[] = [];
       if (ratingsData) {
@@ -489,7 +482,6 @@ export default function App() {
         setAllRatings(ratingList);
       }
 
-      // 4. 찜(Favorites) 데이터 조율
       if (currentUser) {
         const { data: favsData } = await supabase
           .from('favorites')
@@ -500,7 +492,6 @@ export default function App() {
         }
       }
 
-      // 5. 보드게임 데이터 조율
       const { data: gamesData } = await supabase.from('games').select('*');
       if (gamesData) {
         setGames(gamesData.map(g => {
@@ -515,7 +506,6 @@ export default function App() {
           const totalRentalCount = gameRentalList.length;
           const recentRentalCount = gameRentalList.filter(r => r.startDate >= thirtyDaysAgoStr).length;
 
-          // ⭕ 회원 평점 평균 계산
           const gameRatings = ratingList.filter(r => r.gameId === g.game_id);
           const userRatingCount = gameRatings.length;
           const userAvgRating = userRatingCount > 0 
@@ -545,7 +535,6 @@ export default function App() {
         }));
       }
 
-      // 6. 공지사항 데이터
       const { data: noticeData } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
       if (noticeData) {
         setNoticeList(noticeData.map(n => ({
@@ -556,7 +545,6 @@ export default function App() {
         })));
       }
 
-      // 7. 신고 데이터
       const { data: reportsData } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
       if (reportsData) {
         setReportList(reportsData.map(r => ({
@@ -570,7 +558,6 @@ export default function App() {
         })));
       }
 
-      // 8. 사이트 데이터
       const { data: sitesData } = await supabase.from('sites').select('*').order('site_id', { ascending: true });
       if (sitesData) {
         setSiteList(sitesData.map(s => ({
@@ -590,7 +577,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 찜 토글 (등록 / 해제)
   const toggleFavorite = async (gameId: string) => {
     if (!currentUser) return;
     const isFav = userFavorites.includes(gameId);
@@ -604,7 +590,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 회원 별점 저장/수정
   const handleSaveRating = async () => {
     if (!currentUser || !ratingModalGame) return;
 
@@ -799,6 +784,15 @@ export default function App() {
     }
   };
 
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('kakao_boardgame_user');
+    setCart([]);
+    setIsCartOpen(false);
+    setIsSettingsOpen(false);
+    setIsAdminReportDrawerOpen(false);
+  };
+
   const handleUserRoleChange = async (targetUser: UserData, newRole: Role) => {
     const actionText = newRole === '탈퇴회원' ? '탈퇴' : '복구';
     if (window.confirm(`'${targetUser.name}' 회원님을 ${actionText} 처리하시겠습니까?`)) {
@@ -814,6 +808,22 @@ export default function App() {
         await fetchInitialData();
       }
     }
+  };
+
+  const handleMarkReportAsRead = async (report: ReportData) => {
+    setSelectedReport(report);
+    if (!report.isRead) {
+      setReportList(prev => prev.map(r => r.reportId === report.reportId ? { ...r, isRead: true } : r));
+      await supabase.from('reports').update({ is_read: true }).eq('report_id', report.reportId);
+    }
+  };
+
+  const handleMarkAllReportsAsRead = async () => {
+    const unreadIds = reports.filter(r => !r.isRead).map(r => r.reportId);
+    if (unreadIds.length === 0) return;
+
+    setReportList(prev => prev.map(r => ({ ...r, isRead: true })));
+    await supabase.from('reports').update({ is_read: true }).in('report_id', unreadIds);
   };
 
   const saveSite = async (e: React.FormEvent) => {
@@ -874,6 +884,23 @@ export default function App() {
 
   const isAdmin = currentUser?.role === '운영자';
   const unreadReportsCount = reports.filter(r => !r.isRead).length;
+
+  const toggleCartItem = (game: Game) => {
+    const isAlreadyInCart = cart.some((item) => item.gameId === game.gameId);
+    if (isAlreadyInCart) {
+      setCart(cart.filter((item) => item.gameId !== game.gameId));
+    } else {
+      if (cart.length >= 3) {
+        alert('장바구니에는 최대 3개까지만 담을 수 있습니다.');
+        return;
+      }
+      setCart([...cart, game]);
+    }
+  };
+
+  const removeFromCart = (gameId: string) => {
+    setCart(cart.filter((item) => item.gameId !== gameId));
+  };
 
   const processCheckout = async () => {
     if (!currentUser) return;
@@ -1108,6 +1135,35 @@ export default function App() {
     }
   };
 
+  const handleSendReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    if (!reportForm.title.trim() || !reportForm.content.trim()) {
+      alert('제목과 상세 내용을 입력해 주세요.');
+      return;
+    }
+
+    const { error } = await supabase.from('reports').insert([
+      {
+        user_id: currentUser.userId,
+        category: reportForm.category,
+        title: reportForm.title.trim(),
+        content: reportForm.content.trim(),
+        is_read: false
+      }
+    ]);
+
+    if (error) {
+      alert('신고/건의 접수 실패: ' + error.message);
+    } else {
+      alert('운영진에게 성공적으로 전달되었습니다.\n감사합니다.');
+      setReportForm({ title: '', content: '', category: '장애/오류 신고' });
+      setIsReportModalOpen(false);
+      await fetchInitialData();
+    }
+  };
+
   const handleNoticeClick = (notice: Notice) => {
     setSelectedNotice(notice);
     setIsNoticeDrawerOpen(true);
@@ -1121,12 +1177,11 @@ export default function App() {
     return 0;
   };
 
-  // ⭕ 6. 회원 평점의 평균을 랭킹에 합산 도입 (BGG평점 + 최근대여점수 + 회원평점)
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
       const releaseBonus = getReleaseBonus(game.releaseYear);
-      const userRatingScore = (game.userAvgRating || 0) * 0.5; // 회원평점 가산점
+      const userRatingScore = (game.userAvgRating || 0) * 0.5;
       const totalScore = Number((recentScore + releaseBonus + game.bggRating + userRatingScore).toFixed(2));
       return { ...game, totalScore, recentScore, releaseBonus, userRatingScore };
     })
@@ -1143,7 +1198,6 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // 대여 페이지 게임 목록 필터링
   const filteredGameList = [...games]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .filter((g) => g.isVisible === 'Y')
@@ -1208,8 +1262,6 @@ export default function App() {
     });
 
   const visibleSitesList = sites.filter(s => s.isVisible === 'Y');
-
-  // ⭕ 찜한 게임 목록
   const favoriteGamesList = games.filter(g => userFavorites.includes(g.gameId));
 
   const isFilterActive = playerFilter > 0 || genreFilter !== '' || difficultyFilter !== 'all';
@@ -1605,10 +1657,9 @@ export default function App() {
           )}
         </header>
 
-        {/* 탭별 독립 스크롤 분리를 위한 메인 컨테이너 영역 */}
+        {/* ⭕ 메인 스크롤 영역 (메뉴 변경 시 scrollTop 0으로 초기화) */}
         <main 
           ref={mainScrollRef}
-          onScroll={handleScroll}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
         >
@@ -1828,7 +1879,7 @@ export default function App() {
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
-                          {/* ⭕ 5. 대여 목록 이미지 하단 "나의 평점" 및 별점 5개 노출 */}
+                          {/* "나의 평점" 및 별점 5개 노출 */}
                           <div 
                             onClick={() => {
                               setSelectedScore(userRating ? userRating.score : 5.0);
@@ -1879,7 +1930,7 @@ export default function App() {
                             </div>
 
                             <div className="flex justify-end items-center gap-2">
-                              {/* ⭕ 3. 하트(♥) 찜 아이콘 버튼 */}
+                              {/* 하트(♥) 찜 아이콘 버튼 */}
                               <button
                                 onClick={() => toggleFavorite(game.gameId)}
                                 className={`p-1.5 rounded-xl border transition flex items-center justify-center ${
@@ -2125,7 +2176,7 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* ⭕ 회원 평점 지표 노출 */}
+                        {/* 회원 평점 지표 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -2768,7 +2819,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 설정 드로어 (4. '찜한 보드게임' 메뉴 추가) */}
+        {/* 설정 드로어 */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
@@ -2809,7 +2860,7 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* ⭕ 4. 찜한 보드게임 메뉴 추가 */}
+                {/* 찜한 보드게임 메뉴 */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Heart size={14} className="text-rose-500" /> 나의 활동
@@ -2934,7 +2985,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 4. 찜한 보드게임 확인 모달 */}
+        {/* 찜한 보드게임 확인 모달 */}
         {isFavoritesModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border max-h-[85vh] flex flex-col ${
@@ -2994,7 +3045,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 2, 5. 회원 평점 등록/수정 모달 (0.5점 단위) */}
+        {/* 회원 평점 등록/수정 모달 */}
         {ratingModalGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl border text-center ${
@@ -3013,7 +3064,6 @@ export default function App() {
                 <h4 className="font-extrabold text-base text-slate-900 dark:text-slate-100">{ratingModalGame.title}</h4>
                 <p className="text-slate-400 text-xs">게임에 대한 나의 별점을 선택해 주세요.</p>
                 
-                {/* 선택한 점수 크고 선명하게 노출 */}
                 <div className="py-2">
                   <span className="text-3xl font-black text-rose-500">{selectedScore.toFixed(1)}</span>
                   <span className="text-slate-400 font-bold text-sm"> / 5.0</span>
@@ -3023,7 +3073,6 @@ export default function App() {
                   <StarRating rating={selectedScore} size={28} colorClass="text-rose-500" />
                 </div>
 
-                {/* 0.5점 단위 슬라이더 조절기 */}
                 <input 
                   type="range" 
                   min="0.5" 
@@ -3576,7 +3625,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 개편 반영: 게임 등록/수정 모달 (이미지 미리보기, 단독 1열 게임명, 기타 장르 삭제, 노출여부 텍스트 간소화 및 3열 배치) */}
+        {/* ⭕ 개편 반영: 게임 등록/수정 모달 (노출 여부 셀렉트 박스 세로 높이 통일 및 비율 재배치) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3618,42 +3667,42 @@ export default function App() {
                   )}
                 </div>
 
-                {/* 보드게임 ID */}
-                <div>
-                  <label className="font-bold block mb-1">보드게임 ID</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={isEditingMode}
-                    placeholder="예: KG0001"
-                    value={editingGame.gameId}
-                    onChange={(e) => setEditingGame({ ...editingGame, gameId: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isEditingMode ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50/50 border-slate-300'
-                    }`}
-                  />
+                {/* ⭕ 3. 보드게임 ID / 게임명 같은 행 노출 (3:7 비율) */}
+                <div className="flex gap-2">
+                  <div className="w-[30%]">
+                    <label className="font-bold block mb-1 truncate">보드게임 ID</label>
+                    <input
+                      type="text"
+                      required
+                      disabled={isEditingMode}
+                      placeholder="예: KG0001"
+                      value={editingGame.gameId}
+                      onChange={(e) => setEditingGame({ ...editingGame, gameId: e.target.value })}
+                      className={`w-full border p-2.5 rounded-xl text-xs placeholder:text-xs placeholder:opacity-50 ${
+                        isEditingMode ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50/50 border-slate-300'
+                      }`}
+                    />
+                  </div>
+                  <div className="w-[70%]">
+                    <label className="font-bold block mb-1 truncate">게임명</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="보드게임 이름"
+                      value={editingGame.title}
+                      onChange={(e) => setEditingGame({ ...editingGame, title: e.target.value })}
+                      className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
                 </div>
 
-                {/* 게임명 단독 1열 배치 */}
-                <div>
-                  <label className="font-bold block mb-1">게임명</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="보드게임 이름"
-                    value={editingGame.title}
-                    onChange={(e) => setEditingGame({ ...editingGame, title: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                {/* 출시년도 / BGG 평점 2열 배치 */}
-                <div className="grid grid-cols-2 gap-2">
+                {/* ⭕ 3. 출시년도 / 플레이타임 / 난이도 같은 행 노출 (1:1:1 비율) */}
+                <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="font-bold block mb-1 flex items-center gap-1">
-                      <CalendarDays size={13} /> 출시년도
+                    <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
+                      <CalendarDays size={12} /> 출시년도
                     </label>
                     <input
                       type="number"
@@ -3668,56 +3717,9 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label className="font-bold block mb-1 flex items-center gap-1">
-                      <BggIcon size={13} className="text-slate-400" /> BGG 평점
+                    <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
+                      <Clock size={12} /> 플레이타임
                     </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      required
-                      min={1.0}
-                      max={10.0}
-                      value={editingGame.bggRating}
-                      onChange={(e) => setEditingGame({ ...editingGame, bggRating: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {/* 최소인원 / 최대인원 2열 배치 */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="font-bold block mb-1">최소인원 (명)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={editingGame.minPlayers}
-                      onChange={(e) => setEditingGame({ ...editingGame, minPlayers: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold block mb-1">최대인원 (명)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={editingGame.maxPlayers}
-                      onChange={(e) => setEditingGame({ ...editingGame, maxPlayers: Number(e.target.value) })}
-                      className={`w-full border p-2.5 rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {/* 플레이타임 / 난이도 / 노출여부 3열 나란히 배치 */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="font-bold block mb-1 truncate">플레이타임(분)</label>
                     <input
                       type="number"
                       min={1}
@@ -3744,12 +3746,56 @@ export default function App() {
                       }`}
                     />
                   </div>
+                </div>
+
+                {/* ⭕ 3. 최소인원 / 최대인원 / BGG 평점 / 노출 여부 같은 행 노출 (1:1:1:1 비율) */}
+                <div className="grid grid-cols-4 gap-1.5">
                   <div>
-                    <label className="font-bold block mb-1 truncate">노출 여부</label>
+                    <label className="font-bold block mb-1 truncate text-[11px]">최소인원</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editingGame.minPlayers}
+                      onChange={(e) => setEditingGame({ ...editingGame, minPlayers: Number(e.target.value) })}
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1 truncate text-[11px]">최대인원</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editingGame.maxPlayers}
+                      onChange={(e) => setEditingGame({ ...editingGame, maxPlayers: Number(e.target.value) })}
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1 truncate text-[11px]">BGG평점</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      min={1.0}
+                      max={10.0}
+                      value={editingGame.bggRating}
+                      onChange={(e) => setEditingGame({ ...editingGame, bggRating: Number(e.target.value) })}
+                      className={`w-full border p-2.5 rounded-xl text-xs ${
+                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    {/* ⭕ 2. 노출 여부 세로 높이 다른 input들과 동일하게 보정 (py-2.5 h-[38px]) */}
+                    <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                     <select
                       value={editingGame.isVisible}
                       onChange={(e) => setEditingGame({ ...editingGame, isVisible: e.target.value as 'Y' | 'N' })}
-                      className={`w-full border p-2.5 rounded-xl font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_8px_center] pr-6 ${
+                      className={`w-full border py-2.5 px-2 h-[38px] rounded-xl font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_8px] bg-no-repeat bg-[right_6px_center] pr-5 ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     >
@@ -3759,7 +3805,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 장르 선택 (기타 장르 추가 기능 삭제) */}
+                {/* 장르 선택 */}
                 <div className="pt-1">
                   <label className="font-bold block mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 3개)</span>
