@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -274,15 +274,6 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
-  const mainScrollRef = useRef<HTMLDivElement | null>(null);
-  const tabScrollPositions = useRef<{ [key: string]: number }>({
-    games: 0,
-    returns: 0,
-    ranking: 0,
-    sites: 0,
-    admin: 0
-  });
-
   const today = new Date().toISOString().split('T')[0];
 
   const thirtyDaysAgo = new Date();
@@ -320,24 +311,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
-
-  const handleScroll = () => {
-    if (mainScrollRef.current) {
-      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
-    }
-  };
-
-  const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
-    if (mainScrollRef.current) {
-      tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
-    }
-    setActiveTab(newTab);
-    setTimeout(() => {
-      if (mainScrollRef.current) {
-        mainScrollRef.current.scrollTop = tabScrollPositions.current[newTab] || 0;
-      }
-    }, 0);
-  };
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -1575,7 +1548,7 @@ export default function App() {
           )}
         </header>
 
-        {/* 메인 스크롤 영역 (독립 스크롤 이벤트 수신기) */}
+        {/* ⭕ 1. 탭별 스크롤 분리를 위한 개별 Scroll Container 메인 영역 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -1626,7 +1599,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* ⭕ 3. 필터 문구 제외 후 필터 아이콘만 노출 */}
+              {/* ⭕ 2. 필터 버튼 (텍스트 제거 후 아이콘만 세련되게 노출) */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1650,7 +1623,7 @@ export default function App() {
 
                 <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  title="검색 필터"
+                  title="필터 선택"
                   className={`p-2.5 rounded-xl font-bold flex items-center justify-center transition border relative flex-shrink-0 ${
                     isFilterActive 
                       ? 'bg-slate-900 text-white border-slate-900' 
@@ -1666,34 +1639,32 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 필터 확장 영역 */}
+              {/* ⭕ 2. 컴팩트 인라인 형태의 필터 드로어 (세로 수직 길이 단축) */}
               {isFilterOpen && (
-                <div className={`p-4 rounded-2xl border space-y-3.5 shadow-sm transition ${
+                <div className={`p-3.5 rounded-2xl border space-y-2.5 shadow-sm transition ${
                   isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
-                    <span className="font-extrabold flex items-center gap-1.5 text-xs">
-                      <Filter size={13} /> 조건별 게임 검색
-                    </span>
+                  <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/20">
+                    <span className="text-[11px] font-bold text-slate-400">필터 설정</span>
                     {isFilterActive && (
                       <button 
                         onClick={resetFilters}
                         className="text-[10px] font-bold text-rose-500 hover:underline flex items-center gap-0.5"
                       >
-                        <ResetIcon size={11} /> 필터 초기화
+                        <ResetIcon size={10} /> 필터 초기화
                       </button>
                     )}
                   </div>
 
-                  {/* 인원수 필터 */}
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-400 block">인원수 선택</span>
-                    <div className="flex flex-wrap gap-1">
+                  {/* 1) 인원수 인라인 필터 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">인원수</span>
+                    <div className="flex flex-wrap gap-1 flex-1">
                       {[0, 1, 2, 3, 4, 5].map((count) => (
                         <button
                           key={count}
                           onClick={() => setPlayerFilter(count)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
                             playerFilter === count 
                               ? 'bg-slate-900 text-white' 
                               : isDarkMode 
@@ -1701,19 +1672,19 @@ export default function App() {
                               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                           }`}
                         >
-                          {count === 0 ? '전체' : count === 5 ? '5인 이상' : `${count}인`}
+                          {count === 0 ? '전체' : count === 5 ? '5인+' : `${count}인`}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* 장르 필터 */}
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-400 block">장르 선택</span>
-                    <div className="flex flex-wrap gap-1">
+                  {/* 2) 장르 인라인 필터 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">장르</span>
+                    <div className="flex flex-wrap gap-1 flex-1 max-h-20 overflow-y-auto scrollbar-none">
                       <button
                         onClick={() => setGenreFilter('')}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
                           genreFilter === '' 
                             ? 'bg-slate-900 text-white' 
                             : isDarkMode 
@@ -1727,7 +1698,7 @@ export default function App() {
                         <button
                           key={preset}
                           onClick={() => setGenreFilter(preset)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
                             genreFilter === preset 
                               ? 'bg-slate-900 text-white' 
                               : isDarkMode 
@@ -1741,20 +1712,20 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 난이도 필터 */}
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-400 block">난이도 선택</span>
-                    <div className="flex gap-1">
+                  {/* 3) 난이도 인라인 필터 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">난이도</span>
+                    <div className="flex gap-1 flex-1">
                       {[
                         { key: 'all', label: '전체' },
-                        { key: 'easy', label: '쉬움 (~2.2)' },
-                        { key: 'normal', label: '보통 (2.3~3.5)' },
-                        { key: 'hard', label: '어려움 (3.6~)' }
+                        { key: 'easy', label: '쉬움' },
+                        { key: 'normal', label: '보통' },
+                        { key: 'hard', label: '어려움' }
                       ].map((diff) => (
                         <button
                           key={diff.key}
                           onClick={() => setDifficultyFilter(diff.key as any)}
-                          className={`flex-1 py-1 rounded-lg text-[11px] font-bold transition text-center ${
+                          className={`flex-1 py-0.5 rounded-md text-[10px] font-bold transition text-center ${
                             difficultyFilter === diff.key 
                               ? 'bg-slate-900 text-white' 
                               : isDarkMode 
@@ -2054,7 +2025,7 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
-                        {/* ⭕ 4. 수치 항목 줄바꿈 없이 한 줄(whitespace-nowrap)로 노출 */}
+                        {/* ⭕ 4. 수치 항목 줄바꿈 없이 한 줄로 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
@@ -2806,7 +2777,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* ⭕ 2. 로그아웃 버튼 (평범한 스타일로 상단 배치) */}
+                {/* 로그아웃 버튼 (평범한 스타일로 상단 배치) */}
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
@@ -2822,7 +2793,7 @@ export default function App() {
 
               </div>
 
-              {/* ⭕ 2. 최하단 닫기 버튼 */}
+              {/* 최하단 닫기 버튼 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
@@ -2936,7 +2907,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 5, 6, 7. 신고 및 건의하기 독립 팝업 모달 (Placeholder 크기 동기화, 셀렉트 박스 구별 감싸기) */}
+        {/* ⭕ 3. 신고 및 건의하기 독립 팝업 모달 (Placeholder 크기 동기화, 셀렉트 박스 구별 감싸기) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -2954,7 +2925,6 @@ export default function App() {
               <form onSubmit={handleSendReport} className="space-y-3.5">
                 <div>
                   <label className="font-bold block mb-1.5">카테고리 선택</label>
-                  {/* ⭕ 7. 셀렉트 박스 커스텀 화살표 및 테두리 인지 스타일링 적용 */}
                   <select
                     value={reportForm.category}
                     onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
@@ -2971,7 +2941,7 @@ export default function App() {
 
                 <div>
                   <label className="font-bold block mb-1.5">제목</label>
-                  {/* ⭕ 5. 예시(placeholder) 폰트 크기를 입력 크기(text-inherit)와 100% 동기화 */}
+                  {/* ⭕ 3. 예시(placeholder) 폰트 크기를 입력 크기(text-inherit)와 동기화 */}
                   <input
                     type="text"
                     required
@@ -3562,8 +3532,8 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   >
-                    <option value="Y">노출 (Y)</option>
-                    <option value="N">숨김 (N)</option>
+                    <Option value="Y">노출 (Y)</Option>
+                    <Option value="N">숨김 (N)</Option>
                   </select>
                 </div>
 
