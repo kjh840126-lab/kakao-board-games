@@ -1162,7 +1162,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FEE500] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen flex flex-col relative border-x border-slate-200/60">
         
-        {/* 고정 상단 헤더 (로고 크기 h-9로 확대 및 패널티/아이디 영역 레이아웃 정돈) */}
+        {/* ⭕ 고정 상단 헤더 (관리자 모드일 경우 로그아웃 버튼과 관리자 텍스트 제거) */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
@@ -1171,18 +1171,12 @@ export default function App() {
         >
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              {/* ⭕ 로고 크기 h-9로 확대 */}
               <img 
                 src="/header_logo.png" 
                 alt="kakao board games" 
                 className="h-9 w-auto object-contain drop-shadow-sm"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
               />
-              {isHeaderAdminTheme && (
-                <span className="bg-slate-900 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
-                  <ShieldCheck size={11} className="text-sky-300" /> 관리자 모드
-                </span>
-              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" style={{ color: '#0f172a' }}>
@@ -1204,19 +1198,20 @@ export default function App() {
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            title="로그아웃"
-            className={`p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm ${
-              isHeaderAdminTheme ? 'bg-sky-300 hover:bg-sky-200' : 'bg-amber-400/80 hover:bg-amber-400'
-            }`}
-            style={{ color: '#0f172a' }}
-          >
-            <LogOut size={18} />
-          </button>
+          {/* ⭕ 관리자 모드가 아닐 경우에만 로그아웃 버튼 표시 */}
+          {!isHeaderAdminTheme && (
+            <button
+              onClick={handleLogout}
+              title="로그아웃"
+              className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-amber-400/80 hover:bg-amber-400"
+              style={{ color: '#0f172a' }}
+            >
+              <LogOut size={18} />
+            </button>
+          )}
         </header>
 
-        {/* ⭕ 메인 스크롤 영역 (pt-[92px]로 로고 확대 보정) */}
+        {/* 메인 스크롤 영역 */}
         <main 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className="flex-1 p-4 pb-28 overflow-y-auto bg-white"
