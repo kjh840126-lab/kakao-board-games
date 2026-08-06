@@ -43,7 +43,8 @@ import {
   Sun,
   Moon,
   Type,
-  User
+  User,
+  Brain
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -125,10 +126,22 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 설정 관련 State
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
-  const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
+  // ⭕ 1. 새로고침 시 테마 및 폰트 크기 유지 (LocalStorage 연동)
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
+  });
+  const [fontSize, setFontSize] = useState<'normal' | 'large'>(() => {
+    return (localStorage.getItem('kakao_bg_fontSize') as 'normal' | 'large') || 'normal';
+  });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_theme', themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_fontSize', fontSize);
+  }, [fontSize]);
 
   // 내 정보 수정 / 비밀번호 변경 모달 State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -505,7 +518,6 @@ export default function App() {
     }
   };
 
-  // ⭕ 내 정보 수정 및 비밀번호 변경 처리 함수
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -743,6 +755,7 @@ export default function App() {
     if (!editingGame) return;
 
     const genresPayload = editingGame.genres.length > 0 ? editingGame.genres : ['보드게임'];
+    const formattedDifficulty = Number(Number(editingGame.difficulty).toFixed(2));
 
     if (isEditingMode) {
       const { error } = await supabase.from('games').update({
@@ -750,7 +763,7 @@ export default function App() {
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
         play_time: editingGame.playTime,
-        difficulty: editingGame.difficulty,
+        difficulty: formattedDifficulty,
         is_visible: editingGame.isVisible,
         image_url: editingGame.imageUrl,
         genres: genresPayload,
@@ -768,7 +781,7 @@ export default function App() {
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
         play_time: editingGame.playTime,
-        difficulty: editingGame.difficulty,
+        difficulty: formattedDifficulty,
         description: '',
         is_visible: editingGame.isVisible,
         image_url: editingGame.imageUrl,
@@ -1304,7 +1317,7 @@ export default function App() {
           </button>
         </header>
 
-        {/* 메인 스크롤 영역 */}
+        {/* ⭕ 메인 스크롤 영역 (설정된 폰트크기 동적 제어) */}
         <main 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
@@ -1398,16 +1411,21 @@ export default function App() {
                         />
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div>
+                            {/* ⭕ 3. 게임명 뒤에 (2026년) 출시년도 노출 */}
                             <div className="flex justify-between items-start">
-                              <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
+                              <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                <span>{game.title}</span>
+                                <span className="text-[11px] text-slate-400 font-mono font-normal ml-1">({game.releaseYear}년)</span>
+                              </h3>
                               <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                             </div>
                             
+                            {/* ⭕ 4. 난이도를 소수점 2자리(0.00)까지 적당한 아이콘(Brain)과 함께 노출 */}
                             <div className={`flex flex-wrap gap-2 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                               <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                               <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
                               <span className="flex items-center gap-0.5"><Star size={11} className="text-amber-500 fill-amber-500" /> BGG {game.bggRating}</span>
-                              <span className="flex items-center gap-0.5 text-slate-400 font-mono">({game.releaseYear}년)</span>
+                              <span className="flex items-center gap-0.5 text-indigo-500 font-mono"><Brain size={11} /> {Number(game.difficulty).toFixed(2)}</span>
                             </div>
                           </div>
 
@@ -1422,11 +1440,12 @@ export default function App() {
                               ))}
                             </div>
 
+                            {/* ⭕ 2. 대여 가능 버튼 크기 가변(w-auto px-3.5) 수정 */}
                             <div className="flex justify-end">
                               {isAvailable ? (
                                 <button
                                   onClick={() => toggleCartItem(game)}
-                                  className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
+                                  className={`w-auto px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
                                     isSelectedInCart
                                       ? 'bg-slate-900 text-white hover:bg-slate-800'
                                       : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400'
@@ -1435,13 +1454,13 @@ export default function App() {
                                   {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
                                 </button>
                               ) : (
-                                <div className="w-full text-right">
+                                <div>
                                   {isOverdue ? (
-                                    <span className="w-full text-center px-2.5 py-1.5 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block text-xs">
+                                    <span className="px-2.5 py-1 rounded-xl font-extrabold bg-rose-100 text-rose-700 border border-rose-200 inline-block text-xs">
                                       대여중 (연체 {overdueDays}일)
                                     </span>
                                   ) : (
-                                    <span className={`w-full text-center px-2.5 py-1.5 rounded-xl font-bold border inline-block text-xs ${
+                                    <span className={`px-2.5 py-1 rounded-xl font-bold border inline-block text-xs ${
                                       isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-slate-100 text-slate-600 border-slate-200'
                                     }`}>
                                       대여중 ({activeRental?.endDate?.substring(5)} 반납예정)
@@ -1893,7 +1912,7 @@ export default function App() {
                                 <span className="text-slate-400 font-bold flex items-center gap-0.5"><EyeOff size={11} /> 숨김</span>
                               )}
                             </div>
-                            <p className="text-slate-400 mt-0.5">{game.releaseYear}년 | BGG {game.bggRating} | {game.minPlayers}~{game.maxPlayers}인</p>
+                            <p className="text-slate-400 mt-0.5">{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
                           </div>
                         </div>
                         
@@ -2100,6 +2119,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* ⭕ 5. 공지사항 관리 페이지에서 '작성' 버튼명으로 명확히 수정 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2117,9 +2137,9 @@ export default function App() {
                         setEditingNotice({ title: '', content: '' });
                         setIsNoticeModalOpen(true);
                       }}
-                      className="bg-slate-900 text-white font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
+                      className="bg-slate-900 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 hover:bg-slate-800 transition shadow-sm"
                     >
-                      <Plus size={14} /> 공지 작성
+                      <Plus size={14} /> 작성
                     </button>
                   </div>
 
@@ -2177,7 +2197,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 하단 네비게이션 개편 (신고 탭 ➔ 설정 탭으로 변경) */}
+        {/* 고정 하단 네비게이션 (text-[10px] 폰트 크기 고정) */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2193,7 +2213,6 @@ export default function App() {
             <Trophy size={20} />
             <span className="mt-1">랭킹</span>
           </button>
-          {/* ⭕ 신고 탭을 설정 탭으로 변경 */}
           <button onClick={() => setIsSettingsOpen(true)} className="flex flex-col items-center font-bold text-[10px] text-slate-400 hover:text-slate-600">
             <Settings size={20} />
             <span className="mt-1">설정</span>
@@ -2206,10 +2225,10 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 설정 우측 슬라이딩 Drawer 모달 (내 정보 수정, 신고하기 이동, 로그아웃, 닫기 배치) */}
+        {/* 설정 우측 슬라이딩 Drawer 모달 */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
-            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
+            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <div className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm">
                 <span className="flex items-center gap-2">
                   <Settings size={18} /> 설정
@@ -2233,7 +2252,7 @@ export default function App() {
                         setIsEditProfileOpen(true);
                       }
                     }}
-                    className={`w-full p-3 rounded-xl border text-left font-bold text-xs flex justify-between items-center transition ${
+                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
@@ -2252,7 +2271,7 @@ export default function App() {
                       setIsSettingsOpen(false);
                       setActiveTab('report');
                     }}
-                    className={`w-full p-3 rounded-xl border text-left font-bold text-xs flex justify-between items-center transition ${
+                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
@@ -2268,7 +2287,7 @@ export default function App() {
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sun size={14} /> 테마 선택
                   </h4>
-                  <div className={`flex p-1 rounded-xl font-bold text-xs ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                  <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setThemeMode('light')}
                       className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center gap-1.5 ${
@@ -2293,7 +2312,7 @@ export default function App() {
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Type size={14} /> 본문 글자 크기
                   </h4>
-                  <div className={`flex p-1 rounded-xl font-bold text-xs ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                  <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setFontSize('normal')}
                       className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center ${
@@ -2321,7 +2340,7 @@ export default function App() {
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
-                    className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold hover:bg-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
                   >
                     <LogOut size={16} /> 로그아웃
                   </button>
@@ -2333,7 +2352,7 @@ export default function App() {
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className={`w-full py-3 rounded-xl font-bold text-xs transition shadow-sm ${
+                  className={`w-full py-3 rounded-xl font-bold transition shadow-sm ${
                     isDarkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'
                   }`}
                 >
@@ -2344,17 +2363,17 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 신규 추가: 내 정보 수정 및 비밀번호 변경 모달 */}
+        {/* ⭕ 6. 내 정보 수정 및 비밀번호 변경 모달 (폰트 크기 변경 가변 대응) */}
         {isEditProfileOpen && currentUser && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
               isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
-            }`}>
+            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <h3 className="font-extrabold text-base flex items-center gap-2">
                 <User size={18} /> 내 정보 / 비밀번호 변경
               </h3>
 
-              <form onSubmit={handleSaveProfile} className="space-y-3.5 text-xs">
+              <form onSubmit={handleSaveProfile} className="space-y-3.5">
                 <div>
                   <label className="font-bold block mb-1 text-slate-400">아이디 (LDAP)</label>
                   <input
@@ -2433,7 +2452,7 @@ export default function App() {
         {/* 장바구니 Drawer 모달 */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
-            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
+            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <div className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm">
                 <span>장바구니 ({cart.length} / 3)</span>
                 <button onClick={() => setIsCartOpen(false)}><X size={18} /></button>
@@ -2509,7 +2528,7 @@ export default function App() {
         {/* 공지사항 우측 슬라이딩 Drawer 모달 */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end">
-            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
+            <div className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <div className="p-4 bg-slate-900 flex justify-between items-center font-bold text-white text-sm">
                 <span className="flex items-center gap-2">
                   <Bell size={16} className="text-[#FEE500]" /> 공지사항 목록
@@ -2577,11 +2596,12 @@ export default function App() {
           </div>
         )}
 
+        {/* ⭕ 6. 게임 등록/수정 모달 (소수점 2자리 입력 지원 및 폰트크기 가변 동기화) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 max-h-[90vh] overflow-y-auto shadow-2xl border ${
               isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
-            }`}>
+            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <h3 className="font-extrabold text-base">{isEditingMode ? '게임 정보 수정' : '신규 게임 등록'}</h3>
               <form onSubmit={saveGame} className="space-y-3">
                 
@@ -2760,13 +2780,16 @@ export default function App() {
                       }`}
                     />
                   </div>
+                  {/* ⭕ 4. 난이도 소수점 2자리(step 0.01)까지 세밀 입력 지원 */}
                   <div>
-                    <label className="font-bold block mb-1.5">난이도 (1.0~5.0)</label>
+                    <label className="font-bold block mb-1.5 flex items-center gap-1">
+                      <Brain size={13} className="text-indigo-500" /> 난이도 (1.00~5.00)
+                    </label>
                     <input
                       type="number"
-                      step="0.1"
-                      min={1.0}
-                      max={5.0}
+                      step="0.01"
+                      min={1.00}
+                      max={5.00}
                       value={editingGame.difficulty}
                       onChange={(e) => setEditingGame({ ...editingGame, difficulty: Number(e.target.value) })}
                       className={`w-full border p-3 rounded-xl ${
@@ -2799,11 +2822,12 @@ export default function App() {
           </div>
         )}
 
+        {/* ⭕ 6. 공지사항 작성 모달 (폰트 크기 동기화) */}
         {isNoticeModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
               isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
-            }`}>
+            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
               <h3 className="font-extrabold text-base">{editingNotice.id ? '공지사항 수정' : '공지사항 작성'}</h3>
               <form onSubmit={saveNotice} className="space-y-3">
                 <div>
