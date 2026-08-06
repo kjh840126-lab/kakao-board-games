@@ -50,7 +50,8 @@ import {
   Globe,
   ExternalLink,
   Filter,
-  RotateCcw as ResetIcon
+  RotateCcw as ResetIcon,
+  ChevronDown
 } from 'lucide-react';
 
 export type Role = '일반회원' | '운영자' | '탈퇴회원';
@@ -223,15 +224,18 @@ export default function App() {
   const [cart, setCart] = useState<Game[]>([]);
   const [rentalDays, setRentalDays] = useState<number>(7);
   
-  // ⭕ 2. 새로고침 시 기존 탭 유지 (LocalStorage 연동)
+  // 새로고침 시 메인 탭 유지
   const [activeTab, setActiveTab] = useState<'games' | 'returns' | 'ranking' | 'sites' | 'admin'>(() => {
     const savedTab = localStorage.getItem('kakao_bg_activeTab');
     return (savedTab as 'games' | 'returns' | 'ranking' | 'sites' | 'admin') || 'games';
   });
   const [rankingTab, setRankingTab] = useState<'hot' | 'hall'>('hot');
 
-  // ⭕ 3. 관리자 서브탭 명칭 변경 ('siteAdmin' => 사이트관리)
-  const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>('gameAdmin');
+  // ⭕ 2. 운영자 서브탭 새로고침 시 유지 (LocalStorage 연동)
+  const [adminSubTab, setAdminSubTab] = useState<'gameAdmin' | 'rentalAdmin' | 'userAdmin' | 'noticeAdmin' | 'siteAdmin'>(() => {
+    const savedAdminTab = localStorage.getItem('kakao_bg_adminSubTab');
+    return (savedAdminTab as any) || 'gameAdmin';
+  });
   const [adminRentalTab, setAdminRentalTab] = useState<'active' | 'completed'>('active');
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -265,13 +269,12 @@ export default function App() {
   const [gameAdminSearch, setGameAdminSearch] = useState('');
   const [userAdminSearch, setUserAdminSearch] = useState('');
 
-  // ⭕ 5. 대여 페이지 필터 State (인원수, 장르, 난이도)
+  // 대여 페이지 필터 State (인원수, 장르, 난이도)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [playerFilter, setPlayerFilter] = useState<number>(0); // 0: 전체, 1~5 (5: 5인이상)
-  const [genreFilter, setGenreFilter] = useState<string>(''); // '': 전체
+  const [playerFilter, setPlayerFilter] = useState<number>(0);
+  const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
-  // ⭕ 1. 탭별 스크롤 분리를 위한 Ref 및 스크롤 이벤트 수신기
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
   const tabScrollPositions = useRef<{ [key: string]: number }>({
     games: 0,
@@ -311,19 +314,21 @@ export default function App() {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
   }, [fontSize]);
 
-  // ⭕ 새로고침을 위해 activeTab을 LocalStorage에 저
   useEffect(() => {
     localStorage.setItem('kakao_bg_activeTab', activeTab);
   }, [activeTab]);
 
-  // ⭕ 1. 스크롤 실시간 저장
+  // ⭕ 2. 관리자 서브탭 변경 시 저장
+  useEffect(() => {
+    localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
+  }, [adminSubTab]);
+
   const handleScroll = () => {
     if (mainScrollRef.current) {
       tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
     }
   };
 
-  // ⭕ 1, 2. 탭 전환 시 스크롤 위치 복원
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     if (mainScrollRef.current) {
       tabScrollPositions.current[activeTab] = mainScrollRef.current.scrollTop;
@@ -358,7 +363,7 @@ export default function App() {
         setNoticeIndex(0);
       }, 500);
 
-      return () => clearTimeout(timer);
+      return () => clearInterval(timer);
     }
   }, [noticeIndex, recentNoticesList.length]);
 
@@ -1112,7 +1117,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ 5. 대여 페이지 게임 목록 필터링 (검색어 + 인원수 + 장르 + 난이도)
+  // 대여 페이지 게임 목록 필터링 (검색어 + 인원수 + 장르 + 난이도)
   const filteredGameList = [...games]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .filter((g) => g.isVisible === 'Y')
@@ -1361,7 +1366,7 @@ export default function App() {
                         setSignupForm({ ...signupForm, emailDomain: e.target.value });
                         setIsEmailChecked(false);
                       }}
-                      className="border border-slate-300 p-2.5 rounded-xl text-slate-900 bg-slate-50/50 focus:outline-none focus:border-slate-800 text-[11px] font-semibold"
+                      className="border border-slate-300 p-2.5 rounded-xl text-slate-900 bg-slate-50/50 focus:outline-none focus:border-slate-800 text-[11px] font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_10px_center] pr-6"
                     >
                       {ALLOWED_EMAIL_DOMAINS.map((domain) => (
                         <option key={domain} value={domain}>
@@ -1572,7 +1577,7 @@ export default function App() {
           )}
         </header>
 
-        {/* ⭕ 메인 스크롤 영역 (독립 스크롤 이벤트 수신기 등록) */}
+        {/* 메인 스크롤 영역 (독립 스크롤 이벤트 수신기) */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -1623,7 +1628,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* ⭕ 5. 대여 페이지 검색바 및 오른쪽에 필터(Filter) 버튼 신규 노출 */}
+              {/* ⭕ 3. 필터 문구 제외 후 필터 아이콘만 노출 */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1647,7 +1652,8 @@ export default function App() {
 
                 <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={`px-3.5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition border relative flex-shrink-0 ${
+                  title="검색 필터"
+                  className={`p-2.5 rounded-xl font-bold flex items-center justify-center transition border relative flex-shrink-0 ${
                     isFilterActive 
                       ? 'bg-slate-900 text-white border-slate-900' 
                       : isDarkMode 
@@ -1655,15 +1661,14 @@ export default function App() {
                       : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  <Filter size={15} />
-                  <span>필터</span>
+                  <Filter size={18} />
                   {isFilterActive && (
                     <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-1.5 right-1.5"></span>
                   )}
                 </button>
               </div>
 
-              {/* ⭕ 5. 필터 확장 드로어 영역 (인원수, 장르, 난이도) */}
+              {/* 필터 확장 영역 */}
               {isFilterOpen && (
                 <div className={`p-4 rounded-2xl border space-y-3.5 shadow-sm transition ${
                   isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-200'
@@ -1682,7 +1687,7 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* 1) 인원수 필터 */}
+                  {/* 인원수 필터 */}
                   <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-400 block">인원수 선택</span>
                     <div className="flex flex-wrap gap-1">
@@ -1704,7 +1709,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 2) 장르 필터 */}
+                  {/* 장르 필터 */}
                   <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-400 block">장르 선택</span>
                     <div className="flex flex-wrap gap-1">
@@ -1738,7 +1743,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 3) 난이도 필터 */}
+                  {/* 난이도 필터 */}
                   <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-400 block">난이도 선택</span>
                     <div className="flex gap-1">
@@ -2051,19 +2056,20 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
+                        {/* ⭕ 4. 수치 항목 줄바꿈 없이 한 줄(whitespace-nowrap)로 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
-                          <div className="text-slate-400 mt-1 space-y-0.5">
-                            <div className="flex gap-2">
-                              <span>최근 30일 대여: <strong className="text-rose-500">{game.recentRentalCount || 0}회</strong></span>
+                          <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                            <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
+                              <span>최근 대여: <strong className="text-rose-500 font-bold">{game.recentRentalCount || 0}회</strong></span>
                               <span>출시: {game.releaseYear}년 (+{game.releaseBonus}점)</span>
                             </div>
-                            <div>BGG 평점: {game.bggRating}점</div>
+                            <div className="whitespace-nowrap">BGG 평점: {game.bggRating}점</div>
                           </div>
                         </div>
 
                         <div className="text-right flex-shrink-0">
-                          <span className="text-slate-400 font-medium block">트렌드점수</span>
+                          <span className="text-slate-400 font-medium block text-[10px]">트렌드점수</span>
                           <span className="font-black text-rose-500 text-sm">{game.totalScore}점</span>
                         </div>
                       </div>
@@ -2113,19 +2119,20 @@ export default function App() {
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
+                        {/* ⭕ 4. 수치 항목 한 줄 노출 */}
                         <div className="flex-1 min-w-0">
                           <h3 className={`font-bold truncate ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
-                          <div className="text-slate-400 mt-1 space-y-0.5">
-                            <div className="flex gap-2">
-                              <span>총 누적 대여: <strong className="text-amber-500">{game.rentalCount || 0}회</strong></span>
+                          <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                            <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
+                              <span>총 누적 대여: <strong className="text-amber-500 font-bold">{game.rentalCount || 0}회</strong></span>
                               <span>출시: {game.releaseYear}년</span>
                             </div>
-                            <div>BGG 평점: {game.bggRating}점</div>
+                            <div className="whitespace-nowrap">BGG 평점: {game.bggRating}점</div>
                           </div>
                         </div>
 
                         <div className="text-right flex-shrink-0">
-                          <span className="text-slate-400 font-medium block">누적점수</span>
+                          <span className="text-slate-400 font-medium block text-[10px]">누적점수</span>
                           <span className={`font-black text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.totalScore}점</span>
                         </div>
                       </div>
@@ -2136,7 +2143,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ⭕ 3. 보드게임 추천 사이트 탭 */}
+          {/* 보드게임 추천 사이트 탭 */}
           {activeTab === 'sites' && (
             <div className="space-y-4 mt-0.5">
               <div className={`pb-2 border-b flex justify-between items-end ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2218,7 +2225,6 @@ export default function App() {
                 >
                   공지사항
                 </button>
-                {/* ⭕ 3. 서브 메뉴명 '사이트관리'로 변경 */}
                 <button
                   onClick={() => setAdminSubTab('siteAdmin')}
                   className={`py-2 rounded-lg transition text-center text-[10px] ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
@@ -2229,7 +2235,6 @@ export default function App() {
 
               {adminSubTab === 'gameAdmin' && (
                 <div className="space-y-4">
-                  {/* ⭕ 1, 4. 5개 관리자 서브메뉴의 최상단 여백 및 헤더 높이 완벽 통일 */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2334,7 +2339,6 @@ export default function App() {
 
               {adminSubTab === 'rentalAdmin' && (
                 <div className="space-y-4">
-                  {/* ⭕ 4. 상단 헤더 높이 통일 (min-h-[42px]) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2432,7 +2436,6 @@ export default function App() {
 
               {adminSubTab === 'userAdmin' && (
                 <div className="space-y-4">
-                  {/* ⭕ 4. 상단 헤더 높이 통일 (min-h-[42px]) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2516,7 +2519,6 @@ export default function App() {
               {/* 공지사항 관리 페이지 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4">
-                  {/* ⭕ 4. 상단 헤더 높이 통일 (min-h-[42px]) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2568,7 +2570,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ⭕ 4. 관리자 추천 사이트 관리 서브페이지 (헤더 높이 통일 min-h-[42px]) */}
+              {/* 추천 사이트 관리 서브페이지 */}
               {adminSubTab === 'siteAdmin' && (
                 <div className="space-y-4">
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2663,7 +2665,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 하단 네비게이션 (대여 / 반납 / 랭킹 / 사이트 / 관리자) */}
+        {/* 하단 네비게이션 */}
         <nav className={`fixed bottom-0 left-0 right-0 max-w-md mx-auto border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -2691,11 +2693,11 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 2. 설정 드로어 (로그아웃 버튼 위치 및 가독성 개선, 최하단에 닫기 버튼 배치) */}
+        {/* ⭕ 1. 설정 드로어 (가로폭 축소 w-1/2 min-w-[220px]) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
-              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-1/2 min-w-[220px] max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className={`p-4 flex justify-between items-center font-bold text-sm ${
@@ -2707,10 +2709,10 @@ export default function App() {
                 <button onClick={() => setIsSettingsOpen(false)}><X size={18} /></button>
               </div>
 
-              <div className="flex-1 p-5 overflow-y-auto space-y-6">
+              <div className="flex-1 p-4 overflow-y-auto space-y-5">
                 
                 {/* A. 내 정보 수정 / 비밀번호 변경 */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <User size={14} /> 계정 설정
                   </h4>
@@ -2723,17 +2725,17 @@ export default function App() {
                         setIsEditProfileOpen(true);
                       }
                     }}
-                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
-                    <span>내 정보 / 비밀번호 변경</span>
-                    <ChevronRight size={16} className="text-slate-400" />
+                    <span className="truncate pr-1">내 정보 / 비밀번호</span>
+                    <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                   </button>
                 </div>
 
                 {/* B. 신고 및 건의하기 */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
+                <div className="space-y-2 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Siren size={14} /> 고객지원
                   </h4>
@@ -2741,61 +2743,61 @@ export default function App() {
                     onClick={() => {
                       setIsReportModalOpen(true);
                     }}
-                    className={`w-full p-3 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                     }`}
                   >
-                    <span className="flex items-center gap-2">
-                      <Siren size={15} className="text-rose-500" /> 신고 및 건의하기
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Siren size={14} className="text-rose-500 flex-shrink-0" /> 신고 및 건의
                     </span>
-                    <ChevronRight size={16} className="text-slate-400" />
+                    <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                   </button>
                 </div>
 
                 {/* C. 테마 선택 */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
+                <div className="space-y-2 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sun size={14} /> 테마 선택
                   </h4>
                   <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setThemeMode('light')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 ${
                         themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      <Sun size={14} className="text-amber-500" /> 라이트모드
+                      <Sun size={13} className="text-amber-500" /> 라이트
                     </button>
                     <button
                       onClick={() => setThemeMode('dark')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 ${
                         themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      <Moon size={14} className="text-indigo-400" /> 다크모드
+                      <Moon size={13} className="text-indigo-400" /> 다크
                     </button>
                   </div>
                 </div>
 
                 {/* D. 본문 글자 크기 */}
-                <div className="space-y-2.5 pt-2 border-t border-slate-200/20">
+                <div className="space-y-2 pt-2 border-t border-slate-200/20">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Type size={14} /> 본문 글자 크기
                   </h4>
                   <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setFontSize('normal')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
                         fontSize === 'normal' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                           : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      보통 (기본)
+                      보통
                     </button>
                     <button
                       onClick={() => setFontSize('large')}
-                      className={`flex-1 py-2.5 rounded-lg transition flex items-center justify-center ${
+                      className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
                         fontSize === 'large' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                           : 'text-slate-400 hover:text-slate-200'
@@ -2810,23 +2812,23 @@ export default function App() {
                 <div className="pt-2 border-t border-slate-200/20">
                   <button
                     onClick={handleLogout}
-                    className={`w-full py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border ${
+                    className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 border ${
                       isDarkMode 
                         ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' 
                         : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    <LogOut size={16} /> 로그아웃
+                    <LogOut size={15} /> 로그아웃
                   </button>
                 </div>
 
               </div>
 
-              {/* ⭕ 2. 최하단에 닫기 버튼 배치 */}
+              {/* ⭕ 2. 최하단 닫기 버튼 */}
               <div className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className={`w-full py-3 rounded-xl font-bold text-xs transition shadow-sm ${
+                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition shadow-sm ${
                     isDarkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'
                   }`}
                 >
@@ -2837,23 +2839,23 @@ export default function App() {
           </div>
         )}
 
-        {/* 관리자용 신고/건의 내역 우측 슬라이딩 Drawer 모달 */}
+        {/* ⭕ 1. 관리자용 신고/건의 내역 우측 슬라이딩 Drawer (w-1/2 min-w-[220px]) */}
         {isAdminReportDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsAdminReportDrawerOpen(false)}>
             <div 
-              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-1/2 min-w-[220px] max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-sm">
-                <span className="flex items-center gap-2">
-                  <Siren size={18} /> 신고 및 건의 접수함
+                <span className="flex items-center gap-2 truncate">
+                  <Siren size={18} /> 접수함
                 </span>
                 <button onClick={() => setIsAdminReportDrawerOpen(false)}><X size={18} /></button>
               </div>
 
               <div className="p-3 bg-slate-100 dark:bg-slate-800/80 flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-700">
-                <span className="text-slate-500 dark:text-slate-400 font-semibold">
-                  총 {reports.length}건 (안읽음: <strong className="text-rose-500 font-extrabold">{unreadReportsCount}</strong>건)
+                <span className="text-slate-500 dark:text-slate-400 font-semibold text-[11px]">
+                  안읽음: <strong className="text-rose-500 font-extrabold">{unreadReportsCount}</strong>건
                 </span>
                 {unreadReportsCount > 0 && (
                   <button 
@@ -2867,7 +2869,7 @@ export default function App() {
 
               <div className="flex-1 p-4 overflow-y-auto space-y-4">
                 {selectedReport && (
-                  <div className={`p-4 rounded-2xl space-y-2 border shadow-sm ${
+                  <div className={`p-3.5 rounded-2xl space-y-2 border shadow-sm ${
                     isDarkMode ? 'bg-slate-800 border-sky-500/40' : 'bg-sky-50 border-sky-300'
                   }`}>
                     <div className="flex justify-between items-center">
@@ -2875,7 +2877,7 @@ export default function App() {
                         {selectedReport.category}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        작성자: {selectedReport.userId}
+                        {selectedReport.userId}
                       </span>
                     </div>
                     <h3 className={`font-extrabold leading-snug ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
@@ -2889,9 +2891,9 @@ export default function App() {
                 )}
 
                 <div className="space-y-2 pt-1">
-                  <h4 className="font-bold text-slate-400 px-0.5">전체 접수 목록 ({reports.length})</h4>
+                  <h4 className="font-bold text-slate-400 px-0.5 text-[11px]">전체 목록 ({reports.length})</h4>
                   {reports.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400">접수된 신고/건의 내역이 없습니다.</div>
+                    <div className="text-center py-12 text-slate-400 text-xs">접수 내역이 없습니다.</div>
                   ) : (
                     reports.map((report) => {
                       const isSelected = selectedReport?.reportId === report.reportId;
@@ -2899,7 +2901,7 @@ export default function App() {
                         <div
                           key={report.reportId}
                           onClick={() => handleMarkReportAsRead(report)}
-                          className={`p-3 rounded-xl border cursor-pointer transition relative ${
+                          className={`p-2.5 rounded-xl border cursor-pointer transition relative ${
                             isSelected
                               ? 'border-sky-500 bg-sky-500 text-slate-900 font-bold shadow-sm'
                               : isDarkMode
@@ -2908,17 +2910,14 @@ export default function App() {
                           }`}
                         >
                           <div className="flex justify-between items-start gap-1">
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-1 min-w-0 flex-1">
                               {!report.isRead && (
-                                <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 animate-pulse">
+                                <span className="bg-rose-600 text-white text-[8px] font-black px-1 py-0.5 rounded-full flex-shrink-0 animate-pulse">
                                   N
                                 </span>
                               )}
-                              <span className="truncate font-semibold">{report.title}</span>
+                              <span className="truncate font-semibold text-xs">{report.title}</span>
                             </div>
-                            <span className={`text-[10px] font-mono flex-shrink-0 ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
-                              {report.userId}
-                            </span>
                           </div>
                         </div>
                       );
@@ -2930,7 +2929,7 @@ export default function App() {
               <div className={`p-4 border-t ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                 <button
                   onClick={() => setIsAdminReportDrawerOpen(false)}
-                  className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition"
+                  className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition"
                 >
                   닫기
                 </button>
@@ -2939,7 +2938,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 신고 및 건의하기 독립 팝업 모달 */}
+        {/* ⭕ 5, 6, 7. 신고 및 건의하기 독립 팝업 모달 (Placeholder 크기 통일, 셀렉트 박스 스타일 구분) */}
         {isReportModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
@@ -2956,12 +2955,13 @@ export default function App() {
 
               <form onSubmit={handleSendReport} className="space-y-3.5">
                 <div>
-                  <label className="block font-bold mb-1.5">카테고리 선택</label>
+                  <label className="font-bold block mb-1.5">카테고리 선택</label>
+                  {/* ⭕ 7. 셀렉트 박스 커스텀 화살표 및 테두리 인지 스타일링 적용 */}
                   <select
                     value={reportForm.category}
                     onChange={(e) => setReportForm({ ...reportForm, category: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none font-semibold ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    className={`w-full border p-3 rounded-xl focus:outline-none font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900'
                     }`}
                   >
                     <option value="장애/오류 신고">장애/오류 신고</option>
@@ -2972,7 +2972,8 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block font-bold mb-1.5">제목</label>
+                  <label className="font-bold block mb-1.5">제목</label>
+                  {/* ⭕ 5. 예시(placeholder) 폰트 크기를 입력 크기(text-inherit)와 100% 동기화 */}
                   <input
                     type="text"
                     required
@@ -2980,7 +2981,7 @@ export default function App() {
                     placeholder="제목을 입력해 주세요"
                     value={reportForm.title}
                     onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none ${
+                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
                     }`}
                   />
@@ -2988,7 +2989,7 @@ export default function App() {
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="block font-bold">상세 내용</label>
+                    <label className="font-bold block">상세 내용</label>
                     <span className={`font-bold ${reportForm.content.length >= 1000 ? 'text-rose-600' : 'text-slate-400'}`}>
                       {reportForm.content.length} / 1000자
                     </span>
@@ -3000,7 +3001,7 @@ export default function App() {
                     placeholder="운영진에게 전달할 내용을 작성해 주세요."
                     value={reportForm.content}
                     onChange={(e) => setReportForm({ ...reportForm, content: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none leading-relaxed resize-none ${
+                    className={`w-full border p-3 rounded-xl focus:outline-none leading-relaxed resize-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
                     }`}
                   ></textarea>
@@ -3064,7 +3065,7 @@ export default function App() {
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3077,7 +3078,7 @@ export default function App() {
                     placeholder="새 비밀번호 입력 (변경 시에만 작성)"
                     value={changePassword}
                     onChange={(e) => setNewPasswordInput(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3086,7 +3087,7 @@ export default function App() {
                     placeholder="새 비밀번호 재입력"
                     value={changePasswordConfirm}
                     onChange={(e) => setNewPasswordConfirmInput(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3112,11 +3113,11 @@ export default function App() {
           </div>
         )}
 
-        {/* 장바구니 Drawer 모달 */}
+        {/* ⭕ 1. 장바구니 Drawer 모달 (가로폭 w-1/2 min-w-[220px]) */}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsCartOpen(false)}>
             <div 
-              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-1/2 min-w-[220px] max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm">
@@ -3191,11 +3192,11 @@ export default function App() {
           </div>
         )}
 
-        {/* 공지사항 우측 슬라이딩 Drawer 모달 */}
+        {/* ⭕ 1. 공지사항 우측 슬라이딩 Drawer (w-1/2 min-w-[220px]) */}
         {isNoticeDrawerOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsNoticeDrawerOpen(false)}>
             <div 
-              className={`w-full max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+              className={`w-1/2 min-w-[220px] max-w-xs h-full flex flex-col shadow-2xl transition-colors ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 bg-slate-900 flex justify-between items-center font-bold text-white text-sm">
@@ -3265,7 +3266,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 관리자 추천 사이트 등록/수정 모달 */}
+        {/* ⭕ 5, 6, 7. 추천 사이트 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 감싸기) */}
         {isSiteModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
@@ -3274,66 +3275,67 @@ export default function App() {
               <h3 className="font-extrabold text-base">{editingSite.siteId > 0 ? '추천 사이트 수정' : '추천 사이트 등록'}</h3>
               <form onSubmit={saveSite} className="space-y-3">
                 <div>
-                  <label className="font-bold block mb-1">사이트명</label>
+                  <label className="font-bold block mb-1.5">사이트명</label>
                   <input
                     type="text"
                     required
                     placeholder="예: 보드라이프"
                     value={editingSite.name}
                     onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">사이트 URL</label>
+                  <label className="font-bold block mb-1.5">사이트 URL</label>
                   <input
                     type="url"
                     required
                     placeholder="https://boardlife.co.kr"
                     value={editingSite.url}
                     onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">배너 이미지 URL</label>
+                  <label className="font-bold block mb-1.5">배너 이미지 URL</label>
                   <input
                     type="url"
                     placeholder="https://example.com/banner.jpg"
                     value={editingSite.bannerUrl}
                     onChange={(e) => setEditingSite({ ...editingSite, bannerUrl: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">사이트 설명</label>
+                  <label className="font-bold block mb-1.5">사이트 설명</label>
                   <textarea
                     rows={3}
                     placeholder="사이트에 대한 간단한 설명을 입력하세요"
                     value={editingSite.description}
                     onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none ${
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   ></textarea>
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1">노출 여부</label>
+                  {/* ⭕ 6, 7. 노출 여부 라벨 크기 통일 및 셀렉트 박스 구별 인디케이터 적용 */}
+                  <label className="font-bold block mb-1.5">노출 여부</label>
                   <select
                     value={editingSite.isVisible}
                     onChange={(e) => setEditingSite({ ...editingSite, isVisible: e.target.value as 'Y' | 'N' })}
-                    className={`w-full border p-2.5 rounded-xl ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    className={`w-full border p-2.5 rounded-xl focus:outline-none font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900'
                     }`}
                   >
                     <option value="Y">노출 (Y)</option>
@@ -3350,7 +3352,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 게임 등록/수정 모달 */}
+        {/* ⭕ 5, 6, 7. 게임 등록/수정 모달 (예시 폰트크기 동기화, 셀렉트 박스 구별 감싸기) */}
         {isGameModalOpen && editingGame && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 max-h-[90vh] overflow-y-auto shadow-2xl border ${
@@ -3368,7 +3370,7 @@ export default function App() {
                     placeholder="https://example.com/image.jpg"
                     value={editingGame.imageUrl}
                     onChange={(e) => setEditingGame({ ...editingGame, imageUrl: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none ${
+                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3383,7 +3385,7 @@ export default function App() {
                     placeholder="예: KG0001"
                     value={editingGame.gameId}
                     onChange={(e) => setEditingGame({ ...editingGame, gameId: e.target.value })}
-                    className={`w-full border p-3 rounded-xl ${
+                    className={`w-full border p-3 rounded-xl placeholder:text-inherit placeholder:opacity-50 ${
                       isEditingMode ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50/50 border-slate-300'
                     }`}
                   />
@@ -3397,7 +3399,7 @@ export default function App() {
                     placeholder="보드게임 이름"
                     value={editingGame.title}
                     onChange={(e) => setEditingGame({ ...editingGame, title: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none ${
+                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3479,7 +3481,7 @@ export default function App() {
                           handleAddCustomGenre();
                         }
                       }}
-                      className={`flex-1 border p-2.5 rounded-xl ${
+                      className={`flex-1 border p-2.5 rounded-xl placeholder:text-inherit placeholder:opacity-50 ${
                         isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                       }`}
                     />
@@ -3553,11 +3555,12 @@ export default function App() {
                 </div>
 
                 <div>
+                  {/* ⭕ 6, 7. 노출 여부 라벨 크기 통일 및 셀렉트 박스 구별 스타일링 */}
                   <label className="font-bold block mb-1.5">노출 여부</label>
                   <select
                     value={editingGame.isVisible}
                     onChange={(e) => setEditingGame({ ...editingGame, isVisible: e.target.value as 'Y' | 'N' })}
-                    className={`w-full border p-3 rounded-xl ${
+                    className={`w-full border p-3 rounded-xl font-semibold appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   >
@@ -3575,7 +3578,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 공지사항 작성 모달 */}
+        {/* ⭕ 5, 6. 공지사항 작성 모달 (Placeholder 크기 동기화) */}
         {isNoticeModalOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
@@ -3591,7 +3594,7 @@ export default function App() {
                     placeholder="공지 제목을 입력하세요"
                     value={editingNotice.title}
                     onChange={(e) => setEditingNotice({ ...editingNotice, title: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none ${
+                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
@@ -3605,7 +3608,7 @@ export default function App() {
                     placeholder="공지할 내용을 상세히 작성하세요"
                     value={editingNotice.content}
                     onChange={(e) => setEditingNotice({ ...editingNotice, content: e.target.value })}
-                    className={`w-full border p-3 rounded-xl focus:outline-none ${
+                    className={`w-full border p-3 rounded-xl focus:outline-none placeholder:text-inherit placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   ></textarea>
