@@ -369,7 +369,8 @@ export default function App() {
       setNoticeIndex((prev) => prev + 1);
     }, 4000);
 
-    return () => fontClear(interval);
+    // ⭕ 오타 수정: fontClear -> clearInterval
+    return () => clearInterval(interval);
   }, [recentNoticesList.length]);
 
   useEffect(() => {
@@ -1612,7 +1613,7 @@ export default function App() {
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
-        {/* 고정 상단 헤더 (max-w-md 제거, w-full 적용) */}
+        {/* 고정 상단 헤더 */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
@@ -1674,7 +1675,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* 본문 영역 (main, max-w-md 제거, w-full 적용) */}
+        {/* 본문 영역 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
