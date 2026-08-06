@@ -369,7 +369,7 @@ export default function App() {
       setNoticeIndex((prev) => prev + 1);
     }, 4000);
 
-    return () => clearInterval(interval);
+    return () => fontClear(interval);
   }, [recentNoticesList.length]);
 
   useEffect(() => {
@@ -1609,11 +1609,10 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ 1. 최외곽 레이아웃 너비 제약(max-w-md)을 완전히 제거하여 모바일 스크린 너비 전체(100%) 사용
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
-        {/* 고정 상단 헤더 */}
+        {/* 고정 상단 헤더 (max-w-md 제거, w-full 적용) */}
         <header 
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
@@ -1650,7 +1649,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* 관리자 페이지 진입 시 신고 아이콘으로 변경 & 신규 글 있을 경우 N 뱃지 표시 */}
             {isHeaderAdminTheme ? (
               <button
                 onClick={() => setIsAdminReportDrawerOpen(true)}
@@ -1676,7 +1674,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* 2. 본문 영역(main)도 너비 제한 없이 100% 가득 차도록 보정 */}
+        {/* 본문 영역 (main, max-w-md 제거, w-full 적용) */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -2817,7 +2815,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 하단 네비게이션 */}
+        {/* 하단 네비게이션 (max-w-md 제거, w-full 적용) */}
         <nav className={`fixed bottom-0 left-0 right-0 w-full border-t flex justify-around px-2 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
