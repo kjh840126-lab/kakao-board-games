@@ -1835,7 +1835,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 3) 난이도 인라인 필터 (1. 다른 필터들과 동일하게 가변 크기 px-2 py-0.5 적용) */}
+                  {/* 3) 난이도 인라인 필터 (가변 크기 px-2 py-0.5 적용) */}
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">난이도</span>
                     <div className="flex flex-wrap gap-1 flex-1">
@@ -1881,7 +1881,7 @@ export default function App() {
                     const userRating = allRatings.find(r => currentUser && r.userId === currentUser.userId && r.gameId === game.gameId);
 
                     return (
-                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm transition ${
+                      <div key={game.gameId} className={`border rounded-2xl p-3.5 flex flex-col justify-between gap-2 shadow-sm transition ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                       }`}>
                         
@@ -1912,7 +1912,8 @@ export default function App() {
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pt-2">
+                            {/* ⭕ 2. [인원수/플레이타임/난이도] 행과 [장르] 행 사이에 구분선 추가 */}
+                            <div className={`pt-2 border-t flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
                               {game.genres.map((genre) => (
                                 <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
                                   isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-800'
@@ -1924,8 +1925,8 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* 카드 맨 하단 영역: [좌측: 나의 평점 ☆☆☆☆☆ (이미지 열 바짝 정렬)] | [우측: 외곽선 감싸진 찜버튼 + 대여가능 버튼] */}
-                        <div className={`pt-2.5 border-t flex justify-between items-center ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                        {/* ⭕ 3. 카드 맨 하단 영역 (장르행 아래 구분선 제거됨) */}
+                        <div className="flex justify-between items-center gap-2 pt-1">
                           
                           {/* 나의 평점 1줄 노출 및 이미지 시작 열 바짝 정렬 */}
                           <div 
@@ -1944,21 +1945,21 @@ export default function App() {
                             />
                           </div>
 
-                          {/* ⭕ 2. 우측 정렬 그룹: [외곽선으로 감싸진 찜하기 버튼] + [대여가능 버튼] */}
+                          {/* 우측 정렬 그룹: [1. 대여가능 버튼과 동일한 크기(px-3.5 py-1.5)의 찜하기 버튼] + [대여가능 알약 버튼] */}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {/* ⭕ 1. 대여가능 버튼과 완전히 동일한 크기(px-3.5 py-1.5 rounded-xl) 및 외곽선 스타일 반영 */}
                             <button
                               onClick={() => toggleFavorite(game.gameId)}
-                              className={`p-2 rounded-xl border transition flex items-center justify-center ${
-                                isDarkMode 
-                                  ? 'border-slate-700 bg-slate-800/80 hover:bg-slate-700' 
-                                  : 'border-slate-200 bg-slate-50/80 hover:bg-slate-100'
+                              className={`px-3.5 py-1.5 rounded-xl font-bold border transition flex items-center justify-center gap-1 text-xs ${
+                                isFav 
+                                  ? 'border-rose-200 bg-rose-50 dark:bg-rose-950/40 dark:border-rose-800 text-rose-500' 
+                                  : isDarkMode
+                                  ? 'border-slate-700 bg-slate-800 text-slate-400 hover:text-slate-200'
+                                  : 'border-slate-200 bg-slate-50 text-slate-400 hover:text-slate-600'
                               }`}
                               title={isFav ? "찜 해제" : "찜하기"}
                             >
-                              <Heart 
-                                size={16} 
-                                className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} 
-                              />
+                              <Heart size={14} className={isFav ? "fill-rose-500 text-rose-500" : ""} />
                             </button>
 
                             {isAvailable ? (
@@ -2832,7 +2833,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 (가로 폭 화면의 1/3 크기 w-1/3 min-w-[200px] 설정) */}
+        {/* 설정 드로어 */}
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={() => setIsSettingsOpen(false)}>
             <div 
