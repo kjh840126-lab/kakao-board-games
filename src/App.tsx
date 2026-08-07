@@ -303,6 +303,8 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
+  const [isIosDevice, setIsIosDevice] = useState(false);
+
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -310,6 +312,13 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+  // ⭕ iOS(아이폰) 기기 감지 로직
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+    setIsIosDevice(isIos);
+  }, []);
 
   useEffect(() => {
     fetchInitialData();
@@ -2802,7 +2811,7 @@ export default function App() {
           )}
         </main>
 
-        {/* [장바구니] 플로팅 버튼 */}
+        {/* 장바구니 플로팅 버튼 */}
         {activeTab === 'games' && (
           <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-30 transition-all">
             <button
@@ -2852,7 +2861,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 설정 드로어 (상위 카테고리 헤더 아이콘 복구 완료) */}
+        {/* 설정 드로어 (상위 헤더 아이콘 유지) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -2894,7 +2903,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* B. 나의 활동 (상위 카테고리 Heart 아이콘 복구 / 하위 아이콘 지움) */}
+              {/* B. 나의 활동 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Heart size={13} className="text-rose-500" /> 나의 활동
@@ -2924,7 +2933,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* C. 고객지원 (상위 카테고리 Siren 아이콘 복구 / 하위 아이콘 지움) */}
+              {/* C. 고객지원 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Siren size={13} /> 고객지원
@@ -2945,7 +2954,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* D. 테마 선택 (상위 카테고리 Sun 아이콘 복구 / 라이트 모드, 다크 모드 텍스트) */}
+              {/* D. 테마 선택 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Sun size={13} /> 테마 선택
@@ -2970,7 +2979,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* E. 글자 크기 (상위 카테고리 Type 아이콘 복구 / 타이틀 '글자 크기') */}
+              {/* E. 글자 크기 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Type size={13} /> 글자 크기
