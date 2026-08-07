@@ -331,6 +331,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
     
+    // 테마 설정 시 html 및 body 배경색 세팅
     if (themeMode === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.style.backgroundColor = '#0f172a';
@@ -1970,14 +1971,14 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
-                            {/* ⭕ [대여 가능] 버튼 분기 처리: 라이트 모드는 카카오 노란색 / 다크 모드는 밝은 하늘색 */}
+                            {/* ⭕ [대여 가능] 버튼: 라이트 모드 카카오 옐로우 / 다크 모드 밝은 하늘색 분기 */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
                                 className={`w-auto px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-xs ${
                                   isSelectedInCart
                                     ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800'
-                                    : 'bg-[#FEE500] text-slate-900 dark:bg-sky-400 dark:text-slate-950 hover:bg-amber-400 dark:hover:bg-sky-300'
+                                    : 'bg-[#FEE500] text-slate-900 hover:bg-amber-400 dark:bg-sky-400 dark:text-slate-950 dark:hover:bg-sky-300'
                                 }`}
                               >
                                 {isSelectedInCart ? <><Check size={13} /> 선택취소</> : '대여가능'}
