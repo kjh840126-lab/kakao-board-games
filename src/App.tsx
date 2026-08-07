@@ -399,7 +399,6 @@ export default function App() {
     });
   }, []);
 
-  // ⭕ [수정 핵심]: activeTab이 변경될 때 fetchInitialData()를 재호출하던 문제 해결 (관리자 서브탭 전환 시에만 동작)
   useEffect(() => {
     if (currentUser && activeTab === 'admin') {
       fetchInitialData();
@@ -634,7 +633,6 @@ export default function App() {
           };
         });
 
-        // ⭕ [수정 핵심]: 기존 셔플 배열이 비어있을 때만(페이지 첫 로딩/새로고침 시) 새로 섞고, 오갈 때는 순서 완벽 고정
         if (shuffledGamesRef.current.length === 0 && newGameList.length > 0) {
           shuffledGamesRef.current = [...newGameList].sort(() => Math.random() - 0.5);
         } else if (shuffledGamesRef.current.length > 0) {
@@ -1325,7 +1323,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ 탭 오갈 때 순서 완벽 유지 (shuffledGamesRef가 비어있을 때만 1회 셔플)
+  // 탭 오갈 때 순서 완벽 유지 (shuffledGamesRef가 비어있을 때만 1회 셔플)
   const filteredGameList = useMemo(() => {
     if (shuffledGamesRef.current.length === 0 && games.length > 0) {
       shuffledGamesRef.current = [...games].sort(() => Math.random() - 0.5);
@@ -3159,7 +3157,7 @@ export default function App() {
                     setIsEditProfileOpen(true);
                   }
                 }}
-                className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
                   isIosDevice ? 'text-sm' : 'text-xs'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
@@ -3179,7 +3177,7 @@ export default function App() {
               </h4>
               <button
                 onClick={() => setIsFavoritesModalOpen(true)}
-                className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
                   isIosDevice ? 'text-sm' : 'text-xs'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
@@ -3193,7 +3191,7 @@ export default function App() {
 
               <button
                 onClick={() => setIsMyRatingsModalOpen(true)}
-                className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
                   isIosDevice ? 'text-sm' : 'text-xs'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
@@ -3218,7 +3216,7 @@ export default function App() {
                   setReportForm({ title: '', content: '', category: '' });
                   setIsReportModalOpen(true);
                 }}
-                className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
                   isIosDevice ? 'text-sm' : 'text-xs'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
@@ -3238,7 +3236,7 @@ export default function App() {
               }`}>
                 <Sun size={isIosDevice ? 15 : 13} /> 테마 선택
               </h4>
-              <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`flex p-1 rounded-xl font-normal ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setThemeMode('light')}
                   className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
@@ -3247,7 +3245,7 @@ export default function App() {
                     themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  라이트 모드
+                  라이트
                 </button>
                 <button
                   onClick={() => setThemeMode('dark')}
@@ -3257,7 +3255,7 @@ export default function App() {
                     themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  다크 모드
+                  다크
                 </button>
               </div>
             </div>
@@ -3269,7 +3267,7 @@ export default function App() {
               }`}>
                 <Type size={isIosDevice ? 15 : 13} /> 글자 크기
               </h4>
-              <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`flex p-1 rounded-xl font-normal ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setFontSize('normal')}
                   className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
@@ -3536,13 +3534,19 @@ export default function App() {
           </div>
 
           <div className="p-3 bg-slate-100 dark:bg-slate-800/80 flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-700">
-            <span className="text-slate-500 dark:text-slate-400 font-semibold text-xs">
+            {/* ⭕ iOS 접수함: 안읽음 텍스트 폰트 1pt 상향 (text-sm) */}
+            <span className={`text-slate-500 dark:text-slate-400 font-semibold ${
+              isIosDevice ? 'text-sm' : 'text-xs'
+            }`}>
               안읽음: <strong className="text-rose-500 font-extrabold">{unreadReportsCount}</strong>건
             </span>
             {unreadReportsCount > 0 && (
+              /* ⭕ iOS 접수함: 모두 읽음 버튼 폰트 1pt 상향 (text-xs) */
               <button 
                 onClick={handleMarkAllReportsAsRead}
-                className="text-[11px] font-bold bg-slate-900 text-white px-2 py-1 rounded-md hover:bg-slate-800 transition"
+                className={`font-bold bg-slate-900 text-white px-2 py-1 rounded-md hover:bg-slate-800 transition ${
+                  isIosDevice ? 'text-xs' : 'text-[11px]'
+                }`}
               >
                 모두 읽음
               </button>
@@ -3573,7 +3577,10 @@ export default function App() {
             )}
 
             <div className="space-y-2 pt-1">
-              <h4 className="font-bold text-slate-400 px-0.5 text-xs">전체 목록 ({reports.length})</h4>
+              {/* ⭕ iOS 접수함: 전체 목록 텍스트 폰트 1pt 상향 (text-sm) */}
+              <h4 className={`font-bold text-slate-400 px-0.5 ${
+                isIosDevice ? 'text-sm' : 'text-xs'
+              }`}>전체 목록 ({reports.length})</h4>
               {reports.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 text-sm">접수 내역이 없습니다.</div>
               ) : (
