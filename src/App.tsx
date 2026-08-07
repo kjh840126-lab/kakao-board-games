@@ -1261,7 +1261,6 @@ export default function App() {
     return 0;
   };
 
-  // ⭕ 1. 랭킹 계산 공식: 10개 제한 조건 완벽 제거 (회원 평점이 즉시 반영됨)
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
@@ -1285,7 +1284,6 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ 2. 대여 페이지 게임 노출 순서 매번 랜덤화 (Math.random)
   const filteredGameList = [...games]
     .filter((g: Game) => g.isVisible === 'Y')
     .filter((g: Game) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
@@ -1307,7 +1305,6 @@ export default function App() {
     })
     .sort(() => Math.random() - 0.5);
 
-  // ⭕ 4. 관리자 게임관리 페이지: 게임ID 내림차순 정렬 (localeCompare)
   const filteredGameAdminList = [...games]
     .filter((g: Game) => g.title.toLowerCase().includes(gameAdminSearch.trim().toLowerCase()))
     .sort((a, b) => b.gameId.localeCompare(a.gameId, undefined, { numeric: true }));
@@ -1381,9 +1378,10 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
+  // ⭕ [로딩 화면 iOS 노치/주소창 영역 색상 통일]: fixed inset-0 w-screen h-screen z-50 적용
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+      <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
         <div className="relative w-16 h-20 mb-6 flex items-center justify-center">
           <div className="absolute w-12 h-16 bg-[#FEE500] rounded-xl border-2 border-amber-300 shadow-lg animate-[ping_1.8s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30"></div>
           <div className="absolute w-12 h-16 bg-sky-400 rounded-xl border-2 border-sky-300 shadow-md animate-bounce -translate-x-3 -rotate-12"></div>
@@ -2967,7 +2965,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 하단 네비게이션 (3번 반영: 관리자 버튼 신규 신고건 발생 시 'N' 뱃지 노출) */}
+        {/* 하단 네비게이션 */}
         <nav 
           style={{ bottom: isIosDevice ? '-1px' : '0px' }}
           className={`fixed left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
