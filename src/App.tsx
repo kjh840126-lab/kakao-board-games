@@ -158,9 +158,11 @@ const IOS_CONFIG = {
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
 
   // 2. 본문 영역
-  MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기
+  MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
+  MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
   GAME_IMAGE_SIZE: 'w-24 h-24',       // 보드게임 카드 이미지 크기
-  GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기
+  GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
+  GAME_TITLE_SIZE_LARGE: 'text-base', // 보드게임 제목 폰트 크기 (크게 모드)
 
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  // 하단 메뉴 아이콘 크기
@@ -326,9 +328,9 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState<number>(92); // ⭕ 헤더 실제 높이 저장용 State
+  const [headerHeight, setHeaderHeight] = useState<number>(92); 
 
-  const headerRef = useRef<HTMLElement | null>(null); // ⭕ 헤더 감지용 Ref
+  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -337,7 +339,7 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ iOS 기기 감지
+  // ⭕ 순수 iOS 환경 감지
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
@@ -355,7 +357,7 @@ export default function App() {
     updateHeaderHeight();
     window.addEventListener('resize', updateHeaderHeight);
     return () => window.removeEventListener('resize', updateHeaderHeight);
-  }, [currentUser, isIosDevice]);
+  }, [currentUser, isIosDevice, fontSize]);
 
   useEffect(() => {
     fetchInitialData();
@@ -1734,13 +1736,15 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ 본문 영역: 헤더 높이에 맞춰 동적으로 상단 여백(paddingTop) 보정 방어 */}
+        {/* ⭕ 본문 영역: 앱 내 '글자 크기 (보통/크게)' 설정 옵션과 iOS 동기화 반응 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
           style={{ paddingTop: `${headerHeight + 12}px` }} 
           className={`flex-1 w-full p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
-            isLargeFont ? 'text-sm' : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
+            isLargeFont 
+              ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
+              : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
           }`}
         >
           {/* 1. 게임목록(대여) 탭 */}
@@ -1965,8 +1969,11 @@ export default function App() {
                           <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
                               <div className="flex justify-between items-start gap-1">
+                                {/* ⭕ iOS 및 글자 크기 설정 동기화 반응 */}
                                 <h3 className={`font-bold leading-snug break-keep ${
-                                  isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
+                                  isLargeFont
+                                    ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
+                                    : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                                 } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{game.title}</span>
                                   <span className="text-[11px] text-slate-400 font-mono font-normal whitespace-nowrap ml-1">({game.releaseYear}년)</span>
