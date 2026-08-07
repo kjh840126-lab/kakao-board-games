@@ -344,6 +344,7 @@ export default function App() {
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
   const headerRef = useRef<HTMLElement | null>(null); 
+  const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -438,6 +439,8 @@ export default function App() {
       document.documentElement.scrollTop = 0;
     });
   };
+
+  const handleScroll = () => {};
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -1767,6 +1770,7 @@ export default function App() {
       {/* 2. 메인 본문 영역 (Window 스크롤 지원) */}
       <main 
         ref={mainScrollRef}
+        onScroll={handleScroll}
         style={{ 
           paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)'
@@ -3030,9 +3034,9 @@ export default function App() {
       <nav 
         className={`fixed -bottom-[1px] left-0 right-0 w-full z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900' : 'bg-white'
-        } ${isIosDevice ? 'pb-[env(safe-area-inset-bottom)]' : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
+        } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
       >
-        {/* iOS 전용 하단 100px 매립 가림막 블라인드 패치 (실선/여백 100% 차단) */}
+        {/* iOS 전용 하단 100px 매립 가림막 블라인드 패치 (실선/여백 100% 원천 차단) */}
         {isIosDevice && (
           <div 
             aria-hidden="true"
@@ -3855,455 +3859,455 @@ export default function App() {
               </div>
             </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* 내 정보 수정 및 비밀번호 변경 모달 */}
-        {isEditProfileOpen && currentUser && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
-              isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
-            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
-                <h3 className="font-extrabold text-base flex items-center gap-2">
-                  <User size={18} /> 내 정보 / 비밀번호 변경
-                </h3>
-                <button onClick={() => setIsEditProfileOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
-              </div>
-
-              <form onSubmit={handleSaveProfile} className="space-y-3.5">
-                <div>
-                  <label className="font-bold block mb-1 text-slate-400">아이디 (LDAP)</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={currentUser.userId}
-                    className={`w-full border p-2.5 rounded-xl font-mono text-xs cursor-not-allowed ${
-                      isDarkMode ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-300'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold block mb-1 text-slate-400">이메일</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={currentUser.email}
-                    className={`w-full border p-2.5 rounded-xl text-xs cursor-not-allowed ${
-                      isDarkMode ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-300'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold block mb-1">이름</label>
-                  <input
-                    type="text"
-                    required
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                <div className="pt-2 border-t border-slate-200/20 space-y-2">
-                  <label className="font-bold block text-slate-400">비밀번호 변경 (선택)</label>
-                  <input
-                    type="password"
-                    placeholder="새 비밀번호 입력 (변경 시에만 작성)"
-                    value={changePassword}
-                    onChange={(e) => setNewPasswordInput(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                  <input
-                    type="password"
-                    placeholder="새 비밀번호 재입력"
-                    value={changePasswordConfirm}
-                    onChange={(e) => setNewPasswordConfirmInput(e.target.value)}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditProfileOpen(false)}
-                    className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition text-xs"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
-                  >
-                    저장하기
-                  </button>
-                </div>
-              </form>
+      {/* 내 정보 수정 및 비밀번호 변경 모달 */}
+      {isEditProfileOpen && currentUser && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl border ${
+            isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+          } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+            <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+              <h3 className="font-extrabold text-base flex items-center gap-2">
+                <User size={18} /> 내 정보 / 비밀번호 변경
+              </h3>
+              <button onClick={() => setIsEditProfileOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
             </div>
-          </div>
-        )}
 
-        {/* 추천 사이트 등록/수정 모달 */}
-        {isSiteModalOpen && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
-              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
-            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
-                <h3 className="font-extrabold text-base">{editingSite.siteId > 0 ? '추천 사이트 수정' : '추천 사이트 등록'}</h3>
-                <button onClick={() => setIsSiteModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+            <form onSubmit={handleSaveProfile} className="space-y-3.5">
+              <div>
+                <label className="font-bold block mb-1 text-slate-400">아이디 (LDAP)</label>
+                <input
+                  type="text"
+                  disabled
+                  value={currentUser.userId}
+                  className={`w-full border p-2.5 rounded-xl font-mono text-xs cursor-not-allowed ${
+                    isDarkMode ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-300'
+                  }`}
+                />
               </div>
 
-              <form onSubmit={saveSite} className="space-y-3">
-                <div>
-                  <label className="font-bold block mb-1.5">사이트명</label>
+              <div>
+                <label className="font-bold block mb-1 text-slate-400">이메일</label>
+                <input
+                  type="text"
+                  disabled
+                  value={currentUser.email}
+                  className={`w-full border p-2.5 rounded-xl text-xs cursor-not-allowed ${
+                    isDarkMode ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-300'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="font-bold block mb-1">이름</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/20 space-y-2">
+                <label className="font-bold block text-slate-400">비밀번호 변경 (선택)</label>
+                <input
+                  type="password"
+                  placeholder="새 비밀번호 입력 (변경 시에만 작성)"
+                  value={changePassword}
+                  onChange={(e) => setNewPasswordInput(e.target.value)}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                />
+                <input
+                  type="password"
+                  placeholder="새 비밀번호 재입력"
+                  value={changePasswordConfirm}
+                  onChange={(e) => setNewPasswordConfirmInput(e.target.value)}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition text-xs"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
+                >
+                  저장하기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 추천 사이트 등록/수정 모달 */}
+      {isSiteModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
+            isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+          } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+            <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+              <h3 className="font-extrabold text-base">{editingSite.siteId > 0 ? '추천 사이트 수정' : '추천 사이트 등록'}</h3>
+              <button onClick={() => setIsSiteModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+            </div>
+
+            <form onSubmit={saveSite} className="space-y-3">
+              <div>
+                <label className="font-bold block mb-1.5">사이트명</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="예: 보드라이프"
+                  value={editingSite.name}
+                  onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="font-bold block mb-1.5">사이트 URL</label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://boardlife.co.kr"
+                  value={editingSite.url}
+                  onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="font-bold block mb-1.5">배너 이미지 URL</label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/banner.jpg"
+                  value={editingSite.bannerUrl}
+                  onChange={(e) => setEditingSite({ ...editingSite, bannerUrl: e.target.value })}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="font-bold block mb-1.5">사이트 설명</label>
+                <textarea
+                  rows={3}
+                  placeholder="사이트에 대한 간단한 설명을 입력하세요"
+                  value={editingSite.description}
+                  onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="font-bold block mb-1.5">노출 여부</label>
+                <select
+                  value={editingSite.isVisible}
+                  onChange={(e) => setEditingSite({ ...editingSite, isVisible: e.target.value as 'Y' | 'N' })}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  }`}
+                >
+                  <option value="Y">노출 (Y)</option>
+                  <option value="N">숨김 (N)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 게임 등록/수정 모달 */}
+      {isGameModalOpen && editingGame && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
+            isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+          } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+            <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+              <h3 className="font-extrabold text-base">{isEditingMode ? '게임 정보 수정' : '신규 게임 등록'}</h3>
+              <button onClick={() => setIsGameModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+            </div>
+
+            <form onSubmit={saveGame} className="space-y-2.5">
+              <div>
+                <label className="font-bold block mb-1 flex items-center gap-1">
+                  <ImageIcon size={13} /> 이미지 URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={editingGame.imageUrl}
+                  onChange={(e) => setEditingGame({ ...editingGame, imageUrl: e.target.value })}
+                  className="w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50"
+                />
+                {editingGame.imageUrl && (
+                  <div className={`mt-2 flex items-center gap-2.5 p-2 rounded-xl border ${
+                    isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'
+                  }`}>
+                    <img 
+                      src={editingGame.imageUrl} 
+                      alt="미리보기" 
+                      className="w-12 h-12 object-cover rounded-lg bg-white border border-slate-300 dark:border-slate-700 flex-shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
+                    />
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">이미지 미리보기</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <div className="w-[30%]">
+                  <label className="font-bold block mb-1 truncate text-slate-400">보드게임 ID</label>
                   <input
                     type="text"
                     required
-                    placeholder="예: 보드라이프"
-                    value={editingSite.name}
-                    onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    disabled={isEditingMode}
+                    placeholder="예: KG0001"
+                    value={editingGame.gameId}
+                    onChange={(e) => setEditingGame({ ...editingGame, gameId: e.target.value })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs font-mono font-bold cursor-not-allowed ${
+                      isEditingMode 
+                        ? isDarkMode ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-300' 
+                        : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50/50 border-slate-300'
                     }`}
                   />
                 </div>
-
-                <div>
-                  <label className="font-bold block mb-1.5">사이트 URL</label>
+                <div className="w-[70%]">
+                  <label className="font-bold block mb-1 truncate">게임명</label>
                   <input
-                    type="url"
+                    type="text"
                     required
-                    placeholder="https://boardlife.co.kr"
-                    value={editingSite.url}
-                    onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    placeholder="보드게임 이름"
+                    value={editingGame.title}
+                    onChange={(e) => setEditingGame({ ...editingGame, title: e.target.value })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="font-bold block mb-1.5">배너 이미지 URL</label>
+                  <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
+                    <CalendarDays size={12} /> 출시년도
+                  </label>
                   <input
-                    type="url"
-                    placeholder="https://example.com/banner.jpg"
-                    value={editingSite.bannerUrl}
-                    onChange={(e) => setEditingSite({ ...editingSite, bannerUrl: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    type="number"
+                    required
+                    min={1900}
+                    max={2030}
+                    value={editingGame.releaseYear}
+                    onChange={(e) => setEditingGame({ ...editingGame, releaseYear: Number(e.target.value) })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
-
                 <div>
-                  <label className="font-bold block mb-1.5">사이트 설명</label>
-                  <textarea
-                    rows={3}
-                    placeholder="사이트에 대한 간단한 설명을 입력하세요"
-                    value={editingSite.description}
-                    onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                  <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
+                    <Clock size={12} /> 플레이타임
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingGame.playTime}
+                    onChange={(e) => setEditingGame({ ...editingGame, playTime: Number(e.target.value) })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
-                  ></textarea>
+                  />
                 </div>
-
                 <div>
-                  <label className="font-bold block mb-1.5">노출 여부</label>
+                  <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
+                    <Brain size={12} className="text-slate-400" /> 난이도
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min={1.00}
+                    max={5.00}
+                    value={editingGame.difficulty}
+                    onChange={(e) => setEditingGame({ ...editingGame, difficulty: Number(e.target.value) })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-1.5">
+                <div>
+                  <label className="font-bold block mb-1 truncate text-[11px]">최소인원</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingGame.minPlayers}
+                    onChange={(e) => setEditingGame({ ...editingGame, minPlayers: Number(e.target.value) })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="font-bold block mb-1 truncate text-[11px]">최대인원</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingGame.maxPlayers}
+                    onChange={(e) => setEditingGame({ ...editingGame, maxPlayers: Number(e.target.value) })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="font-bold block mb-1 truncate text-[11px]">BGG평점</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    min={1.0}
+                    max={10.0}
+                    value={editingGame.bggRating}
+                    onChange={(e) => setEditingGame({ ...editingGame, bggRating: Number(e.target.value) })}
+                    className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
                   <select
-                    value={editingSite.isVisible}
-                    onChange={(e) => setEditingSite({ ...editingSite, isVisible: e.target.value as 'Y' | 'N' })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none font-semibold text-xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-no-repeat bg-[right_12px_center] pr-8 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    value={editingGame.isVisible}
+                    onChange={(e) => setEditingGame({ ...editingGame, isVisible: e.target.value as 'Y' | 'N' })}
+                    className={`w-full border px-2 h-[38px] min-h-[38px] rounded-xl font-semibold text-xs leading-none appearance-none -webkit-appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_8px] bg-no-repeat bg-[right_6px_center] pr-5 ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   >
-                    <option value="Y">노출 (Y)</option>
-                    <option value="N">숨김 (N)</option>
+                    <option value="Y">노출</option>
+                    <option value="N">숨김</option>
                   </select>
                 </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
-                  <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* 게임 등록/수정 모달 */}
-        {isGameModalOpen && editingGame && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto shadow-2xl border ${
-              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
-            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
-                <h3 className="font-extrabold text-base">{isEditingMode ? '게임 정보 수정' : '신규 게임 등록'}</h3>
-                <button onClick={() => setIsGameModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
               </div>
 
-              <form onSubmit={saveGame} className="space-y-2.5">
-                <div>
-                  <label className="font-bold block mb-1 flex items-center gap-1">
-                    <ImageIcon size={13} /> 이미지 URL
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
-                    value={editingGame.imageUrl}
-                    onChange={(e) => setEditingGame({ ...editingGame, imageUrl: e.target.value })}
-                    className="w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50"
-                  />
-                  {editingGame.imageUrl && (
-                    <div className={`mt-2 flex items-center gap-2.5 p-2 rounded-xl border ${
-                      isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'
-                    }`}>
-                      <img 
-                        src={editingGame.imageUrl} 
-                        alt="미리보기" 
-                        className="w-12 h-12 object-cover rounded-lg bg-white border border-slate-300 dark:border-slate-700 flex-shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
-                      />
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">이미지 미리보기</span>
-                    </div>
-                  )}
+              <div className="pt-1">
+                <label className="font-bold block mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 4개)</span>
+                  <span className="text-amber-500 font-extrabold">{editingGame.genres.length} / 4 개</span>
+                </label>
+                
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_GENRES.map((preset: string) => {
+                    const isSelected = editingGame.genres.includes(preset);
+                    const isMaxReached = editingGame.genres.length >= 4 && !isSelected;
+
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        disabled={isMaxReached}
+                        onClick={() => handleToggleGenre(preset)}
+                        className={`px-2.5 py-1 rounded-full font-bold transition text-[10px] ${
+                          isSelected 
+                            ? 'bg-slate-900 text-white dark:bg-[#FEE500] dark:text-slate-950 dark:font-extrabold shadow-sm' 
+                            : isMaxReached 
+                            ? 'bg-slate-200 text-slate-400 dark:bg-slate-900 dark:text-slate-600 cursor-not-allowed border border-slate-300 dark:border-slate-800' 
+                            : 'bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
                 </div>
-
-                <div className="flex gap-2">
-                  <div className="w-[30%]">
-                    <label className="font-bold block mb-1 truncate text-slate-400">보드게임 ID</label>
-                    <input
-                      type="text"
-                      required
-                      disabled={isEditingMode}
-                      placeholder="예: KG0001"
-                      value={editingGame.gameId}
-                      onChange={(e) => setEditingGame({ ...editingGame, gameId: e.target.value })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs font-mono font-bold cursor-not-allowed ${
-                        isEditingMode 
-                          ? isDarkMode ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-300' 
-                          : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50/50 border-slate-300'
-                      }`}
-                    />
-                  </div>
-                  <div className="w-[70%]">
-                    <label className="font-bold block mb-1 truncate">게임명</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="보드게임 이름"
-                      value={editingGame.title}
-                      onChange={(e) => setEditingGame({ ...editingGame, title: e.target.value })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
-                      <CalendarDays size={12} /> 출시년도
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={1900}
-                      max={2030}
-                      value={editingGame.releaseYear}
-                      onChange={(e) => setEditingGame({ ...editingGame, releaseYear: Number(e.target.value) })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
-                      <Clock size={12} /> 플레이타임
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={editingGame.playTime}
-                      onChange={(e) => setEditingGame({ ...editingGame, playTime: Number(e.target.value) })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold block mb-1 truncate flex items-center gap-0.5">
-                      <Brain size={12} className="text-slate-400" /> 난이도
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min={1.00}
-                      max={5.00}
-                      value={editingGame.difficulty}
-                      onChange={(e) => setEditingGame({ ...editingGame, difficulty: Number(e.target.value) })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-1.5">
-                  <div>
-                    <label className="font-bold block mb-1 truncate text-[11px]">최소인원</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={editingGame.minPlayers}
-                      onChange={(e) => setEditingGame({ ...editingGame, minPlayers: Number(e.target.value) })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold block mb-1 truncate text-[11px]">최대인원</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={editingGame.maxPlayers}
-                      onChange={(e) => setEditingGame({ ...editingGame, maxPlayers: Number(e.target.value) })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold block mb-1 truncate text-[11px]">BGG평점</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      required
-                      min={1.0}
-                      max={10.0}
-                      value={editingGame.bggRating}
-                      onChange={(e) => setEditingGame({ ...editingGame, bggRating: Number(e.target.value) })}
-                      className={`w-full border p-2.5 h-[38px] min-h-[38px] rounded-xl text-xs ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold block mb-1 truncate text-[11px]">노출여부</label>
-                    <select
-                      value={editingGame.isVisible}
-                      onChange={(e) => setEditingGame({ ...editingGame, isVisible: e.target.value as 'Y' | 'N' })}
-                      className={`w-full border px-2 h-[38px] min-h-[38px] rounded-xl font-semibold text-xs leading-none appearance-none -webkit-appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_8px] bg-no-repeat bg-[right_6px_center] pr-5 ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                      }`}
-                    >
-                      <option value="Y">노출</option>
-                      <option value="N">숨김</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="pt-1">
-                  <label className="font-bold block mb-1.5 flex items-center justify-between">
-                    <span className="flex items-center gap-1"><Tag size={13} /> 장르 선택 (최대 4개)</span>
-                    <span className="text-amber-500 font-extrabold">{editingGame.genres.length} / 4 개</span>
-                  </label>
-                  
-                  <div className="flex flex-wrap gap-1.5">
-                    {PRESET_GENRES.map((preset: string) => {
-                      const isSelected = editingGame.genres.includes(preset);
-                      const isMaxReached = editingGame.genres.length >= 4 && !isSelected;
-
-                      return (
-                        <button
-                          key={preset}
-                          type="button"
-                          disabled={isMaxReached}
-                          onClick={() => handleToggleGenre(preset)}
-                          className={`px-2.5 py-1 rounded-full font-bold transition text-[10px] ${
-                            isSelected 
-                              ? 'bg-slate-900 text-white dark:bg-[#FEE500] dark:text-slate-950 dark:font-extrabold shadow-sm' 
-                              : isMaxReached 
-                              ? 'bg-slate-200 text-slate-400 dark:bg-slate-900 dark:text-slate-600 cursor-not-allowed border border-slate-300 dark:border-slate-800' 
-                              : 'bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-200'
-                          }`}
-                        >
-                          {preset}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsGameModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
-                  <button type="submit" className="flex-1 bg-[#FEE500] text-slate-900 py-2.5 rounded-xl font-bold hover:bg-amber-400 transition text-xs">저장</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* 공지사항 작성 모달 */}
-        {isNoticeModalOpen && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
-              isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
-            } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
-                <h3 className="font-extrabold text-base">{editingNotice.id ? '공지사항 수정' : '공지사항 작성'}</h3>
-                <button onClick={() => setIsNoticeModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
               </div>
 
-              <form onSubmit={saveNotice} className="space-y-3">
-                <div>
-                  <label className="font-bold block mb-1.5">공지 제목</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="공지 제목을 입력하세요"
-                    value={editingNotice.title}
-                    onChange={(e) => setEditingNotice({ ...editingNotice, title: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold block mb-1.5">공지 내용</label>
-                  <textarea
-                    required
-                    rows={4}
-                    placeholder="공지할 내용을 상세히 작성하세요"
-                    value={editingNotice.content}
-                    onChange={(e) => setEditingNotice({ ...editingNotice, content: e.target.value })}
-                    className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
-                      isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
-                    }`}
-                  ></textarea>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
-                  <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
-                </div>
-              </form>
-            </div>
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setIsGameModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                <button type="submit" className="flex-1 bg-[#FEE500] text-slate-900 py-2.5 rounded-xl font-bold hover:bg-amber-400 transition text-xs">저장</button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-      </div>
+      {/* 공지사항 작성 모달 */}
+      {isNoticeModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl w-full max-w-sm p-5 space-y-3.5 shadow-2xl border ${
+            isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-100 text-slate-900'
+          } ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+            <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+              <h3 className="font-extrabold text-base">{editingNotice.id ? '공지사항 수정' : '공지사항 작성'}</h3>
+              <button onClick={() => setIsNoticeModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+            </div>
+
+            <form onSubmit={saveNotice} className="space-y-3">
+              <div>
+                <label className="font-bold block mb-1.5">공지 제목</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="공지 제목을 입력하세요"
+                  value={editingNotice.title}
+                  onChange={(e) => setEditingNotice({ ...editingNotice, title: e.target.value })}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="font-bold block mb-1.5">공지 내용</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="공지할 내용을 상세히 작성하세요"
+                  value={editingNotice.content}
+                  onChange={(e) => setEditingNotice({ ...editingNotice, content: e.target.value })}
+                  className={`w-full border p-2.5 rounded-xl focus:outline-none text-xs placeholder:text-xs placeholder:opacity-50 ${
+                    isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
+                  }`}
+                ></textarea>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
