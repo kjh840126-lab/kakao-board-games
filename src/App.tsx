@@ -234,9 +234,8 @@ export default function App() {
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
   
-  // ⭕ 최초 진입 시에만 로딩 화면을 보여주기 위한 상태
-  const [loading, setLoading] = useState(true);
-  const isInitialLoadedRef = useRef(false);
+  // ⭕ 최초 진입 시에만 딱 1번 로딩 화면을 보여주기 위한 단단한 상태 관리
+  const [isFirstInit, setIsFirstInit] = useState(true);
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -411,7 +410,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
     
-    if (loading) {
+    if (isFirstInit) {
       document.documentElement.style.backgroundColor = '#0f172a';
       document.body.style.backgroundColor = '#0f172a';
     } else {
@@ -425,7 +424,7 @@ export default function App() {
         document.body.style.backgroundColor = '#ffffff';
       }
     }
-  }, [themeMode, loading]);
+  }, [themeMode, isFirstInit]);
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
@@ -686,10 +685,9 @@ export default function App() {
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
     } finally {
-      // ⭕ 최초 1회만 로딩 상태 해제 처리
-      if (!isInitialLoadedRef.current) {
-        isInitialLoadedRef.current = true;
-        setLoading(false);
+      // ⭕ 앱 최초 로드 완료 시에만 isFirstInit 상태 해제
+      if (isFirstInit) {
+        setIsFirstInit(false);
       }
     }
   };
@@ -1432,8 +1430,8 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
-  // ⭕ 최초 진입 시에만 로딩 스피너 표시 ("데이터베이스 연결 중..." 문구 완전 제거)
-  if (loading) {
+  // ⭕ 최초 1회 진입 시에만 로딩 화면 노출 ("데이터베이스 연결 중..." 문구 완전 제거)
+  if (isFirstInit) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
         <div className="relative w-16 h-20 flex items-center justify-center">
