@@ -321,7 +321,7 @@ export default function App() {
       if (viewportMeta) {
         viewportMeta.setAttribute(
           'content',
-          'width=device-width, initial-scale=1.20, maximum-scale=1.20, user-scalable=no, viewport-fit=cover'
+          'width=device-width, initial-scale=1.50, maximum-scale=1.50, user-scalable=no, viewport-fit=cover'
         );
       }
     }
