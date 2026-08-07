@@ -147,7 +147,7 @@ const ALLOWED_EMAIL_DOMAINS = [
 const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
-// ⭕ [iOS 전용 UI 크기 개별 설정 영역]
+// ⭕ [iOS 전용 UI 크기 개별 설정 영역 - 앞으로의 수치 변경은 오직 iOS에만 반영됩니다]
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
@@ -341,7 +341,6 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
-  // ⭕ headerHeight 관련 선언 추가 (TS2304 에러 방지)
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
   const headerRef = useRef<HTMLElement | null>(null); 
@@ -359,7 +358,6 @@ export default function App() {
     setIsIosDevice(isIos);
   }, []);
 
-  // ⭕ useLayoutEffect 사용 (TS6133 미사용 에러 완벽 고침)
   useLayoutEffect(() => {
     if (!isIosDevice || !headerRef.current) return;
 
@@ -1703,11 +1701,10 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ [하단 네비게이션 복구 레이아웃]: flex flex-col h-[#100dvh] 구조로 전체 뷰포트에서 상/하단바 노출 보장
     <div className={`h-[#100dvh] w-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
-        {/* 1. 고정 상단 헤더 (fixed top-0) */}
+        {/* 고정 상단 헤더 */}
         <header 
           ref={headerRef}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
@@ -1774,7 +1771,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* 2. 본문 독립 스크롤 영역 (flex-1 overflow-y-auto) */}
+        {/* [독립 스크롤 영역] */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -1869,32 +1866,34 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 컴팩트 인라인 형태의 필터 드로어 */}
+              {/* ⭕ 1. iOS 대여 필터 영역 폰트 1pt 확대 */}
               {isFilterOpen && (
                 <div className={`w-full p-3.5 rounded-2xl border space-y-2.5 shadow-sm transition ${
                   isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-200'
                 }`}>
                   <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/20">
-                    <span className="text-[11px] font-bold text-slate-400">필터 설정</span>
+                    <span className={`font-bold text-slate-400 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>필터 설정</span>
                     {isFilterActive && (
                       <button 
                         onClick={resetFilters}
-                        className="text-[10px] font-bold text-rose-500 hover:underline flex items-center gap-0.5"
+                        className={`font-bold text-rose-500 hover:underline flex items-center gap-0.5 ${isIosDevice ? 'text-[11px]' : 'text-[10px]'}`}
                       >
-                        <ResetIcon size={10} /> 필터 초기화
+                        <ResetIcon size={11} /> 필터 초기화
                       </button>
                     )}
                   </div>
 
                   {/* 1) 인원수 인라인 필터 */}
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">인원수</span>
+                    <span className={`font-bold text-slate-400 w-11 flex-shrink-0 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>인원수</span>
                     <div className="flex flex-wrap gap-1 flex-1">
                       {[0, 1, 2, 3, 4, 5].map((count: number) => (
                         <button
                           key={count}
                           onClick={() => setPlayerFilter(count)}
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
+                          className={`px-2 py-0.5 rounded-md font-bold transition ${
+                            isIosDevice ? 'text-[11px]' : 'text-[10px]'
+                          } ${
                             playerFilter === count 
                               ? 'bg-slate-900 text-white' 
                               : isDarkMode 
@@ -1910,11 +1909,13 @@ export default function App() {
 
                   {/* 2) 장르 인라인 필터 */}
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">장르</span>
+                    <span className={`font-bold text-slate-400 w-11 flex-shrink-0 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>장르</span>
                     <div className="flex flex-wrap gap-1 flex-1 max-h-20 overflow-y-auto scrollbar-none">
                       <button
                         onClick={() => setGenreFilter('')}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
+                        className={`px-2 py-0.5 rounded-md font-bold transition ${
+                          isIosDevice ? 'text-[11px]' : 'text-[10px]'
+                        } ${
                           genreFilter === '' 
                             ? 'bg-slate-900 text-white' 
                             : isDarkMode 
@@ -1928,7 +1929,9 @@ export default function App() {
                         <button
                           key={preset}
                           onClick={() => setGenreFilter(preset)}
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
+                          className={`px-2 py-0.5 rounded-md font-bold transition ${
+                            isIosDevice ? 'text-[11px]' : 'text-[10px]'
+                          } ${
                             genreFilter === preset 
                               ? 'bg-slate-900 text-white' 
                               : isDarkMode 
@@ -1944,7 +1947,7 @@ export default function App() {
 
                   {/* 3) 난이도 인라인 필터 */}
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-slate-400 w-10 flex-shrink-0">난이도</span>
+                    <span className={`font-bold text-slate-400 w-11 flex-shrink-0 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>난이도</span>
                     <div className="flex flex-wrap gap-1 flex-1">
                       {[
                         { key: 'all', label: '전체' },
@@ -1955,7 +1958,9 @@ export default function App() {
                         <button
                           key={diff.key}
                           onClick={() => setDifficultyFilter(diff.key as any)}
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
+                          className={`px-2 py-0.5 rounded-md font-bold transition ${
+                            isIosDevice ? 'text-[11px]' : 'text-[10px]'
+                          } ${
                             difficultyFilter === diff.key 
                               ? 'bg-slate-900 text-white' 
                               : isDarkMode 
