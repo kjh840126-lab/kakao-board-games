@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -400,7 +400,6 @@ export default function App() {
     }
   }, [activeTab, adminSubTab]);
 
-  // ⭕ 로딩 및 테마 상태에 따른 HTML/BODY 배경색 동적 제어 (로딩 시 상하단 흰색 붕 뜸 완벽 해결)
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
     
@@ -1267,6 +1266,7 @@ export default function App() {
     return 0;
   };
 
+  // ⭕ 1. 랭킹 계산 공식: 10개 제한 조건 완벽 제거 (회원 평점이 즉시 반영됨)
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
@@ -1290,7 +1290,12 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  const filteredGameList = [...games]
+  // ⭕ 2. 대여 페이지 게임 노출 순서: 최초 1회(로딩/새로고침 시)만 셔플되고 고정(useMemo)
+  const shuffledInitialGames = useMemo(() => {
+    return [...games].sort(() => Math.random() - 0.5);
+  }, [games]);
+
+  const filteredGameList = shuffledInitialGames
     .filter((g: Game) => g.isVisible === 'Y')
     .filter((g: Game) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
     .filter((g: Game) => {
@@ -1308,8 +1313,7 @@ export default function App() {
       if (difficultyFilter === 'normal') return g.difficulty >= 2.3 && g.difficulty <= 3.5;
       if (difficultyFilter === 'hard') return g.difficulty > 3.5;
       return true;
-    })
-    .sort(() => Math.random() - 0.5);
+    });
 
   const filteredGameAdminList = [...games]
     .filter((g: Game) => g.title.toLowerCase().includes(gameAdminSearch.trim().toLowerCase()))
@@ -1384,7 +1388,6 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
-  // ⭕ [로딩 화면 iOS 상하단 색상 통일]: fixed inset-0 w-screen h-screen z-50
   if (loading) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
@@ -1700,7 +1703,8 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    <div className={`h-[#100dvh] w-full flex justify-center overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+    // ⭕ [iOS 고정 완벽 방어]: Flex 수직 정렬 컨테이너로 네비바를 sticky 고정
+    <div className={`h-[#100dvh] w-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
@@ -1752,8 +1756,9 @@ export default function App() {
                 className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-sky-300 hover:bg-sky-200 text-slate-900 relative"
               >
                 <Siren size={isIosDevice ? IOS_CONFIG.HEADER_ICON_SIZE : 18} />
+                {/* ⭕ 3. 신고 N 뱃지 깜빡임 제거 (animate-pulse 삭제) */}
                 {unreadReportsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm">
                     N
                   </span>
                 )}
@@ -2971,10 +2976,9 @@ export default function App() {
           </div>
         )}
 
-        {/* 하단 네비게이션 */}
+        {/* ⭕ [하단 네비게이션]: sticky bottom-0 제자리 고정으로 당김 새로고침 시에도 미동 없이 위치 사수 */}
         <nav 
-          style={{ bottom: isIosDevice ? '-1px' : '0px' }}
-          className={`fixed left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
+          className={`sticky bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors flex-shrink-0 ${
             isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
@@ -3008,8 +3012,9 @@ export default function App() {
               <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold relative ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
                 <div className="relative">
                   <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+                  {/* ⭕ 3. 관리자 N 뱃지 깜빡임 제거 (animate-pulse 삭제) */}
                   {unreadReportsCount > 0 && (
-                    <span className="absolute -top-1 -right-2 bg-rose-600 text-white font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm animate-pulse">
+                    <span className="absolute -top-1 -right-2 bg-rose-600 text-white font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm">
                       N
                     </span>
                   )}
