@@ -146,13 +146,6 @@ const ALLOWED_EMAIL_DOMAINS = [
 
 const currentYear = new Date().getFullYear();
 
-// ⭕ [iOS 전용 크기 조절 옵션] - 여기서 수치만 수정하시면 iOS 화면이 자유롭게 커집니다!
-const IOS_CONFIG = {
-  SCALE: 'scale-[1.0]',      // 전체 스케일 (예: scale-[1.10], scale-[1.18], scale-[1.20])
-  IMAGE_SIZE: 'w-24 h-24',    // 카드 이미지 크기 (예: w-20 h-20, w-24 h-24, w-[90px] h-[90px])
-  TEXT_SIZE: 'text-sm',       // 폰트 크기 (예: text-xs, text-[13px], text-sm)
-};
-
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
   <svg 
     width={size} 
@@ -310,8 +303,6 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
-  const [isIosDevice, setIsIosDevice] = useState(false);
-
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -319,12 +310,6 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-  useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
-    setIsIosDevice(isIos);
-  }, []);
 
   useEffect(() => {
     fetchInitialData();
@@ -1634,10 +1619,8 @@ export default function App() {
 
   return (
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
-      {/* ⭕ iOS일 때 상단 설정(IOS_CONFIG.SCALE) 스케일이 안전하게 적용되는 Wrapper */}
-      <div className={`w-full min-h-screen flex flex-col relative transition-all ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
-        isIosDevice ? `${IOS_CONFIG.SCALE} origin-top` : ''
-      }`}>
+      {/* ⭕ 잔상 없는 iOS 정밀 스케일링 (순수 CSS 타겟팅) */}
+      <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
         <header 
@@ -1706,8 +1689,8 @@ export default function App() {
           ref={mainScrollRef}
           onScroll={handleScroll}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          className={`flex-1 w-full p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
-            isLargeFont ? 'text-sm' : isIosDevice ? IOS_CONFIG.TEXT_SIZE : 'text-xs'
+          className={`flex-1 w-full p-4 pb-32 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+            isLargeFont ? 'text-sm' : 'text-xs'
           }`}
         >
           {/* 1. 게임목록(대여) 탭 */}
@@ -1923,16 +1906,14 @@ export default function App() {
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                              isIosDevice ? IOS_CONFIG.IMAGE_SIZE : 'w-20 h-20'
-                            }`}
+                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
                           <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
                               <div className="flex justify-between items-start gap-1">
-                                <h3 className={`font-bold leading-snug break-keep ${isIosDevice ? IOS_CONFIG.TEXT_SIZE : 'text-xs'} ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{game.title}</span>
                                   <span className="text-[11px] text-slate-400 font-mono font-normal whitespace-nowrap ml-1">({game.releaseYear}년)</span>
                                 </h3>
@@ -2219,9 +2200,7 @@ export default function App() {
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                            isIosDevice ? 'w-16 h-16' : 'w-14 h-14'
-                          }`}
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2287,9 +2266,7 @@ export default function App() {
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                            isIosDevice ? 'w-16 h-16' : 'w-14 h-14'
-                          }`}
+                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
