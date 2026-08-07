@@ -313,14 +313,11 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ iOS 환경 안전한 보정: 레이아웃 여백 찌그러짐 없는 iOS 전용 Scale 클래스 지정
+  // ⭕ 순수 iOS 환경 감지
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
     setIsIosDevice(isIos);
-
-    // 루트 fontSize 조작 원복 (여백 무너짐 방지)
-    document.documentElement.style.fontSize = '100%';
   }, []);
 
   useEffect(() => {
@@ -1631,8 +1628,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
-      {/* ⭕ iOS일 경우 화면 내부 요소를 자연스럽게 키우되 여백 구조를 유지하는 안전 스케일링 wrapper */}
-      <div className={`w-full min-h-screen flex flex-col relative transition-all ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${isIosDevice ? 'scale-[1.08] origin-top' : ''}`}>
+      <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
         <header 
