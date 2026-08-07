@@ -148,7 +148,7 @@ const currentYear = new Date().getFullYear();
 
 // ⭕ [iOS 전용 크기 조절 옵션] - 여기서 수치만 수정하시면 iOS 화면이 자유롭게 커집니다!
 const IOS_CONFIG = {
-  SCALE: 'scale-[1.15]',      // 전체 스케일 (예: scale-[1.10], scale-[1.18], scale-[1.20])
+  SCALE: 'scale-[1.10]',      // 전체 스케일 (예: scale-[1.10], scale-[1.18], scale-[1.20])
   IMAGE_SIZE: 'w-24 h-24',    // 카드 이미지 크기 (예: w-20 h-20, w-24 h-24, w-[90px] h-[90px])
   TEXT_SIZE: 'text-sm',       // 폰트 크기 (예: text-xs, text-[13px], text-sm)
 };
