@@ -148,7 +148,7 @@ const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
 // ⭕ [iOS 전용 UI 크기 개별 설정 영역]
-// 수치를 변경하시면 대여/랭킹/게임관리 탭 전체에 동시 적용됩니다!
+// 대여 > 랭킹 > 게임관리 순서로 이미지 크기가 다르게 관리됩니다!
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
@@ -157,10 +157,14 @@ const IOS_CONFIG = {
   HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
 
-  // 2. 본문 영역
+  // 2. 본문 및 이미지 크기 (대여 > 랭킹 > 게임관리 크기 순서)
   MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
   MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
-  GAME_IMAGE_SIZE: 'w-24 h-24',       // 보드게임 카드 이미지 크기 (대여/랭킹/게임관리 공통)
+  
+  RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
+  RANKING_IMAGE_SIZE: 'w-16 h-16',    // [2위] 랭킹 탭 게임 이미지 (중간)
+  ADMIN_IMAGE_SIZE: 'w-12 h-12',      // [3위] 게임관리 탭 게임 이미지 (가장 작음)
+
   GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
   GAME_TITLE_SIZE_LARGE: 'text-base', // 보드게임 제목 폰트 크기 (크게 모드)
 
@@ -1955,11 +1959,12 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start w-full">
+                          {/* ⭕ 대여 탭 전용 iOS 이미지 크기(RENTAL_IMAGE_SIZE) 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
                             className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                              isIosDevice ? IOS_CONFIG.GAME_IMAGE_SIZE : 'w-20 h-20'
+                              isIosDevice ? IOS_CONFIG.RENTAL_IMAGE_SIZE : 'w-20 h-20'
                             }`}
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
@@ -2255,18 +2260,18 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* ⭕ iOS일 경우 보드게임 이미지 크기 적용 */}
+                        {/* ⭕ 랭킹 탭 전용 iOS 이미지 크기(RANKING_IMAGE_SIZE) 적용 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
                           className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                            isIosDevice ? IOS_CONFIG.GAME_IMAGE_SIZE : 'w-14 h-14'
+                            isIosDevice ? IOS_CONFIG.RANKING_IMAGE_SIZE : 'w-14 h-14'
                           }`}
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
                         <div className="flex-1 min-w-0">
-                          {/* ⭕ iOS일 경우 보드게임 제목 폰트 크기 적용 */}
+                          {/* ⭕ 랭킹 탭 전용 iOS 제목 폰트 크기 적용 */}
                           <h3 className={`font-bold leading-snug break-keep ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
@@ -2329,18 +2334,18 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* ⭕ iOS일 경우 보드게임 이미지 크기 적용 */}
+                        {/* ⭕ 랭킹 탭 전용 iOS 이미지 크기(RANKING_IMAGE_SIZE) 적용 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
                           className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                            isIosDevice ? IOS_CONFIG.GAME_IMAGE_SIZE : 'w-14 h-14'
+                            isIosDevice ? IOS_CONFIG.RANKING_IMAGE_SIZE : 'w-14 h-14'
                           }`}
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
                         <div className="flex-1 min-w-0">
-                          {/* ⭕ iOS일 경우 보드게임 제목 폰트 크기 적용 */}
+                          {/* ⭕ 랭킹 탭 전용 iOS 제목 폰트 크기 적용 */}
                           <h3 className={`font-bold leading-snug break-keep ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
@@ -2521,18 +2526,18 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {/* ⭕ iOS일 경우 보드게임 이미지 크기 적용 */}
+                          {/* ⭕ 게임관리 탭 전용 iOS 이미지 크기(ADMIN_IMAGE_SIZE) 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
                             className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                              isIosDevice ? IOS_CONFIG.GAME_IMAGE_SIZE : 'w-12 h-12'
+                              isIosDevice ? IOS_CONFIG.ADMIN_IMAGE_SIZE : 'w-12 h-12'
                             }`}
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
                           <div className="min-w-0 flex-1">
                             <div className="font-bold leading-snug break-keep mb-0.5">
-                              {/* ⭕ iOS일 경우 보드게임 제목 폰트 크기 적용 */}
+                              {/* ⭕ 게임관리 탭 전용 iOS 제목 폰트 크기 적용 */}
                               <span className={`${
                                 isLargeFont
                                   ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
