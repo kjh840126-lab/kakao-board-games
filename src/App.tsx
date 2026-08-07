@@ -147,7 +147,7 @@ const ALLOWED_EMAIL_DOMAINS = [
 const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
-// ⭕ [iOS 전용 UI 크기 개별 설정 영역]
+// ⭕ [iOS 전용 UI 크기 개별 설정 영역 - 앞으로의 모든 수치 요청은 iOS에만 반영됩니다]
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
@@ -156,14 +156,14 @@ const IOS_CONFIG = {
   HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
 
-  // 2. 본문 패딩 및 카드 이미지 크기
+  // 2. 본문 패딩 및 카드 이미지 크기 (대여 > 랭킹 > 게임관리 순서)
   MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
   MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
   MAIN_PADDING_X: 'px-5',             // ↔️ iOS 본문 좌우 여백 수치
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
   RANKING_IMAGE_SIZE: 'w-16 h-16',    // [2위] 랭킹 탭 게임 이미지 (중간)
-  ADMIN_IMAGE_SIZE: 'w-16 h-16',      // ⭕ [3위] 게임관리 탭 이미지 시원하게 확대 (기존 w-12 h-12 -> w-16 h-16)
+  ADMIN_IMAGE_SIZE: 'w-16 h-16',      // [3위] 게임관리 탭 이미지
 
   GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
   GAME_TITLE_SIZE_LARGE: 'text-base', // 보드게임 제목 폰트 크기 (크게 모드)
@@ -175,7 +175,7 @@ const IOS_CONFIG = {
   RANKING_INFO_TEXT_SIZE: 'text-xs', 
   RANKING_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  ADMIN_INFO_TEXT_SIZE: 'text-xs',    // ⭕ 게임관리 세부 정보 폰트 시원하게 확대
+  ADMIN_INFO_TEXT_SIZE: 'text-xs',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
   // 3. 하단 네비게이션
@@ -342,7 +342,7 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState<number>(92); 
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
 
   const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
@@ -359,8 +359,9 @@ export default function App() {
     setIsIosDevice(isIos);
   }, []);
 
+  // ⭕ 안드로이드 새로고침 시 여백 붕 뜸 완벽 방어: iOS 환경에서만 동적 높이 계산 사용
   useLayoutEffect(() => {
-    if (!headerRef.current) return;
+    if (!isIosDevice || !headerRef.current) return;
 
     const updateHeaderHeight = () => {
       if (headerRef.current) {
@@ -379,13 +380,8 @@ export default function App() {
 
     observer.observe(headerRef.current);
 
-    const timer1 = setTimeout(updateHeaderHeight, 50);
-    const timer2 = setTimeout(updateHeaderHeight, 150);
-
     return () => {
       observer.disconnect();
-      clearTimeout(timer1);
-      clearTimeout(timer2);
     };
   }, [currentUser, isIosDevice, fontSize, activeTab]);
 
@@ -1766,11 +1762,11 @@ export default function App() {
           </div>
         </header>
 
-        {/* 본문 영역 */}
+        {/* ⭕ 본문 영역: 안드로이드는 순정 패딩 그대로 유지하며 새로고침 시 여백 붕 뜸 완벽 방어 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
-          style={{ paddingTop: headerHeight > 0 ? `${headerHeight + 12}px` : 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
+          style={{ paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
           className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
             isLargeFont 
               ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
@@ -2307,7 +2303,6 @@ export default function App() {
                               : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           
-                          {/* ⭕ 랭킹 탭 세부 폰트 (보통 / 크게 모드 확실히 반영) */}
                           <div className={`text-slate-400 mt-1 space-y-0.5 ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.RANKING_INFO_TEXT_SIZE_LARGE : 'text-xs'
@@ -2385,7 +2380,6 @@ export default function App() {
                               : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           
-                          {/* ⭕ 랭킹 탭 세부 폰트 (보통 / 크게 모드 확실히 반영) */}
                           <div className={`text-slate-400 mt-1 space-y-0.5 ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.RANKING_INFO_TEXT_SIZE_LARGE : 'text-xs'
@@ -2471,7 +2465,7 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5 w-full">
-              {/* ⭕ 1. 관리자 상단 5개 서브 메뉴탭 영역 크기 및 폰트 시원하게 확장 */}
+              {/* 관리자 상단 5개 서브 메뉴탭 영역 */}
               <div className={`flex items-center gap-1.5 p-1.5 rounded-xl font-bold w-full overflow-x-auto scrollbar-none ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
@@ -2576,7 +2570,6 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                          {/* ⭕ 2. 이미지 크기 확대 반영 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2602,7 +2595,6 @@ export default function App() {
                               </span>
                             </div>
                             
-                            {/* ⭕ 2. 세부 정보 (출시년도, BGG, 난이도) 폰트 시원하게 확대 */}
                             <p className={`text-slate-400 mt-1 font-medium ${
                               isLargeFont
                                 ? isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE_LARGE : 'text-sm'
@@ -2969,7 +2961,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 하단 네비게이션: 맨 밑에 회색 구획선이 생성되지 않도록 border-none 보정 */}
+        {/* ⭕ 3. 하단 네비게이션: 밑의 눈에 가시 같던 회색 구분선을 완전히 차단(border-b-0) 및 깔끔 보정 */}
         <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 flex justify-around px-2 pt-3 z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
