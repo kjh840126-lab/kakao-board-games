@@ -1697,7 +1697,8 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    <div className={`h-screen w-full flex justify-center overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+    // ⭕ [iOS 고정 해결 1]: 뷰포트 높이 h-[#100dvh] 및 overflow-hidden 고정
+    <div className={`h-[#100dvh] w-full flex justify-center overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
@@ -1767,12 +1768,12 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ [당기기 새로고침 복구]: overscroll-none 삭제하여 당겨서 새로고침 기능 원상 복구 */}
+        {/* ⭕ [iOS 고정 해결 2]: overscroll-y-contain 적용하여 스크롤 전파로 인한 상하단 바 덜컹거림 완벽 차단 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
           style={{ paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-32 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-32 overflow-y-auto overscroll-y-contain transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
             isLargeFont 
               ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
               : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
