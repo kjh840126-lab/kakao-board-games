@@ -343,7 +343,7 @@ export default function App() {
   const [isIosDevice, setIsIosDevice] = useState(false);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
-  // ⭕ [4번 구현 핵심]: 탭 이동 시 게임 노출 순서 고정용 Ref
+  // ⭕ [게임 셔플 고정용 Ref]: 다른 탭 이동에도 순서를 절대 잃어버리지 않게 유지
   const shuffledGamesRef = useRef<Game[]>([]);
 
   const headerRef = useRef<HTMLElement | null>(null); 
@@ -464,19 +464,15 @@ export default function App() {
     if (noticeIndex === recentNoticesList.length) {
       const timer = setTimeout(() => {
         setIsNoticeTransition(false);
-        setNoticeIndex(0);
+        setNoticeIndex((0));
       }, 500);
 
       return () => clearTimeout(timer);
     }
   }, [noticeIndex, recentNoticesList.length]);
 
-  // ⭕ [TS2554 빌드 에러 조치]: 인자 존재 유무와 관계없이 호출될 수 있도록 옵셔널 파라미터(...args) 적용
   const fetchInitialData = async (..._args: any[]) => {
     try {
-      // ⭕ 새로고침 시 셔플 레퍼런스를 초기화하여 "처음 진입/새로고침 시"에만 새로 섞이도록 처리
-      shuffledGamesRef.current = [];
-
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
         const mappedUsers: UserData[] = await Promise.all(
@@ -573,7 +569,7 @@ export default function App() {
 
       const { data: gamesData } = await supabase.from('games').select('*');
       if (gamesData) {
-        setGames(gamesData.map(g => {
+        const newGameList = gamesData.map(g => {
           let parsedGenres: string[] = ['보드게임'];
           if (Array.isArray(g.genres)) {
             parsedGenres = g.genres;
@@ -611,7 +607,20 @@ export default function App() {
             userAvgRating,
             userRatingCount
           };
-        }));
+        });
+
+        // ⭕ [수정 핵심]: 기존 셔플 배열이 비어있을 때만(최초 접속 및 페이지 새로고침 시) 새로 섞음!
+        if (shuffledGamesRef.current.length === 0 && newGameList.length > 0) {
+          shuffledGamesRef.current = [...newGameList].sort(() => Math.random() - 0.5);
+        } else if (shuffledGamesRef.current.length > 0) {
+          // DB 상태 업데이트 시 순서는 기존 셔플 순서 그대로 유지하면서 개별 데이터만 최신화
+          const map = new Map(newGameList.map(g => [g.gameId, g]));
+          shuffledGamesRef.current = shuffledGamesRef.current
+            .map(g => map.get(g.gameId) || g)
+            .filter(Boolean);
+        }
+
+        setGames(newGameList);
       }
 
       const { data: noticeData } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
@@ -1292,7 +1301,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ [4번 구현 핵심]: 초기 접속 및 새로고침(fetchInitialData) 시에만 1회 셔플하고, 탭 이동 시에는 고정
+  // ⭕ [4번 구현 핵심]: 탭 오갈 때 순서 완벽 유지 (shuffledGamesRef가 비어있을 때만 1회 셔플)
   const filteredGameList = useMemo(() => {
     if (shuffledGamesRef.current.length === 0 && games.length > 0) {
       shuffledGamesRef.current = [...games].sort(() => Math.random() - 0.5);
@@ -3776,7 +3785,7 @@ export default function App() {
                 취소
               </button>
               <button
-                type="button"
+                type="submit"
                 onClick={handleSaveRating}
                 className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm text-xs"
               >
@@ -4312,7 +4321,7 @@ export default function App() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
                 <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
               </div>
             </form>
