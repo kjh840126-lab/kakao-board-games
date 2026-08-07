@@ -1261,16 +1261,15 @@ export default function App() {
     return 0;
   };
 
+  // ⭕ 1. 랭킹 계산 공식: 10개 제한 조건 완벽 제거 (회원 평점이 즉시 반영됨)
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
       const releaseBonus = getReleaseBonus(game.releaseYear);
-      
-      const validUserAvgRating = (game.userRatingCount || 0) >= 10 ? (game.userAvgRating || 0) : 0;
-      const userRatingScore = validUserAvgRating * 0.5;
+      const userRatingScore = (game.userAvgRating || 0) * 0.5;
       
       const totalScore = Number((recentScore + releaseBonus + game.bggRating + userRatingScore).toFixed(2));
-      return { ...game, totalScore, recentScore, releaseBonus, userRatingScore, validUserAvgRating };
+      return { ...game, totalScore, recentScore, releaseBonus, userRatingScore };
     })
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
@@ -1278,18 +1277,16 @@ export default function App() {
   const hallOfFameRankedGamesList = [...games]
     .map(game => {
       const rentalScore = (game.rentalCount || 0) * 0.1;
-      
-      const validUserAvgRating = (game.userRatingCount || 0) >= 10 ? (game.userAvgRating || 0) : 0;
-      const userRatingScore = validUserAvgRating * 0.5;
+      const userRatingScore = (game.userAvgRating || 0) * 0.5;
 
       const totalScore = Number((rentalScore + game.bggRating + userRatingScore).toFixed(2));
-      return { ...game, totalScore, rentalScore, userRatingScore, validUserAvgRating };
+      return { ...game, totalScore, rentalScore, userRatingScore };
     })
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
+  // ⭕ 2. 대여 페이지 게임 노출 순서 매번 랜덤화 (Math.random)
   const filteredGameList = [...games]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .filter((g: Game) => g.isVisible === 'Y')
     .filter((g: Game) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
     .filter((g: Game) => {
@@ -1307,11 +1304,13 @@ export default function App() {
       if (difficultyFilter === 'normal') return g.difficulty >= 2.3 && g.difficulty <= 3.5;
       if (difficultyFilter === 'hard') return g.difficulty > 3.5;
       return true;
-    });
+    })
+    .sort(() => Math.random() - 0.5);
 
+  // ⭕ 4. 관리자 게임관리 페이지: 게임ID 내림차순 정렬 (localeCompare)
   const filteredGameAdminList = [...games]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .filter((g: Game) => g.title.toLowerCase().includes(gameAdminSearch.trim().toLowerCase()));
+    .filter((g: Game) => g.title.toLowerCase().includes(gameAdminSearch.trim().toLowerCase()))
+    .sort((a, b) => b.gameId.localeCompare(a.gameId, undefined, { numeric: true }));
 
   const filteredUserAdminList = [...users]
     .sort((a: UserData, b: UserData) => {
@@ -1697,7 +1696,6 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ [iOS 고정 해결 1]: 뷰포트 높이 h-[#100dvh] 및 overflow-hidden 고정
     <div className={`h-[#100dvh] w-full flex justify-center overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
@@ -1768,7 +1766,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ [iOS 고정 해결 2]: overscroll-y-contain 적용하여 스크롤 전파로 인한 상하단 바 덜컹거림 완벽 차단 */}
+        {/* [독립 스크롤 영역] */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -2264,7 +2262,7 @@ export default function App() {
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5 w-full">
                   <p className="text-slate-400 font-medium px-1">
-                    * 최근 30일 대여 횟수 + 신작 가산점 + BGG & 회원 평점(10개 이상만) 합산 기준
+                    * 최근 30일 대여 횟수 + 신작 가산점 + BGG & 회원 평점 합산 기준
                   </p>
                   {hotRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
@@ -2322,7 +2320,7 @@ export default function App() {
                             </div>
                             <div className="whitespace-nowrap flex gap-2">
                               <span>최근 대여: <strong className="text-rose-500 font-bold">{game.recentRentalCount || 0}회</strong></span>
-                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.validUserAvgRating ? `${game.validUserAvgRating}점` : '0점 (10개 미만)'}</strong></span>
+                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
                             </div>
                           </div>
                         </div>
@@ -2341,7 +2339,7 @@ export default function App() {
               {rankingTab === 'hall' && (
                 <div className="space-y-2.5 w-full">
                   <p className="text-slate-400 font-medium px-1">
-                    * 전체 누적 대여 횟수 + BGG & 회원 평점(10개 이상만) 기준 (스테디셀러)
+                    * 전체 누적 대여 횟수 + BGG & 회원 평점 기준 (스테디셀러)
                   </p>
                   {hallOfFameRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
@@ -2399,7 +2397,7 @@ export default function App() {
                             </div>
                             <div className="whitespace-nowrap flex gap-2">
                               <span>총 대여: <strong className="text-amber-500 font-bold">{game.rentalCount || 0}회</strong></span>
-                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.validUserAvgRating ? `${game.validUserAvgRating}점` : '0점 (10개 미만)'}</strong></span>
+                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
                             </div>
                           </div>
                         </div>
@@ -2969,14 +2967,13 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ [하단 네비게이션]: iOS Safari 잔선 완전 은폐용 bottom[-20px] 덮개 가림막 고정 */}
+        {/* ⭕ 하단 네비게이션 (3번 반영: 관리자 버튼 신규 신고건 발생 시 'N' 뱃지 노출) */}
         <nav 
           style={{ bottom: isIosDevice ? '-1px' : '0px' }}
           className={`fixed left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
-          {/* iOS 전용 잔선 완전 수감 가림막 레이어 */}
           {isIosDevice && (
             <div 
               style={{ bottom: '-30px', height: '30px' }}
@@ -3004,8 +3001,15 @@ export default function App() {
               <span className="mt-1">사이트</span>
             </button>
             {isAdmin && (
-              <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
-                <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+              <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold relative ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
+                <div className="relative">
+                  <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+                  {unreadReportsCount > 0 && (
+                    <span className="absolute -top-1 -right-2 bg-rose-600 text-white font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm animate-pulse">
+                      N
+                    </span>
+                  )}
+                </div>
                 <span className="mt-1">관리자</span>
               </button>
             )}
