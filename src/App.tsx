@@ -162,7 +162,7 @@ const IOS_CONFIG = {
   MAIN_PADDING_X: 'px-5',             // ↔️ iOS 본문 좌우 여백 수치
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
-  RANKING_IMAGE_SIZE: 'w-16 h-16',    // [2위] 랭킹 탭 게임 이미지 (중간)
+  RANKING_IMAGE_SIZE: 'w-18 h-18',    // [2위] 랭킹 탭 게임 이미지 (중간)
   ADMIN_IMAGE_SIZE: 'w-16 h-16',      // [3위] 게임관리 탭 이미지
 
   GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
