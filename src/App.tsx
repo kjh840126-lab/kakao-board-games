@@ -180,6 +180,8 @@ const IOS_CONFIG = {
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
+  // ⭕ [TS2304/TS2339 빌드 에러 조치]: NAV_PADDING_BOTTOM 속성 명시적 정의 복구
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+10px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -2990,11 +2992,11 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                        {/* 공지사항 상세 내용 폰트 상향 (text-xs -> text-sm) */}
+                        {/* ⭕ 4. 공지사항 상세 내용 폰트 상향 (text-xs -> text-sm) */}
                         <p className={`whitespace-pre-wrap break-all leading-relaxed font-medium ${
                           isIosDevice ? 'text-sm' : 'text-xs'
                         } ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
-                        {/* 공지 작성일 폰트 상향 */}
+                        {/* ⭕ 4. 공지 작성일 폰트 상향 */}
                         <span className={`text-slate-400 block pt-1 font-mono ${
                           isIosDevice ? 'text-xs' : 'text-[11px]'
                         }`}>{n.createdAt} 작성</span>
@@ -3777,7 +3779,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleSaveRating}
-                  className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs shadow-sm"
+                  className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm text-xs"
                 >
                   평점 저장
                 </button>
