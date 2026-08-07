@@ -146,17 +146,18 @@ const ALLOWED_EMAIL_DOMAINS = [
 
 const currentYear = new Date().getFullYear();
 
+// ⭕ [핵심]: 브라우저 최초 접속 시에만 1회만 로딩을 띄우기 위한 글로벌 플래그
+let hasInitialLoadedGlobal = false;
+
 // =================================----------------====================
 // ⭕ [iOS 전용 UI 크기 개별 설정 영역]
 // =================================----------------====================
 const IOS_CONFIG = {
-  // 1. 상단 헤더
   HEADER_LOGO_HEIGHT: 'h-11',         
   HEADER_ICON_SIZE: 22,               
   HEADER_USER_TEXT_SIZE: 'text-sm',   
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  
 
-  // 2. 본문 패딩 및 카드 이미지 크기
   MAIN_TEXT_SIZE: 'text-sm',          
   MAIN_TEXT_SIZE_LARGE: 'text-base',  
   MAIN_PADDING_X: 'px-5',             
@@ -177,7 +178,6 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-sm',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-base', 
 
-  // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
   NAV_PADDING_BOTTOM: 'pb-[max(12px,env(safe-area-inset-bottom))]', 
@@ -234,8 +234,8 @@ export default function App() {
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
   
-  // ⭕ 최초 진입 시에만 딱 1번 로딩 화면을 보여주기 위한 단단한 상태 관리
-  const [isFirstInit, setIsFirstInit] = useState(true);
+  // ⭕ 최초 접속 시에만 로딩 스피너 활성화
+  const [loading, setLoading] = useState<boolean>(!hasInitialLoadedGlobal);
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -410,7 +410,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
     
-    if (isFirstInit) {
+    if (loading) {
       document.documentElement.style.backgroundColor = '#0f172a';
       document.body.style.backgroundColor = '#0f172a';
     } else {
@@ -424,7 +424,7 @@ export default function App() {
         document.body.style.backgroundColor = '#ffffff';
       }
     }
-  }, [themeMode, isFirstInit]);
+  }, [themeMode, loading]);
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
@@ -685,9 +685,10 @@ export default function App() {
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
     } finally {
-      // ⭕ 앱 최초 로드 완료 시에만 isFirstInit 상태 해제
-      if (isFirstInit) {
-        setIsFirstInit(false);
+      // ⭕ 접속 완료 후 단 1번만 로딩 화면을 닫고, 재호출 시에는 로딩을 띄우지 않음
+      if (!hasInitialLoadedGlobal) {
+        hasInitialLoadedGlobal = true;
+        setLoading(false);
       }
     }
   };
@@ -1430,8 +1431,8 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
-  // ⭕ 최초 1회 진입 시에만 로딩 화면 노출 ("데이터베이스 연결 중..." 문구 완전 제거)
-  if (isFirstInit) {
+  // ⭕ 브라우저 접속/새로고침 시 딱 1회만 로딩 화면 노출
+  if (loading) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
         <div className="relative w-16 h-20 flex items-center justify-center">
@@ -3536,14 +3537,14 @@ export default function App() {
           </div>
 
           <div className="p-3 bg-slate-100 dark:bg-slate-800/80 flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-700">
-            {/* ⭕ iOS 접수함: 안읽음 텍스트 폰트 1pt 상향 (text-sm) */}
+            {/* iOS 접수함: 안읽음 텍스트 폰트 1pt 상향 (text-sm) */}
             <span className={`text-slate-500 dark:text-slate-400 font-semibold ${
               isIosDevice ? 'text-sm' : 'text-xs'
             }`}>
               안읽음: <strong className="text-rose-500 font-extrabold">{unreadReportsCount}</strong>건
             </span>
             {unreadReportsCount > 0 && (
-              /* ⭕ iOS 접수함: 모두 읽음 버튼 폰트 1pt 상향 (text-xs) */
+              /* iOS 접수함: 모두 읽음 버튼 폰트 1pt 상향 (text-xs) */
               <button 
                 onClick={handleMarkAllReportsAsRead}
                 className={`font-bold bg-slate-900 text-white px-2 py-1 rounded-md hover:bg-slate-800 transition ${
@@ -3579,7 +3580,7 @@ export default function App() {
             )}
 
             <div className="space-y-2 pt-1">
-              {/* ⭕ iOS 접수함: 전체 목록 텍스트 폰트 1pt 상향 (text-sm) */}
+              {/* iOS 접수함: 전체 목록 텍스트 폰트 1pt 상향 (text-sm) */}
               <h4 className={`font-bold text-slate-400 px-0.5 ${
                 isIosDevice ? 'text-sm' : 'text-xs'
               }`}>전체 목록 ({reports.length})</h4>
