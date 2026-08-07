@@ -148,6 +148,7 @@ const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
 // ⭕ [iOS 전용 UI 크기 개별 설정 영역]
+// 대여 > 랭킹 > 게임관리 탭별 크기 및 세부 폰트를 다르게 조절할 수 있습니다!
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
@@ -156,10 +157,9 @@ const IOS_CONFIG = {
   HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
 
-  // 2. 본문 및 이미지 크기
+  // 2. 본문 패딩 및 카드 이미지 크기 (대여 > 랭킹 > 게임관리 순서)
   MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
   MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
-  
   MAIN_PADDING_X: 'px-6',             // ↔️ iOS 본문 좌우 여백 수치
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
@@ -168,6 +168,11 @@ const IOS_CONFIG = {
 
   GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
   GAME_TITLE_SIZE_LARGE: 'text-base', // 보드게임 제목 폰트 크기 (크게 모드)
+
+  // 🔤 탭별 카드 세부 정보 폰트 크기 (대여 탭 유지 / 랭킹 & 게임관리 확대)
+  RENTAL_INFO_TEXT_SIZE: 'text-[11px]',  // 대여 탭 세부 폰트
+  RANKING_INFO_TEXT_SIZE: 'text-xs',     // 랭킹 탭 세부 폰트 (기존 text-[11px] -> text-xs 로 확대)
+  ADMIN_INFO_TEXT_SIZE: 'text-xs',       // 게임관리 탭 세부 폰트 (기존 text-[11px] -> text-xs 로 확대)
 
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  // 하단 메뉴 아이콘 크기
@@ -333,7 +338,7 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState<number>(0); // ⭕ 초기값 0 처리하여 로딩 순간 붕 뜸 방지
+  const [headerHeight, setHeaderHeight] = useState<number>(0); 
 
   const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
@@ -344,14 +349,12 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ 순수 iOS 환경 감지
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
     setIsIosDevice(isIos);
   }, []);
 
-  // ⭕ 안드로이드 새로고침 시 상단 여백 붕 뜸 방지: Dynamic ResizeObserver 및 useLayoutEffect 정밀 측정
   useLayoutEffect(() => {
     if (!headerRef.current) return;
 
@@ -366,14 +369,12 @@ export default function App() {
 
     updateHeaderHeight();
 
-    // 헤더 크기 실시간 변경 감지기 (새로고침/리사이즈 대응)
     const observer = new ResizeObserver(() => {
       updateHeaderHeight();
     });
 
     observer.observe(headerRef.current);
 
-    // 안드로이드 브라우저 주소창 딜레이 대응 (렌더링 직후 50ms, 150ms 2차 재측정)
     const timer1 = setTimeout(updateHeaderHeight, 50);
     const timer2 = setTimeout(updateHeaderHeight, 150);
 
@@ -1694,7 +1695,7 @@ export default function App() {
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
-        {/* 고정 상단 헤더 (headerRef 적용) */}
+        {/* 고정 상단 헤더 */}
         <header 
           ref={headerRef}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
@@ -1761,7 +1762,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ 본문 영역: 헤더 높이 측정 직후에만 12px 간격을 주며 붕 뜸 현상을 방어 */}
+        {/* 본문 영역 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -2005,7 +2006,10 @@ export default function App() {
                                 <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                               </div>
                               
-                              <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              {/* ⭕ 대여 탭 전용 세부 폰트 유지 (RENTAL_INFO_TEXT_SIZE) */}
+                              <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${
+                                isIosDevice ? IOS_CONFIG.RENTAL_INFO_TEXT_SIZE : 'text-[11px]'
+                              } ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                 <span className="flex items-center gap-0.5"><PlayerIcon size={11} className="text-slate-400" /> {game.minPlayers}-{game.maxPlayers}인</span>
                                 <span className="flex items-center gap-0.5"><Clock size={11} className="text-slate-400" /> {game.playTime}분</span>
                                 <span className="flex items-center gap-0.5 font-mono"><Brain size={11} className="text-slate-400" /> {Number(game.difficulty).toFixed(2)}</span>
@@ -2297,7 +2301,11 @@ export default function App() {
                               ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
                               : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
-                          <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                          
+                          {/* ⭕ 랭킹 탭 전용 iOS 확대 세부 폰트(RANKING_INFO_TEXT_SIZE) 적용 */}
+                          <div className={`text-slate-400 mt-1 space-y-0.5 ${
+                            isIosDevice ? IOS_CONFIG.RANKING_INFO_TEXT_SIZE : 'text-[11px]'
+                          }`}>
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>출시: {game.releaseYear}년</span>
                               <span>BGG: {game.bggRating}점</span>
@@ -2369,7 +2377,11 @@ export default function App() {
                               ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
                               : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
-                          <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                          
+                          {/* ⭕ 랭킹 탭 전용 iOS 확대 세부 폰트(RANKING_INFO_TEXT_SIZE) 적용 */}
+                          <div className={`text-slate-400 mt-1 space-y-0.5 ${
+                            isIosDevice ? IOS_CONFIG.RANKING_INFO_TEXT_SIZE : 'text-[11px]'
+                          }`}>
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>출시: {game.releaseYear}년</span>
                               <span>BGG: {game.bggRating}점</span>
@@ -2568,7 +2580,11 @@ export default function App() {
                                 )}
                               </span>
                             </div>
-                            <p className="text-slate-400 text-[11px] mt-0.5">{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
+                            
+                            {/* ⭕ 게임관리 탭 전용 iOS 확대 세부 폰트(ADMIN_INFO_TEXT_SIZE) 적용 */}
+                            <p className={`text-slate-400 mt-0.5 ${
+                              isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-[11px]'
+                            }`}>{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
                           </div>
                         </div>
                         
