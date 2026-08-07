@@ -303,8 +303,6 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
-  const [isIosDevice, setIsIosDevice] = useState(false);
-
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -317,7 +315,6 @@ export default function App() {
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
-    setIsIosDevice(isIos);
 
     if (isIos) {
       const viewportMeta = document.querySelector('meta[name="viewport"]');
