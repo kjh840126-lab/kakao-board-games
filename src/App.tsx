@@ -162,7 +162,7 @@ const IOS_CONFIG = {
   MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
   
     // ↔️ iOS 본문 좌우 여백 수치 (원하시는 수치로 'px-5', 'px-6' 등만 수정)
-  MAIN_PADDING_X: 'px-5',
+  MAIN_PADDING_X: 'px-9',
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
   RANKING_IMAGE_SIZE: 'w-16 h-16',    // [2위] 랭킹 탭 게임 이미지 (중간)
