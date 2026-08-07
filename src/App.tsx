@@ -346,7 +346,7 @@ export default function App() {
   // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
 
-  // ⭕ [대여 탭 전용 스크롤 위치 기억 Ref]
+  // 대여 탭 전용 스크롤 위치 기억 Ref
   const gamesTabScrollPosRef = useRef<number>(0);
 
   const headerRef = useRef<HTMLElement | null>(null); 
@@ -399,11 +399,12 @@ export default function App() {
     });
   }, []);
 
+  // ⭕ [수정 핵심]: activeTab이 변경될 때 fetchInitialData()를 재호출하던 문제 해결 (관리자 서브탭 전환 시에만 동작)
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && activeTab === 'admin') {
       fetchInitialData();
     }
-  }, [activeTab, adminSubTab]);
+  }, [adminSubTab]);
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
@@ -436,7 +437,7 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // ⭕ [실시간 스크롤 리스너]: 대여 탭일 때의 스크롤 위치를 기록
+  // 실시간 스크롤 위치 기록
   useEffect(() => {
     const handleWindowScroll = () => {
       if (activeTab === 'games') {
@@ -448,9 +449,8 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleWindowScroll);
   }, [activeTab]);
 
-  // ⭕ [수정한 탭 이동 로직]: 대여 탭으로 올 때만 이전 스크롤 복원, 다른 탭은 최상단 이동
+  // 탭 이동 처리
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
-    // 탭을 떠나는 순간 대여 탭 스크롤 위치 최종 저장
     if (activeTab === 'games') {
       gamesTabScrollPosRef.current = window.scrollY;
     }
@@ -459,10 +459,8 @@ export default function App() {
     
     requestAnimationFrame(() => {
       if (newTab === 'games') {
-        // 대여 탭 복귀 시 기억된 스크롤 위치로 이동
         window.scrollTo(0, gamesTabScrollPosRef.current);
       } else {
-        // 다른 탭으로 이동 시 최상단으로 스크롤
         window.scrollTo(0, 0);
         document.body.scrollTop = 0;
         document.documentElement.scrollTop = 0;
@@ -500,8 +498,6 @@ export default function App() {
 
   const fetchInitialData = async (..._args: any[]) => {
     try {
-      shuffledGamesRef.current = [];
-
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
         const mappedUsers: UserData[] = await Promise.all(
@@ -638,6 +634,7 @@ export default function App() {
           };
         });
 
+        // ⭕ [수정 핵심]: 기존 셔플 배열이 비어있을 때만(페이지 첫 로딩/새로고침 시) 새로 섞고, 오갈 때는 순서 완벽 고정
         if (shuffledGamesRef.current.length === 0 && newGameList.length > 0) {
           shuffledGamesRef.current = [...newGameList].sort(() => Math.random() - 0.5);
         } else if (shuffledGamesRef.current.length > 0) {
@@ -1328,7 +1325,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ [4번 구현 핵심]: 탭 오갈 때 순서 완벽 유지 (shuffledGamesRef가 비어있을 때만 1회 셔플)
+  // ⭕ 탭 오갈 때 순서 완벽 유지 (shuffledGamesRef가 비어있을 때만 1회 셔플)
   const filteredGameList = useMemo(() => {
     if (shuffledGamesRef.current.length === 0 && games.length > 0) {
       shuffledGamesRef.current = [...games].sort(() => Math.random() - 0.5);
@@ -1745,7 +1742,7 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ [Safari 주소창 반응형 Window 스크롤 구조]: min-h-screen 구조로 변환하여 사파리 주소창 동적 축소/확대 및 순정 당겨서 새로고침 완벽 복구
+    // Safari 주소창 반응형 Window 스크롤 구조
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
       {/* 1. 고정 상단 헤더 (fixed top-0) */}
