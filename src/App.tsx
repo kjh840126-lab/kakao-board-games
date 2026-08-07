@@ -156,14 +156,14 @@ const IOS_CONFIG = {
   HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
 
-  // 2. 본문 패딩 및 카드 이미지 크기 (대여 > 랭킹 > 게임관리 순서)
+  // 2. 본문 패딩 및 카드 이미지 크기
   MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
   MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
-  MAIN_PADDING_X: 'px-6',             // ↔️ iOS 본문 좌우 여백 수치
+  MAIN_PADDING_X: 'px-5',             // ↔️ iOS 본문 좌우 여백 수치
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
   RANKING_IMAGE_SIZE: 'w-16 h-16',    // [2위] 랭킹 탭 게임 이미지 (중간)
-  ADMIN_IMAGE_SIZE: 'w-12 h-12',      // [3위] 게임관리 탭 게임 이미지 (가장 작음)
+  ADMIN_IMAGE_SIZE: 'w-16 h-16',      // ⭕ [3위] 게임관리 탭 이미지 시원하게 확대 (기존 w-12 h-12 -> w-16 h-16)
 
   GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
   GAME_TITLE_SIZE_LARGE: 'text-base', // 보드게임 제목 폰트 크기 (크게 모드)
@@ -175,7 +175,7 @@ const IOS_CONFIG = {
   RANKING_INFO_TEXT_SIZE: 'text-xs', 
   RANKING_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  ADMIN_INFO_TEXT_SIZE: 'text-xs',   
+  ADMIN_INFO_TEXT_SIZE: 'text-xs',    // ⭕ 게임관리 세부 정보 폰트 시원하게 확대
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
   // 3. 하단 네비게이션
@@ -342,7 +342,6 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
-  // ⭕ iOS 새로고침 시 상단 패딩이 0이 되어 찌그러지는 현상 방지를 위해 기본 높이 92px 설정
   const [headerHeight, setHeaderHeight] = useState<number>(92); 
 
   const headerRef = useRef<HTMLElement | null>(null); 
@@ -360,7 +359,6 @@ export default function App() {
     setIsIosDevice(isIos);
   }, []);
 
-  // ⭕ 새로고침 시 상단 여백 좁아짐 잔상 완벽 해결
   useLayoutEffect(() => {
     if (!headerRef.current) return;
 
@@ -2012,7 +2010,6 @@ export default function App() {
                                 <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{game.gameId}</span>
                               </div>
                               
-                              {/* 대여 탭 세부 폰트 (보통/크게 지원) */}
                               <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${
                                 isLargeFont
                                   ? isIosDevice ? IOS_CONFIG.RENTAL_INFO_TEXT_SIZE_LARGE : 'text-xs'
@@ -2310,7 +2307,7 @@ export default function App() {
                               : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           
-                          {/* ⭕ 랭킹 탭 세부 폰트 (보통 / 크게 모드 정밀 반영) */}
+                          {/* ⭕ 랭킹 탭 세부 폰트 (보통 / 크게 모드 확실히 반영) */}
                           <div className={`text-slate-400 mt-1 space-y-0.5 ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.RANKING_INFO_TEXT_SIZE_LARGE : 'text-xs'
@@ -2388,7 +2385,7 @@ export default function App() {
                               : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           
-                          {/* ⭕ 랭킹 탭 세부 폰트 (보통 / 크게 모드 정밀 반영) */}
+                          {/* ⭕ 랭킹 탭 세부 폰트 (보통 / 크게 모드 확실히 반영) */}
                           <div className={`text-slate-400 mt-1 space-y-0.5 ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.RANKING_INFO_TEXT_SIZE_LARGE : 'text-xs'
@@ -2474,44 +2471,44 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5 w-full">
-              {/* ⭕ 관리자 상단 5개 서브 메뉴탭 글자 크기 연동 */}
-              <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              {/* ⭕ 1. 관리자 상단 5개 서브 메뉴탭 영역 크기 및 폰트 시원하게 확장 */}
+              <div className={`flex items-center gap-1.5 p-1.5 rounded-xl font-bold w-full overflow-x-auto scrollbar-none ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${
-                    isLargeFont ? 'text-xs' : 'text-[10px]'
+                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
                   } ${adminSubTab === 'gameAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   게임관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('rentalAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${
-                    isLargeFont ? 'text-xs' : 'text-[10px]'
+                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
                   } ${adminSubTab === 'rentalAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   대여/반납
                 </button>
                 <button
                   onClick={() => setAdminSubTab('siteAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${
-                    isLargeFont ? 'text-xs' : 'text-[10px]'
+                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
                   } ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   사이트관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('userAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${
-                    isLargeFont ? 'text-xs' : 'text-[10px]'
+                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
                   } ${adminSubTab === 'userAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   회원관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('noticeAdmin')}
-                  className={`py-2 rounded-lg transition text-center ${
-                    isLargeFont ? 'text-xs' : 'text-[10px]'
+                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
                   } ${adminSubTab === 'noticeAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   공지사항
@@ -2575,15 +2572,16 @@ export default function App() {
 
                   <div className="space-y-2.5 w-full">
                     {filteredGameAdminList.map((game: Game) => (
-                      <div key={game.gameId} className={`w-full border p-3 rounded-2xl flex justify-between items-center shadow-sm ${
+                      <div key={game.gameId} className={`w-full border p-3.5 rounded-2xl flex justify-between items-center shadow-sm ${
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          {/* ⭕ 2. 이미지 크기 확대 반영 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
                             className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                              isIosDevice ? IOS_CONFIG.ADMIN_IMAGE_SIZE : 'w-12 h-12'
+                              isIosDevice ? IOS_CONFIG.ADMIN_IMAGE_SIZE : 'w-16 h-16'
                             }`}
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
@@ -2591,24 +2589,24 @@ export default function App() {
                             <div className="font-bold leading-snug break-keep mb-0.5">
                               <span className={`${
                                 isLargeFont
-                                  ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
-                                  : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
+                                  ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-base'
+                                  : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-sm'
                               } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</span>
                               <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
                               <span className="inline-flex items-center ml-1.5 align-middle">
                                 {game.isVisible === 'Y' ? (
-                                  <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><Eye size={11} /> 노출</span>
+                                  <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-xs"><Eye size={12} /> 노출</span>
                                 ) : (
-                                  <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><EyeOff size={11} /> 숨김</span>
+                                  <span className="text-slate-400 font-bold flex items-center gap-0.5 text-xs"><EyeOff size={12} /> 숨김</span>
                                 )}
                               </span>
                             </div>
                             
-                            {/* ⭕ 게임관리 탭 세부 폰트 (보통 / 크게 모드 정밀 반영) */}
-                            <p className={`text-slate-400 mt-0.5 ${
+                            {/* ⭕ 2. 세부 정보 (출시년도, BGG, 난이도) 폰트 시원하게 확대 */}
+                            <p className={`text-slate-400 mt-1 font-medium ${
                               isLargeFont
-                                ? isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE_LARGE : 'text-xs'
-                                : isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-[11px]'
+                                ? isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE_LARGE : 'text-sm'
+                                : isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-xs'
                             }`}>{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
                           </div>
                         </div>
@@ -2622,13 +2620,13 @@ export default function App() {
                             }}
                             className="p-2 text-slate-400 hover:bg-slate-700/50 rounded-xl transition"
                           >
-                            <Edit size={15} />
+                            <Edit size={16} />
                           </button>
                           <button
                             onClick={() => deleteGame(game.gameId, game.title, game.status)}
                             className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50/10 rounded-xl transition"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </div>
@@ -2971,8 +2969,8 @@ export default function App() {
           </div>
         )}
 
-        {/* 하단 네비게이션 */}
-        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t flex justify-around px-2 pt-3 z-30 shadow-lg transition-colors ${
+        {/* ⭕ 3. 하단 네비게이션: 맨 밑에 회색 구획선이 생성되지 않도록 border-none 보정 */}
+        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 flex justify-around px-2 pt-3 z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
           <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
