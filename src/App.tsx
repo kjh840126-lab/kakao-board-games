@@ -343,7 +343,7 @@ export default function App() {
   const [isIosDevice, setIsIosDevice] = useState(false);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
-  // ⭕ [초기 접속 및 새로고침 전용 셔플 고정 기법 적용]
+  // ⭕ [4번 구현 핵심]: 탭 이동 시 게임 노출 순서 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
 
   const headerRef = useRef<HTMLElement | null>(null); 
@@ -395,6 +395,12 @@ export default function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchInitialData();
+    }
+  }, [activeTab, adminSubTab]);
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
@@ -467,7 +473,7 @@ export default function App() {
 
   const fetchInitialData = async () => {
     try {
-      // ⭕ 새로고침 시 셔플 레퍼런스를 초기화하여 새로 섞이도록 설정
+      // ⭕ 새로고침 시 셔플 레퍼런스를 초기화하여 "처음 진입/새로고침 시"에만 새로 섞이도록 처리
       shuffledGamesRef.current = [];
 
       const { data: usersData } = await supabase.from('users').select('*');
@@ -693,7 +699,7 @@ export default function App() {
     }
 
     const endDate = new Date();
-    endDate.setDate(endDate.getDate() + rentalDays);
+    endDate.setDate(endDate.setDate() + rentalDays);
     const endDateStr = endDate.toISOString().split('T')[0];
 
     const newRentals = cart.map((game: Game) => ({
@@ -1123,7 +1129,7 @@ export default function App() {
         title: editingGame.title,
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
-        playTime: editingGame.playTime,
+        play_time: editingGame.playTime,
         difficulty: formattedDifficulty,
         is_visible: editingGame.isVisible,
         image_url: editingGame.imageUrl,
