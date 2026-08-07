@@ -180,7 +180,7 @@ const IOS_CONFIG = {
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+10px)]', 
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+8px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -1701,7 +1701,8 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    <div className={`h-[#100dvh] w-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+    // ⭕ [카카오 메이커스 방식 고정 레이아웃]: fixed inset-0 flex flex-col 구조로 iOS Safari 주소창 오차로 인한 하단 뜸 완전 차단
+    <div className={`fixed inset-0 w-full h-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
@@ -2991,11 +2992,11 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                        {/* ⭕ 4. 공지사항 상세 내용 폰트 상향 (text-xs -> text-sm) */}
+                        {/* 공지사항 상세 내용 폰트 상향 (text-xs -> text-sm) */}
                         <p className={`whitespace-pre-wrap break-all leading-relaxed font-medium ${
                           isIosDevice ? 'text-sm' : 'text-xs'
                         } ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
-                        {/* ⭕ 4. 공지 작성일 폰트 상향 */}
+                        {/* 공지 작성일 폰트 상향 */}
                         <span className={`text-slate-400 block pt-1 font-mono ${
                           isIosDevice ? 'text-xs' : 'text-[11px]'
                         }`}>{n.createdAt} 작성</span>
@@ -3031,7 +3032,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 하단 네비게이션: 하단 50px 가림막 패치 및 미세 위치 내림 유지 */}
+        {/* ⭕ 6. 하단 네비게이션: 위치 1~2px 내림 조율 및 하단 50px 가림막 유지 */}
         <nav 
           className={`fixed bottom-0 left-0 right-0 w-full z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900' : 'bg-white'
