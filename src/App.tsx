@@ -178,10 +178,10 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-xs',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  // 3. 하단 네비게이션 (iOS 안성맞춤 안전 바텀 영역)
+  // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+6px)]', 
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+8px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -1697,7 +1697,7 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    <div className={`h-screen w-full flex justify-center overflow-hidden touch-none select-none transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+    <div className={`h-screen w-full flex justify-center overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
@@ -1767,12 +1767,12 @@ export default function App() {
           </div>
         </header>
 
-        {/* [독립 스크롤 영역] */}
+        {/* ⭕ [당기기 새로고침 복구]: overscroll-none 삭제하여 당겨서 새로고침 기능 원상 복구 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
           style={{ paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-32 overflow-y-auto overscroll-none touch-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-32 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
             isLargeFont 
               ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
               : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
@@ -2968,16 +2968,21 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ [iOS 핵심 해결]: 네비바 하단에 -bottom-[20px] 흰색/어두운색 강력 차단 가림막 블록 결합 */}
-        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors relative ${
-          isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-        } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
-          
-          {/* iOS 전용 픽셀 비침 완전 차단 가림막 */}
+        {/* ⭕ [하단 네비게이션]: iOS Safari 잔선 완전 은폐용 bottom[-20px] 덮개 가림막 고정 */}
+        <nav 
+          style={{ bottom: isIosDevice ? '-1px' : '0px' }}
+          className={`fixed left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
+            isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+          } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
+        >
+          {/* iOS 전용 잔선 완전 수감 가림막 레이어 */}
           {isIosDevice && (
-            <div className={`absolute -bottom-[20px] left-0 right-0 h-[20px] pointer-events-none ${
-              isDarkMode ? 'bg-slate-900' : 'bg-white'
-            }`} />
+            <div 
+              style={{ bottom: '-30px', height: '30px' }}
+              className={`absolute left-0 right-0 pointer-events-none z-0 ${
+                isDarkMode ? 'bg-slate-900' : 'bg-white'
+              }`} 
+            />
           )}
 
           <div className="flex justify-around px-2 pt-2 pb-1.5 relative z-10">
