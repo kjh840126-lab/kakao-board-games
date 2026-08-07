@@ -147,7 +147,7 @@ const ALLOWED_EMAIL_DOMAINS = [
 const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
-// ⭕ [iOS 전용 UI 크기 개별 설정 영역 - 앞으로의 수치 변경은 오직 iOS에만 반영됩니다]
+// ⭕ [iOS 전용 UI 크기 개별 설정 영역]
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
@@ -1866,7 +1866,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* ⭕ 1. iOS 대여 필터 영역 폰트 1pt 확대 */}
+              {/* iOS 대여 필터 영역 폰트 1pt 확대 */}
               {isFilterOpen && (
                 <div className={`w-full p-3.5 rounded-2xl border space-y-2.5 shadow-sm transition ${
                   isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-200'
@@ -2998,13 +2998,13 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. 하단 네비게이션 (⭕ 1번 반영: iOS 하단 50px 블라인드 패치 레이어로 실선/여백 비침 100% 원천 차단) */}
+        {/* 3. 하단 네비게이션 (⭕ 2번 반영: iOS 하단 50px 블라인드 패치 레이어로 실선/여백 비침 100% 원천 차단) */}
         <nav 
           className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
-          {/* ⭕ 1. iOS 전용 하단 잔선/여백 완전 매립 가림막 패치 */}
+          {/* ⭕ 2. iOS 전용 하단 잔선/여백 100% 가림막 패치 */}
           {isIosDevice && (
             <div 
               aria-hidden="true"
@@ -3223,30 +3223,34 @@ export default function App() {
           </div>
         </div>
 
-        {/* 장바구니 드로어 */}
+        {/* ⭕ 장바구니 드로어 (2번 반영: iOS 장바구니 폰트 크기 전체 1pt 확대) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsCartOpen(false)} />
           <div className={`absolute top-0 right-0 h-full w-4/5 max-w-sm flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
             isCartOpen ? 'translate-x-0' : 'translate-x-full'
-          } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+          } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-base' : 'text-sm'}`}>
             <div 
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-              className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm"
+              className={`p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold ${
+                isIosDevice ? 'text-base' : 'text-sm'
+              }`}
             >
               <span className="flex items-center gap-1.5">
-                <ShoppingCart size={18} className="text-slate-900" /> 장바구니 ({cart.length} / 3)
+                <ShoppingCart size={20} className="text-slate-900" /> 장바구니 ({cart.length} / 3)
               </span>
-              <button onClick={() => setIsCartOpen(false)} className="p-1"><X size={18} /></button>
+              <button onClick={() => setIsCartOpen(false)} className="p-1"><X size={20} /></button>
             </div>
 
             <div className={`p-4 border-b space-y-2 ${isDarkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-50 border-slate-200/80'}`}>
               <div className="flex justify-between items-center font-bold">
-                <span className="flex items-center gap-1.5">
-                  <Calendar size={14} /> 대여 기간 설정
+                <span className={`flex items-center gap-1.5 ${isIosDevice ? 'text-sm' : 'text-xs'}`}>
+                  <Calendar size={15} /> 대여 기간 설정
                 </span>
-                <span className="font-extrabold bg-amber-300/60 dark:bg-sky-300/60 text-slate-900 px-2 py-0.5 rounded-md text-[11px]">
+                <span className={`font-extrabold bg-amber-300/60 dark:bg-sky-300/60 text-slate-900 px-2.5 py-0.5 rounded-md ${
+                  isIosDevice ? 'text-xs' : 'text-[11px]'
+                }`}>
                   {rentalDays}일 선택
                 </span>
               </div>
@@ -3257,6 +3261,8 @@ export default function App() {
                     key={days}
                     onClick={() => setRentalDays(days)}
                     className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                      isIosDevice ? 'text-sm' : 'text-xs'
+                    } ${
                       rentalDays === days
                         ? 'bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 shadow-sm scale-105'
                         : isDarkMode
@@ -3269,25 +3275,27 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="text-slate-400 font-medium flex justify-between items-center pt-0.5">
+              <div className={`text-slate-400 font-medium flex justify-between items-center pt-0.5 ${
+                isIosDevice ? 'text-sm' : 'text-xs'
+              }`}>
                 <span>반납 예정일:</span>
                 <strong className={isDarkMode ? 'text-slate-100 font-extrabold' : 'text-slate-900 font-extrabold'}>{calculateEndDate()}</strong>
               </div>
             </div>
 
-            <div className="flex-1 p-4 overflow-y-auto space-y-2">
+            <div className="flex-1 p-4 overflow-y-auto space-y-2.5">
               {cart.length === 0 ? (
-                <div className="text-center py-16 text-slate-400 font-medium">담긴 게임이 없습니다.</div>
+                <div className={`text-center py-16 text-slate-400 font-medium ${isIosDevice ? 'text-sm' : 'text-xs'}`}>담긴 게임이 없습니다.</div>
               ) : (
                 cart.map((game: Game) => (
-                  <div key={game.gameId} className={`flex justify-between items-center border p-3 rounded-xl shadow-sm ${
+                  <div key={game.gameId} className={`flex justify-between items-center border p-3.5 rounded-xl shadow-sm ${
                     isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200/80'
                   }`}>
                     <div>
-                      <h4 className={`font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h4>
-                      <p className="text-slate-400 mt-0.5">{game.minPlayers}~{game.maxPlayers}인 | {game.playTime}분</p>
+                      <h4 className={`font-bold ${isIosDevice ? 'text-sm' : 'text-xs'} ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h4>
+                      <p className={`text-slate-400 mt-0.5 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>{game.minPlayers}~{game.maxPlayers}인 | {game.playTime}분</p>
                     </div>
-                    <button onClick={() => removeFromCart(game.gameId)} className="text-slate-400 hover:text-rose-600 p-1"><Trash2 size={15} /></button>
+                    <button onClick={() => removeFromCart(game.gameId)} className="text-slate-400 hover:text-rose-600 p-1"><Trash2 size={16} /></button>
                   </div>
                 ))
               )}
@@ -3298,11 +3306,15 @@ export default function App() {
               className={`p-4 border-t ${isDarkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
             >
               {cart.length > 0 ? (
-                <button onClick={processCheckout} className="w-full bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 py-3.5 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-sky-300 transition shadow-sm">
+                <button onClick={processCheckout} className={`w-full bg-slate-900 dark:bg-sky-400 text-white dark:text-slate-950 py-3.5 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-sky-300 transition shadow-sm ${
+                  isIosDevice ? 'text-sm' : 'text-xs'
+                }`}>
                   선택한 게임 {rentalDays}일간 대여하기
                 </button>
               ) : (
-                <button onClick={() => setIsCartOpen(false)} className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-3.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm">
+                <button onClick={() => setIsCartOpen(false)} className={`w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-3.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm ${
+                  isIosDevice ? 'text-sm' : 'text-xs'
+                }`}>
                   닫기
                 </button>
               )}
@@ -3310,7 +3322,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 3. 공지사항 드로어 (iOS 공지 목록 폰트 및 시인성 대폭 향상) */}
+        {/* 공지사항 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isNoticeDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3351,13 +3363,11 @@ export default function App() {
                       className="p-3.5 cursor-pointer flex justify-between items-start gap-2"
                     >
                       <div className="flex-1 min-w-0 pr-1">
-                        {/* ⭕ 3. 공지사항 제목 폰트 시원하게 확대 */}
                         <h3 className={`font-extrabold leading-snug break-all ${
                           isIosDevice ? 'text-base' : 'text-sm'
                         } ${isExpanded ? (isDarkMode ? 'text-sky-300' : 'text-slate-900') : ''}`}>
                           {notice.title}
                         </h3>
-                        {/* ⭕ 3. 공지 작성일 폰트 확대 */}
                         <span className={`text-slate-400 font-mono mt-1 block ${
                           isIosDevice ? 'text-xs' : 'text-[10px]'
                         }`}>
@@ -3373,7 +3383,6 @@ export default function App() {
                     </div>
 
                     {isExpanded && (
-                      /* ⭕ 3. 공지사항 본문 내용 폰트 시원하게 확대 및 행간 확보 */
                       <div className={`px-3.5 pb-4 pt-2 border-t font-medium leading-relaxed break-all ${
                         isIosDevice ? 'text-sm' : 'text-xs'
                       } ${
