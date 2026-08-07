@@ -303,6 +303,8 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
+  const [isIosDevice, setIsIosDevice] = useState(false);
+
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -311,17 +313,14 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ iOS(아이폰/아이패드) 기기에서만 이미지, 폰트, 간격, 모달 등 전체 UI 비율 125% 강제 확대
+  // ⭕ iOS 환경 안전한 보정: 레이아웃 여백 찌그러짐 없는 iOS 전용 Scale 클래스 지정
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+    setIsIosDevice(isIos);
 
-    if (isIos) {
-      // 125%로 확대 (더 크게 키우고 싶으시다면 '130%', '135%' 등으로 수정)
-      document.documentElement.style.fontSize = '125%';
-    } else {
-      document.documentElement.style.fontSize = '100%';
-    }
+    // 루트 fontSize 조작 원복 (여백 무너짐 방지)
+    document.documentElement.style.fontSize = '100%';
   }, []);
 
   useEffect(() => {
@@ -1632,7 +1631,8 @@ export default function App() {
 
   return (
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
-      <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
+      {/* ⭕ iOS일 경우 화면 내부 요소를 자연스럽게 키우되 여백 구조를 유지하는 안전 스케일링 wrapper */}
+      <div className={`w-full min-h-screen flex flex-col relative transition-all ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${isIosDevice ? 'scale-[1.08] origin-top' : ''}`}>
         
         {/* 고정 상단 헤더 */}
         <header 
@@ -1701,7 +1701,9 @@ export default function App() {
           ref={mainScrollRef}
           onScroll={handleScroll}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          className={`flex-1 w-full p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}
+          className={`flex-1 w-full p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+            isLargeFont ? 'text-sm' : isIosDevice ? 'text-[13px]' : 'text-xs'
+          }`}
         >
           {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
@@ -1916,14 +1918,16 @@ export default function App() {
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-20 h-20 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
+                            className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
+                              isIosDevice ? 'w-[88px] h-[88px]' : 'w-20 h-20'
+                            }`}
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
 
                           <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
                               <div className="flex justify-between items-start gap-1">
-                                <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                <h3 className={`font-bold leading-snug break-keep ${isIosDevice ? 'text-[13px]' : 'text-xs'} ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{game.title}</span>
                                   <span className="text-[11px] text-slate-400 font-mono font-normal whitespace-nowrap ml-1">({game.releaseYear}년)</span>
                                 </h3>
@@ -2210,7 +2214,9 @@ export default function App() {
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
+                          className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
+                            isIosDevice ? 'w-16 h-16' : 'w-14 h-14'
+                          }`}
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
@@ -2276,7 +2282,9 @@ export default function App() {
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
+                          className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
+                            isIosDevice ? 'w-16 h-16' : 'w-14 h-14'
+                          }`}
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
