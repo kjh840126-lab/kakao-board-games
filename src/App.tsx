@@ -343,8 +343,11 @@ export default function App() {
   const [isIosDevice, setIsIosDevice] = useState(false);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
-  // ⭕ [게임 셔플 고정용 Ref]: 다른 탭 이동에도 순서를 절대 잃어버리지 않게 유지
+  // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
+
+  // ⭕ [대여 탭 전용 스크롤 위치 기억 Ref]
+  const gamesTabScrollPosRef = useRef<number>(0);
 
   const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
@@ -433,13 +436,37 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
+  // ⭕ [실시간 스크롤 리스너]: 대여 탭일 때의 스크롤 위치를 기록
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (activeTab === 'games') {
+        gamesTabScrollPosRef.current = window.scrollY;
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [activeTab]);
+
+  // ⭕ [수정한 탭 이동 로직]: 대여 탭으로 올 때만 이전 스크롤 복원, 다른 탭은 최상단 이동
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
+    // 탭을 떠나는 순간 대여 탭 스크롤 위치 최종 저장
+    if (activeTab === 'games') {
+      gamesTabScrollPosRef.current = window.scrollY;
+    }
+
     setActiveTab(newTab);
     
     requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
+      if (newTab === 'games') {
+        // 대여 탭 복귀 시 기억된 스크롤 위치로 이동
+        window.scrollTo(0, gamesTabScrollPosRef.current);
+      } else {
+        // 다른 탭으로 이동 시 최상단으로 스크롤
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+      }
     });
   };
 
@@ -464,7 +491,7 @@ export default function App() {
     if (noticeIndex === recentNoticesList.length) {
       const timer = setTimeout(() => {
         setIsNoticeTransition(false);
-        setNoticeIndex((0));
+        setNoticeIndex(0);
       }, 500);
 
       return () => clearTimeout(timer);
@@ -473,6 +500,8 @@ export default function App() {
 
   const fetchInitialData = async (..._args: any[]) => {
     try {
+      shuffledGamesRef.current = [];
+
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
         const mappedUsers: UserData[] = await Promise.all(
@@ -609,11 +638,9 @@ export default function App() {
           };
         });
 
-        // ⭕ [수정 핵심]: 기존 셔플 배열이 비어있을 때만(최초 접속 및 페이지 새로고침 시) 새로 섞음!
         if (shuffledGamesRef.current.length === 0 && newGameList.length > 0) {
           shuffledGamesRef.current = [...newGameList].sort(() => Math.random() - 0.5);
         } else if (shuffledGamesRef.current.length > 0) {
-          // DB 상태 업데이트 시 순서는 기존 셔플 순서 그대로 유지하면서 개별 데이터만 최신화
           const map = new Map(newGameList.map(g => [g.gameId, g]));
           shuffledGamesRef.current = shuffledGamesRef.current
             .map(g => map.get(g.gameId) || g)
@@ -3785,7 +3812,7 @@ export default function App() {
                 취소
               </button>
               <button
-                type="submit"
+                type="button"
                 onClick={handleSaveRating}
                 className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm text-xs"
               >
@@ -4321,7 +4348,7 @@ export default function App() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setIsSiteModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
+                <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
                 <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
               </div>
             </form>
