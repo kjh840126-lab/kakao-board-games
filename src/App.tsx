@@ -1629,7 +1629,7 @@ export default function App() {
   return (
     // ⭕ 아이폰(iOS)에서만 10% 더 크게(zoom: 1.10) 조정 / 안드로이드는 zoom: 1.0으로 원본 크기 유지
     <div 
-      style={{ zoom: isIosDevice ? '1.10' : '1.0' }}
+      style={{ zoom: isIosDevice ? '1.21' : '1.0' }}
       className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}
     >
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
