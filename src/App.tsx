@@ -2998,23 +2998,23 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. 하단 네비게이션 (⭕ 2번 반영: iOS 하단 50px 블라인드 패치 레이어로 실선/여백 비침 100% 원천 차단) */}
+        {/* ⭕ 1. 하단 네비게이션: border-t 및 하단 100px 완벽 가림막 패치 적용 (iOS 실선/여백 100% 원천 차단) */}
         <nav 
-          className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
-            isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+          className={`fixed bottom-0 left-0 right-0 w-full z-30 shadow-lg transition-colors ${
+            isDarkMode ? 'bg-slate-900' : 'bg-white'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
-          {/* ⭕ 2. iOS 전용 하단 잔선/여백 100% 가림막 패치 */}
+          {/* ⭕ 1. iOS 전용 하단 100px 매립 가림막 블라인드 패치 (실선/여백 완벽 가림) */}
           {isIosDevice && (
             <div 
               aria-hidden="true"
-              className={`absolute left-0 right-0 -bottom-[50px] h-[50px] pointer-events-none z-0 ${
+              className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
                 isDarkMode ? 'bg-slate-900' : 'bg-white'
               }`} 
             />
           )}
 
-          <div className="flex justify-around px-2 pt-2 pb-1.5 relative z-10">
+          <div className="flex justify-around px-2 pt-2.5 pb-1.5 relative z-10">
             <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
               <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
               <span className="mt-1">대여</span>
@@ -3223,7 +3223,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 장바구니 드로어 (2번 반영: iOS 장바구니 폰트 크기 전체 1pt 확대) */}
+        {/* ⭕ 2. 장바구니 드로어 (iOS 장바구니 폰트 크기 전체 1pt 확대) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3410,17 +3410,17 @@ export default function App() {
           </div>
         </div>
 
-        {/* 관리자용 접수함 드로어 */}
+        {/* ⭕ 관리자용 접수함 드로어 (1번 반영: 폰트 1pt씩 상향) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isAdminReportDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsAdminReportDrawerOpen(false)} />
           <div className={`absolute top-0 right-0 h-full w-4/5 max-w-sm flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
             isAdminReportDrawerOpen ? 'translate-x-0' : 'translate-x-full'
-          } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+          } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
             <div 
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-              className="p-4 bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-sm"
+              className="p-4 bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-base"
             >
               <span className="flex items-center gap-2 truncate">
                 <Siren size={18} /> 접수함
@@ -3429,13 +3429,13 @@ export default function App() {
             </div>
 
             <div className="p-3 bg-slate-100 dark:bg-slate-800/80 flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-700">
-              <span className="text-slate-500 dark:text-slate-400 font-semibold text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400 font-semibold text-xs">
                 안읽음: <strong className="text-rose-500 font-extrabold">{unreadReportsCount}</strong>건
               </span>
               {unreadReportsCount > 0 && (
                 <button 
                   onClick={handleMarkAllReportsAsRead}
-                  className="text-[10px] font-bold bg-slate-900 text-white px-2 py-1 rounded-md hover:bg-slate-800 transition"
+                  className="text-[11px] font-bold bg-slate-900 text-white px-2 py-1 rounded-md hover:bg-slate-800 transition"
                 >
                   모두 읽음
                 </button>
@@ -3448,27 +3448,27 @@ export default function App() {
                   isDarkMode ? 'bg-slate-800 border-sky-500/40' : 'bg-sky-50 border-sky-300'
                 }`}>
                   <div className="flex justify-between items-center gap-2">
-                    <span className="text-[10px] text-sky-800 font-extrabold bg-sky-200 px-2 py-0.5 rounded-md inline-block">
+                    <span className="text-xs text-sky-800 font-extrabold bg-sky-200 px-2 py-0.5 rounded-md inline-block">
                       {selectedReport.category}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono truncate">
+                    <span className="text-xs text-slate-400 font-mono truncate">
                       {selectedReport.userId}
                     </span>
                   </div>
-                  <h3 className={`font-extrabold leading-snug break-all text-xs ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
+                  <h3 className={`font-extrabold leading-snug break-all text-sm ${isDarkMode ? 'text-sky-300' : 'text-slate-900'}`}>{selectedReport.title}</h3>
                   <p className={`whitespace-pre-wrap break-all leading-relaxed text-xs pt-1.5 border-t ${
                     isDarkMode ? 'text-slate-300 border-slate-700' : 'text-slate-700 border-sky-200'
                   }`}>
                     {selectedReport.content}
                   </p>
-                  <span className="text-[10px] text-slate-400 block text-right pt-0.5">{selectedReport.createdAt}</span>
+                  <span className="text-xs text-slate-400 block text-right pt-0.5">{selectedReport.createdAt}</span>
                 </div>
               )}
 
               <div className="space-y-2 pt-1">
-                <h4 className="font-bold text-slate-400 px-0.5 text-[11px]">전체 목록 ({reports.length})</h4>
+                <h4 className="font-bold text-slate-400 px-0.5 text-xs">전체 목록 ({reports.length})</h4>
                 {reports.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 text-xs">접수 내역이 없습니다.</div>
+                  <div className="text-center py-12 text-slate-400 text-sm">접수 내역이 없습니다.</div>
                 ) : (
                   reports.map((report: ReportData) => {
                     const isSelected = selectedReport?.reportId === report.reportId;
@@ -3491,7 +3491,7 @@ export default function App() {
                                 N
                               </span>
                             )}
-                            <span className="font-semibold text-xs leading-snug break-all">{report.title}</span>
+                            <span className="font-semibold text-sm leading-snug break-all">{report.title}</span>
                           </div>
                         </div>
                       </div>
@@ -3507,7 +3507,7 @@ export default function App() {
             >
               <button
                 onClick={() => setIsAdminReportDrawerOpen(false)}
-                className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition"
+                className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-sm"
               >
                 닫기
               </button>
