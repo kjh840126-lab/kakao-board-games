@@ -174,7 +174,6 @@ const IOS_CONFIG = {
   RANKING_INFO_TEXT_SIZE: 'text-xs', 
   RANKING_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  // ⭕ 관리자 하단 세부정보 폰트 1pt 확대 (text-xs -> text-sm)
   ADMIN_INFO_TEXT_SIZE: 'text-sm',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-base', 
 
@@ -2503,7 +2502,7 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5 w-full">
-              {/* ⭕ 관리자 상단 서브 메뉴 폰트 크기 상향 및 세로 영역 확대 */}
+              {/* ⭕ 2. 관리자 상단 서브 메뉴 폰트 크기 상향 및 세로 영역 확대 */}
               <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
@@ -2550,7 +2549,8 @@ export default function App() {
               {/* A. 게임 관리 */}
               {adminSubTab === 'gameAdmin' && (
                 <div className="space-y-4 w-full">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2618,7 +2618,7 @@ export default function App() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="font-bold leading-snug break-keep mb-0.5">
-                              {/* ⭕ 게임명 폰트는 지시대로 변동 없이 기존 유지 */}
+                              {/* ⭕ 4. 게임명 폰트는 지시대로 변동 없이 기존 유지 */}
                               <span className={`text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</span>
                               <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap text-xs">({game.gameId})</span>
                               <span className="inline-flex items-center ml-1.5 align-middle">
@@ -2630,7 +2630,7 @@ export default function App() {
                               </span>
                             </div>
                             
-                            {/* ⭕ 게임명 외 서브 정보 폰트 크기 상향 */}
+                            {/* ⭕ 4. 게임명 외 서브 정보 폰트 크기 상향 */}
                             <p className={`text-slate-400 mt-1 font-medium ${
                               isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-xs'
                             }`}>{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
@@ -2664,14 +2664,15 @@ export default function App() {
               {/* B. 대여/반납 현황 */}
               {adminSubTab === 'rentalAdmin' && (
                 <div className="space-y-4 w-full">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                       대여 및 반납 현황
                     </h2>
                   </div>
 
-                  {/* ⭕ 세그먼트 버튼 폰트 상향 */}
+                  {/* ⭕ 4. 세그먼트 버튼 폰트 상향 */}
                   <div className={`flex p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setAdminRentalTab('active')}
@@ -2715,13 +2716,13 @@ export default function App() {
                           }`}>
                             <div className="flex justify-between items-start">
                               <div>
-                                {/* ⭕ 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
+                                {/* ⭕ 3, 4. 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
                                 <span className={`text-slate-500 font-semibold block mb-0.5 ${
                                   isIosDevice ? 'text-xs' : 'text-[11px]'
                                 }`}>
                                   대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
                                 </span>
-                                {/* ⭕ 게임명은 기존 폰트 크기 유지 */}
+                                {/* ⭕ 4. 게임명은 기존 폰트 크기(text-xs) 유지 */}
                                 <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{rental.gameTitle}</span>
                                   <span className="text-slate-400 font-bold ml-1 text-xs">({rental.gameId})</span>
@@ -2733,7 +2734,7 @@ export default function App() {
                                 </span>
                               )}
                             </div>
-                            {/* ⭕ 대여일 / 반납예정일 폰트 상향 */}
+                            {/* ⭕ 4. 대여일 / 반납예정일 폰트 상향 */}
                             <div className={`mt-3 pt-2 border-t flex justify-between font-medium ${
                               isIosDevice ? 'text-xs' : 'text-[11px]'
                             } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
@@ -2757,13 +2758,13 @@ export default function App() {
                           }`}>
                             <div className="flex justify-between items-start">
                               <div>
-                                {/* ⭕ 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
+                                {/* ⭕ 3, 4. 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
                                 <span className={`text-slate-500 font-semibold block mb-0.5 ${
                                   isIosDevice ? 'text-xs' : 'text-[11px]'
                                 }`}>
                                   대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
                                 </span>
-                                {/* ⭕ 게임명은 기존 폰트 크기 유지 */}
+                                {/* ⭕ 4. 게임명은 기존 폰트 크기(text-xs) 유지 */}
                                 <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
                                   <span>{rental.gameTitle}</span>
@@ -2771,7 +2772,7 @@ export default function App() {
                                 </h3>
                               </div>
                             </div>
-                            {/* ⭕ 대여일 / 반납일 폰트 상향 */}
+                            {/* ⭕ 4. 대여일 / 반납일 폰트 상향 */}
                             <div className={`mt-2 pt-2 border-t flex justify-between font-medium ${
                               isIosDevice ? 'text-xs' : 'text-[11px]'
                             } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
@@ -2789,7 +2790,8 @@ export default function App() {
               {/* C. 추천 사이트 관리 */}
               {adminSubTab === 'siteAdmin' && (
                 <div className="space-y-4 w-full">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2858,7 +2860,8 @@ export default function App() {
               {/* D. 회원 관리 */}
               {adminSubTab === 'userAdmin' && (
                 <div className="space-y-4 w-full">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
                       회원 관리
@@ -2941,7 +2944,8 @@ export default function App() {
               {/* E. 공지사항 관리 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4 w-full">
-                  <div className={`flex justify-between items-center pb-2 border-b min-h-[42px] w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
+                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                         <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2965,7 +2969,10 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start gap-2">
-                          <h3 className={`font-bold break-all leading-snug text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
+                          {/* ⭕ 4. 공지사항 관리 하단 노출 공지 제목 폰트 상향 (text-sm -> text-base) */}
+                          <h3 className={`font-extrabold break-all leading-snug ${
+                            isIosDevice ? 'text-base' : 'text-sm'
+                          } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               onClick={() => {
@@ -2984,8 +2991,14 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                        <p className={`whitespace-pre-wrap break-all leading-relaxed text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
-                        <span className="text-slate-400 block pt-1 text-xs">{n.createdAt} 작성</span>
+                        {/* ⭕ 4. 공지사항 상세 내용 폰트 상향 (text-xs -> text-sm) */}
+                        <p className={`whitespace-pre-wrap break-all leading-relaxed font-medium ${
+                          isIosDevice ? 'text-sm' : 'text-xs'
+                        } ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
+                        {/* ⭕ 4. 공지 작성일 폰트 상향 (text-[11px] -> text-xs/text-sm) */}
+                        <span className={`text-slate-400 block pt-1 font-mono ${
+                          isIosDevice ? 'text-xs' : 'text-[11px]'
+                        }`}>{n.createdAt} 작성</span>
                       </div>
                     ))}
                   </div>
@@ -3067,7 +3080,7 @@ export default function App() {
           </div>
         </nav>
 
-        {/* ⭕ 설정 드로어 (폰트 1pt씩 상향) */}
+        {/* ⭕ 1. 설정 드로어 (폰트 1pt씩 상향) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3101,13 +3114,13 @@ export default function App() {
                     }
                   }}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-sm' : 'text-xs'
+                    isIosDevice ? 'text-base' : 'text-sm'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   <span className="truncate pr-1">내 정보 / 비밀번호</span>
-                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
@@ -3119,7 +3132,7 @@ export default function App() {
                 <button
                   onClick={() => setIsFavoritesModalOpen(true)}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-sm' : 'text-xs'
+                    isIosDevice ? 'text-base' : 'text-sm'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
@@ -3127,13 +3140,13 @@ export default function App() {
                   <span className="truncate">
                     찜목록 ({userFavorites.length})
                   </span>
-                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
                 </button>
 
                 <button
                   onClick={() => setIsMyRatingsModalOpen(true)}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-sm' : 'text-xs'
+                    isIosDevice ? 'text-base' : 'text-sm'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
@@ -3141,7 +3154,7 @@ export default function App() {
                   <span className="truncate">
                     내 평점 ({myRatingGamesList.length})
                   </span>
-                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
@@ -3156,7 +3169,7 @@ export default function App() {
                     setIsReportModalOpen(true);
                   }}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-sm' : 'text-xs'
+                    isIosDevice ? 'text-base' : 'text-sm'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
@@ -3164,7 +3177,7 @@ export default function App() {
                   <span className="truncate">
                     신고 및 건의
                   </span>
-                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
@@ -3235,14 +3248,14 @@ export default function App() {
                 <button
                   onClick={handleLogout}
                   className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 border ${
-                    isIosDevice ? 'text-sm' : 'text-xs'
+                    isIosDevice ? 'text-base' : 'text-sm'
                   } ${
                     isDarkMode 
                       ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' 
                       : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  <LogOut size={15} /> 로그아웃
+                  <LogOut size={16} /> 로그아웃
                 </button>
               </div>
             </div>
@@ -3254,7 +3267,7 @@ export default function App() {
               <button
                 onClick={() => setIsSettingsOpen(false)}
                 className={`w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold transition shadow-sm ${
-                  isIosDevice ? 'text-sm' : 'text-xs'
+                  isIosDevice ? 'text-base' : 'text-sm'
                 }`}
               >
                 닫기
@@ -3450,7 +3463,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 관리자용 접수함 드로어 (1번 반영: 폰트 1pt씩 상향) */}
+        {/* ⭕ 1. 관리자용 접수함 드로어 (폰트 1pt씩 상향) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isAdminReportDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
