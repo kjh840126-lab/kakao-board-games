@@ -180,7 +180,8 @@ const IOS_CONFIG = {
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+8px)]', 
+  // ⭕ iOS 하단 Safe Area 밀착 패딩 재정비
+  NAV_PADDING_BOTTOM: 'pb-[max(12px,env(safe-area-inset-bottom))]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -2031,7 +2032,7 @@ export default function App() {
                                 }`}>{game.gameId}</span>
                               </div>
                               
-                              {/* ⭕ 5. iOS 세부 정보 (인원/시간/난이도/BGG) 폰트 1pt 상향 */}
+                              {/* iOS 세부 정보 (인원/시간/난이도/BGG) 폰트 1pt 상향 */}
                               <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${
                                 isLargeFont
                                   ? isIosDevice ? IOS_CONFIG.RENTAL_INFO_TEXT_SIZE_LARGE : 'text-xs'
