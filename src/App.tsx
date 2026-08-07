@@ -180,7 +180,6 @@ const IOS_CONFIG = {
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  // ⭕ [TS2304/TS2339 빌드 에러 조치]: NAV_PADDING_BOTTOM 속성 명시적 정의 복구
   NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+10px)]', 
 };
 
@@ -2503,7 +2502,7 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5 w-full">
-              {/* ⭕ 2. 관리자 상단 서브 메뉴 폰트 크기 상향 및 세로 영역 확대 */}
+              {/* 관리자 상단 5개 서브 메뉴탭 영역 */}
               <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
@@ -2550,7 +2549,7 @@ export default function App() {
               {/* A. 게임 관리 */}
               {adminSubTab === 'gameAdmin' && (
                 <div className="space-y-4 w-full">
-                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2665,7 +2664,7 @@ export default function App() {
               {/* B. 대여/반납 현황 */}
               {adminSubTab === 'rentalAdmin' && (
                 <div className="space-y-4 w-full">
-                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2791,7 +2790,7 @@ export default function App() {
               {/* C. 추천 사이트 관리 */}
               {adminSubTab === 'siteAdmin' && (
                 <div className="space-y-4 w-full">
-                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2861,7 +2860,7 @@ export default function App() {
               {/* D. 회원 관리 */}
               {adminSubTab === 'userAdmin' && (
                 <div className="space-y-4 w-full">
-                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                       <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2945,7 +2944,7 @@ export default function App() {
               {/* E. 공지사항 관리 */}
               {adminSubTab === 'noticeAdmin' && (
                 <div className="space-y-4 w-full">
-                  {/* ⭕ 3. 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
+                  {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                   <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                     <div>
                       <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -3032,7 +3031,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 6. 하단 네비게이션: 위치 1~2px 내림 조율 및 하단 50px 가림막 유지 */}
+        {/* 하단 네비게이션: 하단 50px 가림막 패치 및 미세 위치 내림 유지 */}
         <nav 
           className={`fixed bottom-0 left-0 right-0 w-full z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900' : 'bg-white'
@@ -3779,7 +3778,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleSaveRating}
-                  className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm text-xs"
+                  className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs shadow-sm"
                 >
                   평점 저장
                 </button>
