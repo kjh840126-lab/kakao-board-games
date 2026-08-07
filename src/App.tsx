@@ -148,7 +148,7 @@ const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
 // ⭕ [iOS 전용 UI 크기 개별 설정 영역]
-// 수치를 늘려도 상단/하단 여백이 완벽하게 방어됩니다!
+// 수치를 변경하시면 대여/랭킹/게임관리 탭 전체에 동시 적용됩니다!
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
@@ -160,7 +160,7 @@ const IOS_CONFIG = {
   // 2. 본문 영역
   MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
   MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
-  GAME_IMAGE_SIZE: 'w-24 h-24',       // 보드게임 카드 이미지 크기
+  GAME_IMAGE_SIZE: 'w-24 h-24',       // 보드게임 카드 이미지 크기 (대여/랭킹/게임관리 공통)
   GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
   GAME_TITLE_SIZE_LARGE: 'text-base', // 보드게임 제목 폰트 크기 (크게 모드)
 
@@ -339,14 +339,12 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ 순수 iOS 환경 감지
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
     setIsIosDevice(isIos);
   }, []);
 
-  // ⭕ 헤더 높이를 동적으로 측정하여 본문 상단 패딩 방어
   useEffect(() => {
     const updateHeaderHeight = () => {
       if (headerRef.current) {
@@ -1736,7 +1734,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ 본문 영역: 앱 내 '글자 크기 (보통/크게)' 설정 옵션과 iOS 동기화 반응 */}
+        {/* ⭕ 본문 영역: 헤더 높이에 맞춰 동적으로 상단 여백(paddingTop) 보정 방어 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -1969,7 +1967,6 @@ export default function App() {
                           <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
                               <div className="flex justify-between items-start gap-1">
-                                {/* ⭕ iOS 및 글자 크기 설정 동기화 반응 */}
                                 <h3 className={`font-bold leading-snug break-keep ${
                                   isLargeFont
                                     ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
@@ -2258,15 +2255,23 @@ export default function App() {
                           )}
                         </div>
 
+                        {/* ⭕ iOS일 경우 보드게임 이미지 크기 적용 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
+                          className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
+                            isIosDevice ? IOS_CONFIG.GAME_IMAGE_SIZE : 'w-14 h-14'
+                          }`}
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
                         <div className="flex-1 min-w-0">
-                          <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
+                          {/* ⭕ iOS일 경우 보드게임 제목 폰트 크기 적용 */}
+                          <h3 className={`font-bold leading-snug break-keep ${
+                            isLargeFont
+                              ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
+                              : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
+                          } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>출시: {game.releaseYear}년</span>
@@ -2324,15 +2329,23 @@ export default function App() {
                           )}
                         </div>
 
+                        {/* ⭕ iOS일 경우 보드게임 이미지 크기 적용 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
-                          className="w-14 h-14 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0"
+                          className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
+                            isIosDevice ? IOS_CONFIG.GAME_IMAGE_SIZE : 'w-14 h-14'
+                          }`}
                           onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                         />
 
                         <div className="flex-1 min-w-0">
-                          <h3 className={`font-bold leading-snug break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
+                          {/* ⭕ iOS일 경우 보드게임 제목 폰트 크기 적용 */}
+                          <h3 className={`font-bold leading-snug break-keep ${
+                            isLargeFont
+                              ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
+                              : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
+                          } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</h3>
                           <div className="text-slate-400 mt-1 space-y-0.5 text-[11px]">
                             <div className="flex gap-2 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-none">
                               <span>출시: {game.releaseYear}년</span>
@@ -2508,15 +2521,23 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {/* ⭕ iOS일 경우 보드게임 이미지 크기 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
-                            className="w-12 h-12 object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0" 
+                            className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
+                              isIosDevice ? IOS_CONFIG.GAME_IMAGE_SIZE : 'w-12 h-12'
+                            }`}
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="font-bold leading-snug break-keep text-xs mb-0.5">
-                              <span className={isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{game.title}</span>
+                            <div className="font-bold leading-snug break-keep mb-0.5">
+                              {/* ⭕ iOS일 경우 보드게임 제목 폰트 크기 적용 */}
+                              <span className={`${
+                                isLargeFont
+                                  ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
+                                  : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
+                              } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</span>
                               <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
                               <span className="inline-flex items-center ml-1.5 align-middle">
                                 {game.isVisible === 'Y' ? (
