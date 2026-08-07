@@ -178,10 +178,10 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-xs',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  // 3. 하단 네비게이션
+  // 3. 하단 네비게이션 (⭕ 원복: 하단 여백을 안전하게 확보하여 정상 노출)
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+8px)]', 
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+18px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -1703,7 +1703,6 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ [iOS 고정 완벽 방어]: Flex 수직 정렬 컨테이너로 네비바를 sticky 고정
     <div className={`h-[#100dvh] w-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
@@ -1756,7 +1755,6 @@ export default function App() {
                 className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-sky-300 hover:bg-sky-200 text-slate-900 relative"
               >
                 <Siren size={isIosDevice ? IOS_CONFIG.HEADER_ICON_SIZE : 18} />
-                {/* ⭕ 3. 신고 N 뱃지 깜빡임 제거 (animate-pulse 삭제) */}
                 {unreadReportsCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm">
                     N
@@ -2976,21 +2974,12 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ [하단 네비게이션]: sticky bottom-0 제자리 고정으로 당김 새로고침 시에도 미동 없이 위치 사수 */}
+        {/* ⭕ [하단 네비게이션]: 원복된 100% 정상 배치 구문 */}
         <nav 
-          className={`sticky bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors flex-shrink-0 ${
+          className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
-          {isIosDevice && (
-            <div 
-              style={{ bottom: '-30px', height: '30px' }}
-              className={`absolute left-0 right-0 pointer-events-none z-0 ${
-                isDarkMode ? 'bg-slate-900' : 'bg-white'
-              }`} 
-            />
-          )}
-
           <div className="flex justify-around px-2 pt-2 pb-1.5 relative z-10">
             <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
               <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
@@ -3012,7 +3001,6 @@ export default function App() {
               <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold relative ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
                 <div className="relative">
                   <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-                  {/* ⭕ 3. 관리자 N 뱃지 깜빡임 제거 (animate-pulse 삭제) */}
                   {unreadReportsCount > 0 && (
                     <span className="absolute -top-1 -right-2 bg-rose-600 text-white font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm">
                       N
