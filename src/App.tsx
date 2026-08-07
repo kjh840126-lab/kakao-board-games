@@ -180,8 +180,7 @@ const IOS_CONFIG = {
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  // ⭕ iOS 하단 Safe Area 밀착 패딩 재정비
-  NAV_PADDING_BOTTOM: 'pb-[max(12px,env(safe-area-inset-bottom))]', 
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+8px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -1289,7 +1288,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ 대여 페이지 게임 노출 순서: 최초 1회만 랜덤 셔플 고정 (useMemo)
+  // 대여 페이지 게임 노출 순서: 최초 1회만 랜덤 셔플 고정 (useMemo)
   const shuffledInitialGames = useMemo(() => {
     return [...games].sort(() => Math.random() - 0.5);
   }, [games]);
@@ -1702,7 +1701,7 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ [카카오 메이커스 방식 고정 레이아웃]: fixed inset-0 flex flex-col 구조로 iOS Safari 주소창 오차로 인한 하단 뜸 완전 차단
+    // ⭕ [카카오 메이커스 방식 고정 레이아웃]: fixed inset-0 flex flex-col 구조로 iOS Safari 주소창 오차로 인한 하단 뜸 완벽 차단
     <div className={`fixed inset-0 w-full h-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
@@ -3033,17 +3032,17 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 6. 하단 네비게이션: 위치 1~2px 내림 조율 및 하단 50px 가림막 유지 */}
+        {/* ⭕ 1. 하단 네비게이션: 메이커스 방식 적용 - 바닥 -1px 밀착 및 100px 하단 매립 가림막 패치 */}
         <nav 
-          className={`fixed bottom-0 left-0 right-0 w-full z-30 shadow-lg transition-colors ${
+          className={`fixed -bottom-[1px] left-0 right-0 w-full z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900' : 'bg-white'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
-          {/* iOS 전용 하단 50px 매립 가림막 블라인드 패치 */}
+          {/* iOS 전용 하단 100px 매립 가림막 블라인드 패치 (실선/여백 100% 원천 차단) */}
           {isIosDevice && (
             <div 
               aria-hidden="true"
-              className={`absolute left-0 right-0 -bottom-[50px] h-[50px] pointer-events-none z-0 ${
+              className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
                 isDarkMode ? 'bg-slate-900' : 'bg-white'
               }`} 
             />
@@ -3082,7 +3081,7 @@ export default function App() {
           </div>
         </nav>
 
-        {/* ⭕ 2. 설정 드로어 (폰트 및 아이콘 재조율) */}
+        {/* 설정 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3103,13 +3102,11 @@ export default function App() {
             <div className="flex-1 p-4 overflow-y-auto space-y-5">
               {/* A. 계정 설정 */}
               <div className="space-y-2">
-                {/* ⭕ 2. 메뉴 타이틀 및 아이콘 1pt 상향 (text-sm, Icon 15) */}
                 <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                   isIosDevice ? 'text-sm' : 'text-[11px]'
                 }`}>
                   <User size={isIosDevice ? 15 : 13} /> 계정 설정
                 </h4>
-                {/* ⭕ 2. 일부 메뉴명 1pt 하향 (text-sm) */}
                 <button
                   onClick={() => {
                     if (currentUser) {
@@ -3132,13 +3129,11 @@ export default function App() {
 
               {/* B. 나의 활동 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                {/* ⭕ 2. 메뉴 타이틀 및 아이콘 1pt 상향 */}
                 <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                   isIosDevice ? 'text-sm' : 'text-[11px]'
                 }`}>
                   <Heart size={isIosDevice ? 15 : 13} className="text-rose-500" /> 나의 활동
                 </h4>
-                {/* ⭕ 2. 일부 메뉴명 1pt 하향 (text-sm) */}
                 <button
                   onClick={() => setIsFavoritesModalOpen(true)}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
@@ -3170,13 +3165,11 @@ export default function App() {
 
               {/* C. 고객지원 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                {/* ⭕ 2. 메뉴 타이틀 및 아이콘 1pt 상향 */}
                 <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                   isIosDevice ? 'text-sm' : 'text-[11px]'
                 }`}>
                   <Siren size={isIosDevice ? 15 : 13} /> 고객지원
                 </h4>
-                {/* ⭕ 2. 일부 메뉴명 1pt 하향 (text-sm) */}
                 <button
                   onClick={() => {
                     setReportForm({ title: '', content: '', category: '' });
@@ -3197,14 +3190,12 @@ export default function App() {
 
               {/* D. 테마 선택 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                {/* ⭕ 2. 메뉴 타이틀 및 아이콘 1pt 상향 */}
                 <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                   isIosDevice ? 'text-sm' : 'text-[11px]'
                 }`}>
                   <Sun size={isIosDevice ? 15 : 13} /> 테마 선택
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                  {/* ⭕ 2. 선택 버튼 폰트 1pt 상향 (text-sm) */}
                   <button
                     onClick={() => setThemeMode('light')}
                     className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
@@ -3230,14 +3221,12 @@ export default function App() {
 
               {/* E. 글자 크기 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                {/* ⭕ 2. 메뉴 타이틀 및 아이콘 1pt 상향 */}
                 <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                   isIosDevice ? 'text-sm' : 'text-[11px]'
                 }`}>
                   <Type size={isIosDevice ? 15 : 13} /> 글자 크기
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                  {/* ⭕ 2. 선택 버튼 폰트 1pt 상향 (text-sm) */}
                   <button
                     onClick={() => setFontSize('normal')}
                     className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
@@ -3397,7 +3386,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 3. 공지사항 목록 드로어 (타이틀 "전체 공지 목록" 폰트 1pt 상향 반영) */}
+        {/* 공지사항 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isNoticeDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3416,7 +3405,6 @@ export default function App() {
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto space-y-3 overflow-x-hidden">
-              {/* ⭕ 3. 메뉴 타이틀 폰트 1pt 상향 (text-xs -> text-sm) */}
               <h4 className={`font-bold text-slate-400 px-0.5 ${isIosDevice ? 'text-sm' : 'text-xs'}`}>전체 공지 목록 ({notices.length})</h4>
               {notices.map((notice: Notice) => {
                 const isExpanded = expandedNoticeId === notice.noticeId;
