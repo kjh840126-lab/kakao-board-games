@@ -148,24 +148,24 @@ const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
 // ⭕ [iOS 전용 UI 크기 개별 설정 영역]
-// 아래 클래스 수치를 자유롭게 조절하시면 iOS에서만 크기가 변경됩니다!
+// 수치를 늘려도 상단/하단 여백이 완벽하게 방어됩니다!
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
-  HEADER_LOGO_HEIGHT: 'h-11',         // 상단 로고 이미지 높이 (기본 h-9 -> h-11 추천)
-  HEADER_ICON_SIZE: 22,               // 상단 설정 / 접수함 아이콘 크기 (기본 18 -> 22 추천)
-  HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기 (기본 text-xs -> text-sm 추천)
-  HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기 (기본 text-[10px] -> text-xs 추천)
+  HEADER_LOGO_HEIGHT: 'h-11',         // 상단 로고 이미지 높이
+  HEADER_ICON_SIZE: 22,               // 상단 설정 / 접수함 아이콘 크기
+  HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기
+  HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
 
   // 2. 본문 영역
-  MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (기본 text-xs -> text-sm 추천)
-  GAME_IMAGE_SIZE: 'w-24 h-24',       // 보드게임 카드 이미지 크기 (기본 w-20 h-20 -> w-24 h-24 추천)
-  GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (기본 text-xs -> text-sm 추천)
+  MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기
+  GAME_IMAGE_SIZE: 'w-24 h-24',       // 보드게임 카드 이미지 크기
+  GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기
 
   // 3. 하단 네비게이션
-  NAV_ICON_SIZE: 24,                  // 하단 메뉴 아이콘 크기 (기본 20 -> 24 추천)
-  NAV_TEXT_SIZE: 'text-xs',           // 하단 메뉴 이름 폰트 크기 (기본 text-[10px] -> text-xs 추천)
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+18px)]', // 하단 여백 높이
+  NAV_ICON_SIZE: 24,                  // 하단 메뉴 아이콘 크기
+  NAV_TEXT_SIZE: 'text-xs',           // 하단 메뉴 이름 폰트 크기
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+18px)]', // 하단바 바텀 여백
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -326,7 +326,9 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState<number>(92); // ⭕ 헤더 실제 높이 저장용 State
 
+  const headerRef = useRef<HTMLElement | null>(null); // ⭕ 헤더 감지용 Ref
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -335,12 +337,25 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ 순수 iOS 환경 감지
+  // ⭕ iOS 기기 감지
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
     setIsIosDevice(isIos);
   }, []);
+
+  // ⭕ 헤더 높이를 동적으로 측정하여 본문 상단 패딩 방어
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      }
+    };
+
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => window.removeEventListener('resize', updateHeaderHeight);
+  }, [currentUser, isIosDevice]);
 
   useEffect(() => {
     fetchInitialData();
@@ -1652,8 +1667,9 @@ export default function App() {
     <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
-        {/* 고정 상단 헤더 */}
+        {/* 고정 상단 헤더 (headerRef 적용) */}
         <header 
+          ref={headerRef}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
           className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
             isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
@@ -1665,13 +1681,11 @@ export default function App() {
                 <img 
                   src="/header_logo.png" 
                   alt="kakao board games" 
-                  // ⭕ iOS일 경우 상단 로고 이미지 크기 적용
                   className={`w-auto object-contain drop-shadow-sm ${isIosDevice ? IOS_CONFIG.HEADER_LOGO_HEIGHT : 'h-9'}`}
                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                 />
               </div>
 
-              {/* ⭕ iOS일 경우 회원 아이디 영역 크기 적용 */}
               <div className={`flex flex-wrap items-center gap-1.5 font-bold text-slate-900 ${isIosDevice ? IOS_CONFIG.HEADER_USER_TEXT_SIZE : 'text-xs'}`}>
                 <div className="flex items-center gap-1">
                   <UserCheck size={14} className="text-slate-900" />
@@ -1695,7 +1709,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* ⭕ iOS일 경우 설정 / 접수함 아이콘 크기 적용 */}
             {isHeaderAdminTheme ? (
               <button
                 onClick={() => setIsAdminReportDrawerOpen(true)}
@@ -1721,12 +1734,11 @@ export default function App() {
           </div>
         </header>
 
-        {/* 본문 영역 */}
+        {/* ⭕ 본문 영역: 헤더 높이에 맞춰 동적으로 상단 여백(paddingTop) 보정 방어 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
-          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          // ⭕ iOS일 경우 본문 기본 폰트 크기 적용
+          style={{ paddingTop: `${headerHeight + 12}px` }} 
           className={`flex-1 w-full p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
             isLargeFont ? 'text-sm' : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
           }`}
@@ -1941,7 +1953,6 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start w-full">
-                          {/* ⭕ iOS일 경우 보드게임 이미지 크기 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -1954,7 +1965,6 @@ export default function App() {
                           <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                             <div>
                               <div className="flex justify-between items-start gap-1">
-                                {/* ⭕ iOS일 경우 보드게임 제목 폰트 크기 적용 */}
                                 <h3 className={`font-bold leading-snug break-keep ${
                                   isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                                 } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2871,7 +2881,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ iOS일 경우 하단 네비게이션 아이콘/폰트 및 바텀 여백 개별 적용 */}
+        {/* 하단 네비게이션 */}
         <nav className={`fixed bottom-0 left-0 right-0 w-full border-t flex justify-around px-2 pt-3 z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
