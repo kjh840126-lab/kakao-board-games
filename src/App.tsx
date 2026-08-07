@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -148,7 +148,6 @@ const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
 // ⭕ [iOS 전용 UI 크기 개별 설정 영역]
-// 대여 > 랭킹 > 게임관리 순서로 이미지 크기가 다르게 관리됩니다!
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
@@ -157,12 +156,11 @@ const IOS_CONFIG = {
   HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
 
-  // 2. 본문 및 이미지 크기 (대여 > 랭킹 > 게임관리 크기 순서)
+  // 2. 본문 및 이미지 크기
   MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
   MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
   
-    // ↔️ iOS 본문 좌우 여백 수치 (원하시는 수치로 'px-5', 'px-6' 등만 수정)
-  MAIN_PADDING_X: 'px-9',
+  MAIN_PADDING_X: 'px-6',             // ↔️ iOS 본문 좌우 여백 수치
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
   RANKING_IMAGE_SIZE: 'w-16 h-16',    // [2위] 랭킹 탭 게임 이미지 (중간)
@@ -335,7 +333,7 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState<number>(92); 
+  const [headerHeight, setHeaderHeight] = useState<number>(0); // ⭕ 초기값 0 처리하여 로딩 순간 붕 뜸 방지
 
   const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
@@ -346,23 +344,45 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
+  // ⭕ 순수 iOS 환경 감지
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
     setIsIosDevice(isIos);
   }, []);
 
-  useEffect(() => {
+  // ⭕ 안드로이드 새로고침 시 상단 여백 붕 뜸 방지: Dynamic ResizeObserver 및 useLayoutEffect 정밀 측정
+  useLayoutEffect(() => {
+    if (!headerRef.current) return;
+
     const updateHeaderHeight = () => {
       if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
+        const height = headerRef.current.getBoundingClientRect().height;
+        if (height > 0) {
+          setHeaderHeight(height);
+        }
       }
     };
 
     updateHeaderHeight();
-    window.addEventListener('resize', updateHeaderHeight);
-    return () => window.removeEventListener('resize', updateHeaderHeight);
-  }, [currentUser, isIosDevice, fontSize]);
+
+    // 헤더 크기 실시간 변경 감지기 (새로고침/리사이즈 대응)
+    const observer = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+
+    observer.observe(headerRef.current);
+
+    // 안드로이드 브라우저 주소창 딜레이 대응 (렌더링 직후 50ms, 150ms 2차 재측정)
+    const timer1 = setTimeout(updateHeaderHeight, 50);
+    const timer2 = setTimeout(updateHeaderHeight, 150);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [currentUser, isIosDevice, fontSize, activeTab]);
 
   useEffect(() => {
     fetchInitialData();
@@ -1741,12 +1761,12 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ 본문 영역: 헤더 높이에 맞춰 동적으로 상단 여백(paddingTop) 보정 방어 */}
+        {/* ⭕ 본문 영역: 헤더 높이 측정 직후에만 12px 간격을 주며 붕 뜸 현상을 방어 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
-          style={{ paddingTop: `${headerHeight + 12}px` }} 
-          className={`flex-1 w-full p-4 pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+          style={{ paddingTop: headerHeight > 0 ? `${headerHeight + 12}px` : 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
+          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
             isLargeFont 
               ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
               : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
@@ -1962,7 +1982,6 @@ export default function App() {
                         
                         {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                         <div className="flex gap-3.5 items-start w-full">
-                          {/* ⭕ 대여 탭 전용 iOS 이미지 크기(RENTAL_IMAGE_SIZE) 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2263,7 +2282,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* ⭕ 랭킹 탭 전용 iOS 이미지 크기(RANKING_IMAGE_SIZE) 적용 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2274,7 +2292,6 @@ export default function App() {
                         />
 
                         <div className="flex-1 min-w-0">
-                          {/* ⭕ 랭킹 탭 전용 iOS 제목 폰트 크기 적용 */}
                           <h3 className={`font-bold leading-snug break-keep ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
@@ -2337,7 +2354,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* ⭕ 랭킹 탭 전용 iOS 이미지 크기(RANKING_IMAGE_SIZE) 적용 */}
                         <img 
                           src={game.imageUrl} 
                           alt={game.title} 
@@ -2348,7 +2364,6 @@ export default function App() {
                         />
 
                         <div className="flex-1 min-w-0">
-                          {/* ⭕ 랭킹 탭 전용 iOS 제목 폰트 크기 적용 */}
                           <h3 className={`font-bold leading-snug break-keep ${
                             isLargeFont
                               ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
@@ -2529,7 +2544,6 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {/* ⭕ 게임관리 탭 전용 iOS 이미지 크기(ADMIN_IMAGE_SIZE) 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2540,7 +2554,6 @@ export default function App() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="font-bold leading-snug break-keep mb-0.5">
-                              {/* ⭕ 게임관리 탭 전용 iOS 제목 폰트 크기 적용 */}
                               <span className={`${
                                 isLargeFont
                                   ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
