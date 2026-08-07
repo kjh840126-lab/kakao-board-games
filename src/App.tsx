@@ -313,7 +313,7 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ iOS(아이폰) 기기 감지 로직
+  // ⭕ 순수 iOS(아이폰/아이패드) 디바이스 환경 감지
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
@@ -1130,7 +1130,7 @@ export default function App() {
       }]);
 
       if (error) alert('공지사항 등록 실패: ' + error.message);
-      else alert('공지사항이 등록되었습니다.');
+      else alert('공지사항이 등록되었습니다 me.');
     }
 
     await fetchInitialData();
@@ -1627,7 +1627,11 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+    // ⭕ isIosDevice 변수를 style에 연결하여 아이폰에만 1.08배 보정 줌 부여 (안드로이드는 0.001%도 영향을 받지 않음)
+    <div 
+      style={{ zoom: isIosDevice ? '1.08' : '1.0' }}
+      className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}
+    >
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
@@ -2861,7 +2865,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 (상위 헤더 아이콘 유지) */}
+        {/* 설정 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -4035,7 +4039,7 @@ export default function App() {
                   ></textarea>
                 </div>
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-1">
                   <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
                   <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
                 </div>
