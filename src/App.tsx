@@ -174,8 +174,9 @@ const IOS_CONFIG = {
   RANKING_INFO_TEXT_SIZE: 'text-xs', 
   RANKING_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  ADMIN_INFO_TEXT_SIZE: 'text-xs',    
-  ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
+  // ⭕ 관리자 하단 세부정보 폰트 1pt 확대 (text-xs -> text-sm)
+  ADMIN_INFO_TEXT_SIZE: 'text-sm',    
+  ADMIN_INFO_TEXT_SIZE_LARGE: 'text-base', 
 
   // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
@@ -2502,44 +2503,44 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5 w-full">
-              {/* 관리자 상단 5개 서브 메뉴탭 영역 */}
+              {/* ⭕ 관리자 상단 서브 메뉴 폰트 크기 상향 및 세로 영역 확대 */}
               <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
-                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
+                  className={`py-2.5 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isIosDevice ? 'text-xs font-bold' : isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'gameAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   게임관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('rentalAdmin')}
-                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
+                  className={`py-2.5 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isIosDevice ? 'text-xs font-bold' : isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'rentalAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   대여/반납
                 </button>
                 <button
                   onClick={() => setAdminSubTab('siteAdmin')}
-                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
+                  className={`py-2.5 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isIosDevice ? 'text-xs font-bold' : isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   사이트관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('userAdmin')}
-                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
+                  className={`py-2.5 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isIosDevice ? 'text-xs font-bold' : isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'userAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   회원관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('noticeAdmin')}
-                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
+                  className={`py-2.5 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isIosDevice ? 'text-xs font-bold' : isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'noticeAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   공지사항
@@ -2617,12 +2618,9 @@ export default function App() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="font-bold leading-snug break-keep mb-0.5">
-                              <span className={`${
-                                isLargeFont
-                                  ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-base'
-                                  : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-sm'
-                              } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</span>
-                              <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap">({game.gameId})</span>
+                              {/* ⭕ 게임명 폰트는 지시대로 변동 없이 기존 유지 */}
+                              <span className={`text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</span>
+                              <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap text-xs">({game.gameId})</span>
                               <span className="inline-flex items-center ml-1.5 align-middle">
                                 {game.isVisible === 'Y' ? (
                                   <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-xs"><Eye size={12} /> 노출</span>
@@ -2632,10 +2630,9 @@ export default function App() {
                               </span>
                             </div>
                             
+                            {/* ⭕ 게임명 외 서브 정보 폰트 크기 상향 */}
                             <p className={`text-slate-400 mt-1 font-medium ${
-                              isLargeFont
-                                ? isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE_LARGE : 'text-sm'
-                                : isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-xs'
+                              isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-xs'
                             }`}>{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
                           </div>
                         </div>
@@ -2674,10 +2671,13 @@ export default function App() {
                     </h2>
                   </div>
 
+                  {/* ⭕ 세그먼트 버튼 폰트 상향 */}
                   <div className={`flex p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setAdminRentalTab('active')}
                       className={`flex-1 py-2 rounded-lg transition ${
+                        isIosDevice ? 'text-sm font-bold' : 'text-xs'
+                      } ${
                         adminRentalTab === 'active' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm' 
                           : 'text-slate-400 hover:text-slate-200'
@@ -2688,6 +2688,8 @@ export default function App() {
                     <button
                       onClick={() => setAdminRentalTab('completed')}
                       className={`flex-1 py-2 rounded-lg transition ${
+                        isIosDevice ? 'text-sm font-bold' : 'text-xs'
+                      } ${
                         adminRentalTab === 'completed' 
                           ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm' 
                           : 'text-slate-400 hover:text-slate-200'
@@ -2713,21 +2715,30 @@ export default function App() {
                           }`}>
                             <div className="flex justify-between items-start">
                               <div>
-                                <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
+                                {/* ⭕ 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
+                                <span className={`text-slate-500 font-semibold block mb-0.5 ${
+                                  isIosDevice ? 'text-xs' : 'text-[11px]'
+                                }`}>
+                                  대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
+                                </span>
+                                {/* ⭕ 게임명은 기존 폰트 크기 유지 */}
                                 <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{rental.gameTitle}</span>
-                                  <span className="text-slate-400 font-mono font-normal ml-1">({rental.gameId})</span>
+                                  <span className="text-slate-400 font-bold ml-1 text-xs">({rental.gameId})</span>
                                 </h3>
                               </div>
                               {isOverdue && (
-                                <span className="bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
-                                  <AlertTriangle size={10} /> 연체 ({overdueDays}일)
+                                <span className="bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0 text-xs">
+                                  <AlertTriangle size={11} /> 연체 ({overdueDays}일)
                                 </span>
                               )}
                             </div>
-                            <div className={`mt-3 pt-2 border-t flex justify-between ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
+                            {/* ⭕ 대여일 / 반납예정일 폰트 상향 */}
+                            <div className={`mt-3 pt-2 border-t flex justify-between font-medium ${
+                              isIosDevice ? 'text-xs' : 'text-[11px]'
+                            } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
                               <span>대여일: {rental.startDate}</span>
-                              <span>반납예정일: <strong className={isOverdue ? 'text-rose-600 font-bold' : isDarkMode ? 'text-slate-100' : 'text-slate-900'}>{rental.endDate}</strong></span>
+                              <span>반납예정일: <strong className={isOverdue ? 'text-rose-600 font-bold' : isDarkMode ? 'text-slate-100 font-bold' : 'text-slate-900 font-bold'}>{rental.endDate}</strong></span>
                             </div>
                           </div>
                         );
@@ -2746,15 +2757,24 @@ export default function App() {
                           }`}>
                             <div className="flex justify-between items-start">
                               <div>
-                                <span className="text-slate-400 font-mono block">대여회원: {rental.userId}</span>
+                                {/* ⭕ 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
+                                <span className={`text-slate-500 font-semibold block mb-0.5 ${
+                                  isIosDevice ? 'text-xs' : 'text-[11px]'
+                                }`}>
+                                  대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
+                                </span>
+                                {/* ⭕ 게임명은 기존 폰트 크기 유지 */}
                                 <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
                                   <span>{rental.gameTitle}</span>
-                                  <span className="text-slate-400 font-mono font-normal">({rental.gameId})</span>
+                                  <span className="text-slate-400 font-bold ml-1 text-xs">({rental.gameId})</span>
                                 </h3>
                               </div>
                             </div>
-                            <div className={`mt-2 pt-2 border-t flex justify-between ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
+                            {/* ⭕ 대여일 / 반납일 폰트 상향 */}
+                            <div className={`mt-2 pt-2 border-t flex justify-between font-medium ${
+                              isIosDevice ? 'text-xs' : 'text-[11px]'
+                            } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
                               <span>대여일: {rental.startDate}</span>
                               <span>반납일: <strong className="text-emerald-500 font-bold">{returnedDate}</strong></span>
                             </div>
@@ -2803,9 +2823,9 @@ export default function App() {
                           <div className="flex items-center gap-2">
                             <h3 className={`font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{s.name}</h3>
                             {s.isVisible === 'Y' ? (
-                              <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><Eye size={11} /> 노출</span>
+                              <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-xs"><Eye size={12} /> 노출</span>
                             ) : (
-                              <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><EyeOff size={11} /> 숨김</span>
+                              <span className="text-slate-400 font-bold flex items-center gap-0.5 text-xs"><EyeOff size={12} /> 숨김</span>
                             )}
                           </div>
                           <div className="flex items-center gap-1">
@@ -2827,8 +2847,8 @@ export default function App() {
                           </div>
                         </div>
 
-                        <p className="text-slate-400 text-[11px] truncate font-mono">{s.url}</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{s.description}</p>
+                        <p className="text-slate-400 text-xs truncate font-mono">{s.url}</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{s.description}</p>
                       </div>
                     ))}
                   </div>
@@ -2876,38 +2896,38 @@ export default function App() {
                           <div className="flex justify-between items-start">
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <h3 className={`font-bold font-mono ${isWithdrawn ? 'text-slate-400 line-through' : isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{user.userId}</h3>
-                                <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                                <h3 className={`font-bold text-sm ${isWithdrawn ? 'text-slate-400 line-through' : isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{user.userId}</h3>
+                                <span className={`px-2 py-0.5 rounded-md font-semibold text-xs ${
                                   user.role === '관리자' ? 'bg-amber-100 text-amber-800' : isWithdrawn ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
                                 }`}>
                                   {user.role}
                                 </span>
                               </div>
-                              <p className="text-slate-400 mt-0.5">{user.name} | {user.email}</p>
+                              <p className="text-slate-400 mt-0.5 text-xs">{user.name} | {user.email}</p>
                             </div>
 
                             {user.role === '일반회원' && (
                               <button
                                 onClick={() => handleUserRoleChange(user, '탈퇴회원')}
-                                className="px-2.5 py-1 font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition flex items-center gap-1"
+                                className="px-2.5 py-1 font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition flex items-center gap-1 text-xs"
                               >
-                                <UserX size={12} /> 탈퇴
+                                <UserX size={13} /> 탈퇴
                               </button>
                             )}
                             {user.role === '탈퇴회원' && (
                               <button
                                 onClick={() => handleUserRoleChange(user, '일반회원')}
-                                className="px-2.5 py-1 font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition flex items-center gap-1"
+                                className="px-2.5 py-1 font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition flex items-center gap-1 text-xs"
                               >
-                                <UserCheckIcon size={12} /> 복구
+                                <UserCheckIcon size={13} /> 복구
                               </button>
                             )}
                           </div>
 
-                          <div className={`pt-2 border-t flex justify-between text-slate-400 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                          <div className={`pt-2 border-t flex justify-between text-slate-400 text-xs ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
                             <span>가입일: {user.createdAt}</span>
                             <span className="font-semibold flex items-center gap-1">
-                              <ShieldAlert size={13} className={user.penaltyPoints > 0 ? 'text-rose-600' : 'text-slate-400'} />
+                              <ShieldAlert size={14} className={user.penaltyPoints > 0 ? 'text-rose-600' : 'text-slate-400'} />
                               패널티: {user.penaltyPoints}점
                             </span>
                           </div>
@@ -2945,7 +2965,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start gap-2">
-                          <h3 className={`font-bold break-all leading-snug ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
+                          <h3 className={`font-bold break-all leading-snug text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               onClick={() => {
@@ -2965,7 +2985,7 @@ export default function App() {
                           </div>
                         </div>
                         <p className={`whitespace-pre-wrap break-all leading-relaxed text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
-                        <span className="text-slate-400 block pt-1 text-[11px]">{n.createdAt} 작성</span>
+                        <span className="text-slate-400 block pt-1 text-xs">{n.createdAt} 작성</span>
                       </div>
                     ))}
                   </div>
@@ -2998,17 +3018,17 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 하단 네비게이션: border-t 및 하단 100px 완벽 가림막 패치 적용 (iOS 실선/여백 100% 원천 차단) */}
+        {/* ⭕ 1. 하단 네비게이션: border-t 및 하단 50px 완벽 가림막 패치 적용 (iOS 실선/여백 100% 원천 차단) */}
         <nav 
           className={`fixed bottom-0 left-0 right-0 w-full z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900' : 'bg-white'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
-          {/* ⭕ 1. iOS 전용 하단 100px 매립 가림막 블라인드 패치 (실선/여백 완벽 가림) */}
+          {/* ⭕ 1. iOS 전용 하단 50px 매립 가림막 블라인드 패치 (실선/여백 완벽 가림) */}
           {isIosDevice && (
             <div 
               aria-hidden="true"
-              className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
+              className={`absolute left-0 right-0 -bottom-[50px] h-[50px] pointer-events-none z-0 ${
                 isDarkMode ? 'bg-slate-900' : 'bg-white'
               }`} 
             />
@@ -3047,17 +3067,17 @@ export default function App() {
           </div>
         </nav>
 
-        {/* 설정 드로어 */}
+        {/* ⭕ 설정 드로어 (폰트 1pt씩 상향) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)} />
           <div className={`absolute top-0 right-0 h-full w-1/3 min-w-[200px] max-w-xs flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
             isSettingsOpen ? 'translate-x-0' : 'translate-x-full'
-          } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
+          } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
             <div 
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-              className="p-4 flex justify-between items-center font-bold text-sm bg-[#FEE500] text-slate-900"
+              className="p-4 flex justify-between items-center font-bold text-base bg-[#FEE500] text-slate-900"
             >
               <span className="flex items-center gap-1.5 truncate">
                 <Settings size={18} /> 설정
@@ -3068,7 +3088,7 @@ export default function App() {
             <div className="flex-1 p-4 overflow-y-auto space-y-5">
               {/* A. 계정 설정 */}
               <div className="space-y-2">
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <User size={13} /> 계정 설정
                 </h4>
                 <button
@@ -3081,47 +3101,53 @@ export default function App() {
                     }
                   }}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    isIosDevice ? 'text-sm' : 'text-xs'
+                  } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   <span className="truncate pr-1">내 정보 / 비밀번호</span>
-                  <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
               {/* B. 나의 활동 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Heart size={13} className="text-rose-500" /> 나의 활동
                 </h4>
                 <button
                   onClick={() => setIsFavoritesModalOpen(true)}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    isIosDevice ? 'text-sm' : 'text-xs'
+                  } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   <span className="truncate">
                     찜목록 ({userFavorites.length})
                   </span>
-                  <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
 
                 <button
                   onClick={() => setIsMyRatingsModalOpen(true)}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    isIosDevice ? 'text-sm' : 'text-xs'
+                  } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   <span className="truncate">
                     내 평점 ({myRatingGamesList.length})
                   </span>
-                  <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
               {/* C. 고객지원 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Siren size={13} /> 고객지원
                 </h4>
                 <button
@@ -3130,25 +3156,29 @@ export default function App() {
                     setIsReportModalOpen(true);
                   }}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
+                    isIosDevice ? 'text-sm' : 'text-xs'
+                  } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   <span className="truncate">
                     신고 및 건의
                   </span>
-                  <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
               {/* D. 테마 선택 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Sun size={13} /> 테마 선택
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button
                     onClick={() => setThemeMode('light')}
-                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
+                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                    } ${
                       themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -3156,7 +3186,9 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => setThemeMode('dark')}
-                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
+                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                    } ${
                       themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -3167,13 +3199,15 @@ export default function App() {
 
               {/* E. 글자 크기 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Type size={13} /> 글자 크기
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button
                     onClick={() => setFontSize('normal')}
-                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
+                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                    } ${
                       fontSize === 'normal' 
                         ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                         : 'text-slate-400 hover:text-slate-200'
@@ -3183,7 +3217,9 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => setFontSize('large')}
-                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
+                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                    } ${
                       fontSize === 'large' 
                         ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
                         : 'text-slate-400 hover:text-slate-200'
@@ -3198,13 +3234,15 @@ export default function App() {
               <div className="pt-2 border-t border-slate-200/20">
                 <button
                   onClick={handleLogout}
-                  className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 border text-xs ${
+                  className={`w-full py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 border ${
+                    isIosDevice ? 'text-sm' : 'text-xs'
+                  } ${
                     isDarkMode 
                       ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' 
                       : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  <LogOut size={14} /> 로그아웃
+                  <LogOut size={15} /> 로그아웃
                 </button>
               </div>
             </div>
@@ -3215,7 +3253,9 @@ export default function App() {
             >
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold text-xs transition shadow-sm"
+                className={`w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold transition shadow-sm ${
+                  isIosDevice ? 'text-sm' : 'text-xs'
+                }`}
               >
                 닫기
               </button>
@@ -3223,7 +3263,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 2. 장바구니 드로어 (iOS 장바구니 폰트 크기 전체 1pt 확대) */}
+        {/* 장바구니 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
