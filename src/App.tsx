@@ -193,7 +193,7 @@ const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: str
     className={`inline-block flex-shrink-0 ${className}`}
   >
     <path d="M 12 0 L 22 6 L 20 18 L 12 22 L 4 18 L 2 6 Z" />
-    <path d="M 4 20 L 12 24 L 20 20 L 18 32 L 6 32 Z" />
+    <path d="M 4 20 L 18 32 L 6 32 Z" />
   </svg>
 );
 
@@ -400,19 +400,25 @@ export default function App() {
     }
   }, [activeTab, adminSubTab]);
 
+  // ⭕ 로딩 및 테마 상태에 따른 HTML/BODY 배경색 동적 제어 (로딩 시 상하단 흰색 붕 뜸 완벽 해결)
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
     
-    if (themeMode === 'dark') {
-      document.documentElement.classList.add('dark');
+    if (loading) {
       document.documentElement.style.backgroundColor = '#0f172a';
       document.body.style.backgroundColor = '#0f172a';
     } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.style.backgroundColor = '#ffffff';
-      document.body.style.backgroundColor = '#ffffff';
+      if (themeMode === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.backgroundColor = '#0f172a';
+        document.body.style.backgroundColor = '#0f172a';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.backgroundColor = '#ffffff';
+        document.body.style.backgroundColor = '#ffffff';
+      }
     }
-  }, [themeMode]);
+  }, [themeMode, loading]);
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
@@ -1378,7 +1384,7 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
-  // ⭕ [로딩 화면 iOS 노치/주소창 영역 색상 통일]: fixed inset-0 w-screen h-screen z-50 적용
+  // ⭕ [로딩 화면 iOS 상하단 색상 통일]: fixed inset-0 w-screen h-screen z-50
   if (loading) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
