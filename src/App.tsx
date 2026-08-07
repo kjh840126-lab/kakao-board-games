@@ -471,7 +471,8 @@ export default function App() {
     }
   }, [noticeIndex, recentNoticesList.length]);
 
-  const fetchInitialData = async () => {
+  // ⭕ [TS2554 빌드 에러 조치]: 인자 존재 유무와 관계없이 호출될 수 있도록 옵셔널 파라미터(...args) 적용
+  const fetchInitialData = async (..._args: any[]) => {
     try {
       // ⭕ 새로고침 시 셔플 레퍼런스를 초기화하여 "처음 진입/새로고침 시"에만 새로 섞이도록 처리
       shuffledGamesRef.current = [];
@@ -699,7 +700,7 @@ export default function App() {
     }
 
     const endDate = new Date();
-    endDate.setDate(endDate.setDate() + rentalDays);
+    endDate.setDate(endDate.getDate() + rentalDays);
     const endDateStr = endDate.toISOString().split('T')[0];
 
     const newRentals = cart.map((game: Game) => ({
@@ -1291,7 +1292,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ [원하는 기능 구현]: 초기 접속 및 새로고침(fetchInitialData) 시에만 1회 셔플하고, 탭 이동 시에는 고정
+  // ⭕ [4번 구현 핵심]: 초기 접속 및 새로고침(fetchInitialData) 시에만 1회 셔플하고, 탭 이동 시에는 고정
   const filteredGameList = useMemo(() => {
     if (shuffledGamesRef.current.length === 0 && games.length > 0) {
       shuffledGamesRef.current = [...games].sort(() => Math.random() - 0.5);
