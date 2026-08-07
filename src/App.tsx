@@ -178,10 +178,10 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-xs',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  // 3. 하단 네비게이션 (⭕ 원복: 하단 여백을 안전하게 확보하여 정상 노출)
+  // 3. 하단 네비게이션 (⭕ iOS 주소창 변동 추종 및 노출 보장 패딩)
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+18px)]', 
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -1266,7 +1266,6 @@ export default function App() {
     return 0;
   };
 
-  // ⭕ 1. 랭킹 계산 공식: 10개 제한 조건 완벽 제거 (회원 평점이 즉시 반영됨)
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
@@ -1290,7 +1289,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // ⭕ 2. 대여 페이지 게임 노출 순서: 최초 1회(로딩/새로고침 시)만 셔플되고 고정(useMemo)
+  // ⭕ 대여 페이지 게임 노출 순서: 최초 1회만 랜덤 셔플 고정 (useMemo)
   const shuffledInitialGames = useMemo(() => {
     return [...games].sort(() => Math.random() - 0.5);
   }, [games]);
@@ -1706,7 +1705,7 @@ export default function App() {
     <div className={`h-[#100dvh] w-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
-        {/* 고정 상단 헤더 */}
+        {/* ⭕ 상단 고정 헤더 (fixed top-0) */}
         <header 
           ref={headerRef}
           style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
@@ -2974,7 +2973,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ [하단 네비게이션]: 원복된 100% 정상 배치 구문 */}
+        {/* ⭕ 하단 네비게이션: fixed bottom-0 구조 유지 (주소창 변동 동적 추종 및 시야 노출 보장) */}
         <nav 
           className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
