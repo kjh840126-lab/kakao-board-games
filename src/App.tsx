@@ -331,7 +331,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
     
-    // 테마 설정 시 html 및 body 배경색 세팅
     if (themeMode === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.style.backgroundColor = '#0f172a';
@@ -1971,7 +1970,7 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
-                            {/* ⭕ [대여 가능] 버튼: 라이트 모드 카카오 옐로우 / 다크 모드 밝은 하늘색 분기 */}
+                            {/* [대여 가능] 버튼 분기 처리: 라이트 모드 카카오 노란색 / 다크 모드 밝은 하늘색 */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
@@ -2804,7 +2803,7 @@ export default function App() {
           )}
         </main>
 
-        {/* ⭕ [장바구니] 플로팅 버튼: 라이트모드 다크 슬레이트 / 다크모드 노란색 반영 */}
+        {/* ⭕ 2. [장바구니] 플로팅 버튼: 라이트모드 다크 슬레이트 / 다크모드 노란색 지정 */}
         {activeTab === 'games' && (
           <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-30 transition-all">
             <button
@@ -2854,7 +2853,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 */}
+        {/* 설정 드로어 (우측 슬라이딩 + Safe Area 대응) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -2864,9 +2863,7 @@ export default function App() {
           } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
             <div 
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-              className={`p-4 flex justify-between items-center font-bold text-sm ${
-                isHeaderAdminTheme ? 'bg-sky-400 text-slate-900' : 'bg-[#FEE500] text-slate-900'
-              }`}
+              className="p-4 flex justify-between items-center font-bold text-sm bg-[#FEE500] text-slate-900"
             >
               <span className="flex items-center gap-1.5 truncate">
                 <Settings size={18} /> 설정
@@ -3024,9 +3021,7 @@ export default function App() {
             >
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className={`w-full py-2.5 rounded-xl font-bold text-xs transition shadow-sm ${
-                  isDarkMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'
-                }`}
+                className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold text-xs transition shadow-sm"
               >
                 닫기
               </button>
@@ -3044,7 +3039,7 @@ export default function App() {
           } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
             <div 
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-              className="p-4 bg-[#FEE500] dark:bg-sky-400 text-slate-900 flex justify-between items-center font-bold text-sm"
+              className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm"
             >
               <span>장바구니 ({cart.length} / 3)</span>
               <button onClick={() => setIsCartOpen(false)} className="p-1"><X size={18} /></button>
@@ -3111,7 +3106,7 @@ export default function App() {
                   선택한 게임 {rentalDays}일간 대여하기
                 </button>
               ) : (
-                <button onClick={() => setIsCartOpen(false)} className="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3.5 rounded-xl font-bold hover:bg-slate-300 transition shadow-sm">
+                <button onClick={() => setIsCartOpen(false)} className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-3.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-sm">
                   닫기
                 </button>
               )}
@@ -3129,12 +3124,12 @@ export default function App() {
           } ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'} ${isLargeFont ? 'text-sm' : 'text-xs'}`}>
             <div 
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
-              className="p-4 bg-slate-900 flex justify-between items-center font-bold text-white text-sm"
+              className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm"
             >
               <span className="flex items-center gap-2">
-                <Bell size={16} className="text-[#FEE500] dark:text-sky-400" /> 공지사항 목록
+                <Bell size={16} className="text-slate-900" /> 공지사항 목록
               </span>
-              <button onClick={() => setIsNoticeDrawerOpen(false)} className="text-slate-300 hover:text-white p-1"><X size={18} /></button>
+              <button onClick={() => setIsNoticeDrawerOpen(false)} className="text-slate-900 hover:text-slate-700 p-1"><X size={18} /></button>
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto space-y-3 overflow-x-hidden">
@@ -3148,7 +3143,7 @@ export default function App() {
                     className={`rounded-2xl border transition overflow-hidden max-w-full ${
                       isExpanded
                         ? isDarkMode 
-                          ? 'border-sky-500/80 bg-slate-800' 
+                          ? 'border-amber-500/80 bg-slate-800' 
                           : 'border-amber-400 bg-amber-50/60'
                         : isDarkMode
                         ? 'border-slate-800 bg-slate-800/60 hover:border-slate-700'
@@ -3161,7 +3156,7 @@ export default function App() {
                     >
                       <div className="flex-1 min-w-0 pr-1">
                         <h3 className={`font-bold leading-snug break-all text-xs ${
-                          isExpanded ? (isDarkMode ? 'text-sky-300' : 'text-slate-900') : ''
+                          isExpanded ? (isDarkMode ? 'text-amber-300' : 'text-slate-900') : ''
                         }`}>
                           {notice.title}
                         </h3>
@@ -3172,7 +3167,7 @@ export default function App() {
                       <ChevronDown 
                         size={16} 
                         className={`text-slate-400 flex-shrink-0 transition-transform duration-300 mt-0.5 ${
-                          isExpanded ? 'rotate-180 text-amber-500 dark:text-sky-400' : ''
+                          isExpanded ? 'rotate-180 text-amber-500' : ''
                         }`} 
                       />
                     </div>
@@ -3195,7 +3190,7 @@ export default function App() {
             >
               <button
                 onClick={() => setIsNoticeDrawerOpen(false)}
-                className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 py-3 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
+                className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-3 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
               >
                 닫기
               </button>
@@ -3300,7 +3295,7 @@ export default function App() {
             >
               <button
                 onClick={() => setIsAdminReportDrawerOpen(false)}
-                className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition"
+                className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition"
               >
                 닫기
               </button>
@@ -3368,7 +3363,7 @@ export default function App() {
               <div className="pt-2 border-t border-slate-200/20">
                 <button
                   onClick={() => setIsFavoritesModalOpen(false)}
-                  className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
+                  className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
                 >
                   닫기
                 </button>
@@ -3440,7 +3435,7 @@ export default function App() {
               <div className="pt-2 border-t border-slate-200/20">
                 <button
                   onClick={() => setIsMyRatingsModalOpen(false)}
-                  className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
+                  className="w-full bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs"
                 >
                   닫기
                 </button>
