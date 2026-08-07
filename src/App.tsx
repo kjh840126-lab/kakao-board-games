@@ -233,7 +233,10 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
+  
+  // ⭕ 최초 진입 시에만 로딩 화면을 보여주기 위한 상태
   const [loading, setLoading] = useState(true);
+  const isInitialLoadedRef = useRef(false);
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -683,7 +686,11 @@ export default function App() {
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
     } finally {
-      setLoading(false);
+      // ⭕ 최초 1회만 로딩 상태 해제 처리
+      if (!isInitialLoadedRef.current) {
+        isInitialLoadedRef.current = true;
+        setLoading(false);
+      }
     }
   };
 
@@ -1425,10 +1432,11 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
+  // ⭕ 최초 진입 시에만 로딩 스피너 표시 ("데이터베이스 연결 중..." 문구 완전 제거)
   if (loading) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
-        <div className="relative w-16 h-20 mb-6 flex items-center justify-center">
+        <div className="relative w-16 h-20 flex items-center justify-center">
           <div className="absolute w-12 h-16 bg-[#FEE500] rounded-xl border-2 border-amber-300 shadow-lg animate-[ping_1.8s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30"></div>
           <div className="absolute w-12 h-16 bg-sky-400 rounded-xl border-2 border-sky-300 shadow-md animate-bounce -translate-x-3 -rotate-12"></div>
           <div className="absolute w-12 h-16 bg-rose-500 rounded-xl border-2 border-rose-300 shadow-md animate-bounce delay-150 translate-x-3 rotate-12"></div>
@@ -1436,10 +1444,6 @@ export default function App() {
             <Loader2 size={22} className="animate-spin text-slate-900" />
           </div>
         </div>
-
-        <p className="text-slate-300 text-xs font-bold tracking-tight animate-pulse flex items-center gap-1.5">
-          <span>데이터베이스 연결 중...</span>
-        </p>
       </div>
     );
   }
@@ -3157,8 +3161,8 @@ export default function App() {
                     setIsEditProfileOpen(true);
                   }
                 }}
-                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
-                  isIosDevice ? 'text-sm' : 'text-xs'
+                className={`w-full p-2.5 rounded-xl border text-left flex justify-between items-center transition ${
+                  isIosDevice ? 'text-sm font-normal' : 'text-xs font-bold'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                 }`}
@@ -3177,8 +3181,8 @@ export default function App() {
               </h4>
               <button
                 onClick={() => setIsFavoritesModalOpen(true)}
-                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
-                  isIosDevice ? 'text-sm' : 'text-xs'
+                className={`w-full p-2.5 rounded-xl border text-left flex justify-between items-center transition ${
+                  isIosDevice ? 'text-sm font-normal' : 'text-xs font-bold'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                 }`}
@@ -3191,8 +3195,8 @@ export default function App() {
 
               <button
                 onClick={() => setIsMyRatingsModalOpen(true)}
-                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
-                  isIosDevice ? 'text-sm' : 'text-xs'
+                className={`w-full p-2.5 rounded-xl border text-left flex justify-between items-center transition ${
+                  isIosDevice ? 'text-sm font-normal' : 'text-xs font-bold'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                 }`}
@@ -3216,8 +3220,8 @@ export default function App() {
                   setReportForm({ title: '', content: '', category: '' });
                   setIsReportModalOpen(true);
                 }}
-                className={`w-full p-2.5 rounded-xl border text-left font-normal flex justify-between items-center transition ${
-                  isIosDevice ? 'text-sm' : 'text-xs'
+                className={`w-full p-2.5 rounded-xl border text-left flex justify-between items-center transition ${
+                  isIosDevice ? 'text-sm font-normal' : 'text-xs font-bold'
                 } ${
                   isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                 }`}
@@ -3236,26 +3240,26 @@ export default function App() {
               }`}>
                 <Sun size={isIosDevice ? 15 : 13} /> 테마 선택
               </h4>
-              <div className={`flex p-1 rounded-xl font-normal ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`flex p-1 rounded-xl ${isIosDevice ? 'font-normal' : 'font-bold'} ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setThemeMode('light')}
                   className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                    isIosDevice ? 'text-sm' : 'text-[11px]'
+                    isIosDevice ? 'text-sm font-normal' : 'text-[11px] font-bold'
                   } ${
                     themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  라이트
+                  {isIosDevice ? '라이트' : '라이트 모드'}
                 </button>
                 <button
                   onClick={() => setThemeMode('dark')}
                   className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                    isIosDevice ? 'text-sm' : 'text-[11px]'
+                    isIosDevice ? 'text-sm font-normal' : 'text-[11px] font-bold'
                   } ${
                     themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  다크
+                  {isIosDevice ? '다크' : '다크 모드'}
                 </button>
               </div>
             </div>
@@ -3267,11 +3271,11 @@ export default function App() {
               }`}>
                 <Type size={isIosDevice ? 15 : 13} /> 글자 크기
               </h4>
-              <div className={`flex p-1 rounded-xl font-normal ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              <div className={`flex p-1 rounded-xl ${isIosDevice ? 'font-normal' : 'font-bold'} ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setFontSize('normal')}
                   className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                    isIosDevice ? 'text-sm' : 'text-[11px]'
+                    isIosDevice ? 'text-sm font-normal' : 'text-[11px] font-bold'
                   } ${
                     fontSize === 'normal' 
                       ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
@@ -3283,7 +3287,7 @@ export default function App() {
                 <button
                   onClick={() => setFontSize('large')}
                   className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                    isIosDevice ? 'text-sm' : 'text-[11px]'
+                    isIosDevice ? 'text-sm font-normal' : 'text-[11px] font-bold'
                   } ${
                     fontSize === 'large' 
                       ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
