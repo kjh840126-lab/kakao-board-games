@@ -37,9 +37,6 @@ import {
   Award,
   ChevronRight,
   Settings,
-  Sun,
-  Moon,
-  Type,
   User,
   Brain,
   Medal,
@@ -1970,6 +1967,7 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
+                            {/* [대여 가능] 버튼: 라이트 모드 카카오 노란색 / 다크 모드 밝은 하늘색 */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
@@ -2852,7 +2850,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* ⭕ 3. 설정 드로어 (헤더 노란색 통일 / 아이콘 제거 및 텍스트 수정) */}
+        {/* 설정 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -2894,7 +2892,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* B. 나의 활동 (아이콘 제거) */}
+              {/* B. 나의 활동 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   나의 활동
@@ -2924,7 +2922,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* C. 고객지원 (아이콘 제거) */}
+              {/* C. 고객지원 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   고객지원
@@ -2945,7 +2943,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* D. 테마 선택 (라이트 모드 / 다크 모드 텍스트 변경 및 앞 아이콘 제거) */}
+              {/* D. 테마 선택 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   테마 선택
@@ -2970,7 +2968,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* E. 글자 크기 (타이틀 '글자 크기'로 변경) */}
+              {/* E. 글자 크기 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   글자 크기
@@ -3014,7 +3012,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* ⭕ 4. 닫기 버튼 스타일 통일 */}
             <div 
               style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
               className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}
@@ -3029,7 +3026,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 1. 장바구니 드로어 (헤더 아이콘 추가 + 노란색 통일 / 닫기 버튼 통일) */}
+        {/* 장바구니 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3116,7 +3113,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 2. 공지사항 드로어 (헤더 노란색 통일 / 닫기 버튼 통일) */}
+        {/* 공지사항 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isNoticeDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
