@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ⭕ 기기 OS 다크모드 감지를 무시하고 class="dark" 유무로만 색상을 제어하도록 강제 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* 1. 내 서버(public/fonts)에서 직접 불러오는 카카오 폰트 로컬 정의 */
 @font-face {
   font-family: "Kakao";
@@ -71,7 +74,6 @@ h1, h2, h3, h4, h5, h6, b, strong, .font-bold, .font-extrabold {
   font-family: "KakaoBold", "Kakao", "Pretendard Variable", Pretendard, -apple-system, sans-serif !important;
 }
 
-/* ⭕ 핵심 수정: max-width 440px 제한 제거 후 100% 꽉 차게 변경 */
 #root {
   width: 100%;
   max-width: 100% !important;
