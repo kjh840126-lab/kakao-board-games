@@ -51,7 +51,8 @@ import {
   RotateCcw as ResetIcon,
   Heart,
   Star,
-  ChevronDown
+  ChevronDown,
+  ArrowDown
 } from 'lucide-react';
 
 export type Role = '일반회원' | '관리자' | '탈퇴회원';
@@ -343,6 +344,11 @@ export default function App() {
   const [isIosDevice, setIsIosDevice] = useState(false);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // ⭕ [당겨서 새로고침 전용 상태]
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartYRef = useRef(0);
+
   const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -444,6 +450,42 @@ export default function App() {
   };
 
   const handleScroll = () => {};
+
+  // ⭕ [당겨서 새로고침 핸들러]
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (mainScrollRef.current && mainScrollRef.current.scrollTop === 0) {
+      touchStartYRef.current = e.touches[0].clientY;
+    } else {
+      touchStartYRef.current = 0;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartYRef.current > 0 && mainScrollRef.current && mainScrollRef.current.scrollTop === 0) {
+      const currentY = e.touches[0].clientY;
+      const diffY = currentY - touchStartYRef.current;
+      if (diffY > 0) {
+        // 저항감을 주어 자연스럽게 당겨지도록 유도 (최대 110px)
+        const resistanceY = Math.min(110, Math.pow(diffY, 0.85));
+        setPullY(resistanceY);
+      }
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullY >= 70 && !isRefreshing) {
+      setIsRefreshing(true);
+      setPullY(70);
+      await fetchInitialData();
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullY(0);
+      }, 600);
+    } else {
+      setPullY(0);
+    }
+    touchStartYRef.current = 0;
+  };
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -1288,7 +1330,6 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  // 대여 페이지 게임 노출 순서: 최초 1회만 랜덤 셔플 고정 (useMemo)
   const shuffledInitialGames = useMemo(() => {
     return [...games].sort(() => Math.random() - 0.5);
   }, [games]);
@@ -1701,7 +1742,7 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ [카카오 메이커스 방식 고정 레이아웃]: fixed inset-0 flex flex-col 구조로 iOS Safari 주소창 오차로 인한 하단 뜸 완벽 차단
+    // ⭕ [카카오 메이커스 방식 고정 레이아웃]: fixed inset-0 flex flex-col 구조로 iOS Safari 주소창 오차로 인한 하단 뜸 완전 차단
     <div className={`fixed inset-0 w-full h-full flex flex-col justify-between overflow-hidden transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
@@ -1772,17 +1813,48 @@ export default function App() {
           </div>
         </header>
 
-        {/* [독립 스크롤 영역] */}
+        {/* [독립 스크롤 영역 + 당겨서 새로고침 터치 영역] */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
-          style={{ paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-32 overflow-y-auto overscroll-y-contain transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ 
+            paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)',
+            transform: `translateY(${pullY}px)`,
+            transition: pullY === 0 || pullY === 70 ? 'transform 0.3s cubic-bezier(0.1, 0.85, 0.25, 1)' : 'none'
+          }} 
+          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-32 overflow-y-auto overscroll-y-contain relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
             isLargeFont 
               ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
               : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
           }`}
         >
+          {/* ⭕ [당겨서 새로고침 인디케이터 모션] */}
+          {pullY > 0 && (
+            <div 
+              className="absolute left-1/2 -translate-x-1/2 transition-opacity flex items-center justify-center z-20 pointer-events-none"
+              style={{ 
+                top: `${headerHeight > 0 ? headerHeight + 16 : 100}px`,
+                opacity: Math.min(1, pullY / 40)
+              }}
+            >
+              <div className="w-10 h-10 rounded-full bg-[#FEE500] text-slate-900 shadow-md border border-amber-300/80 flex items-center justify-center">
+                {isRefreshing ? (
+                  <Loader2 size={20} className="animate-spin text-slate-900" />
+                ) : (
+                  <ArrowDown 
+                    size={20} 
+                    className={`text-slate-900 transition-transform duration-200 ${
+                      pullY >= 70 ? 'rotate-180 text-rose-600' : ''
+                    }`} 
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           {/* 1. 게임목록(대여) 탭 */}
           {activeTab === 'games' && (
             <div className="space-y-4 mt-0.5 w-full">
@@ -2970,7 +3042,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start gap-2">
-                          {/* ⭕ 1. 공지사항 관리 하단 노출 공지 제목 폰트 1pt 하향 조정 (text-base -> text-sm) */}
+                          {/* 공지사항 관리 하단 노출 공지 제목 폰트 1pt 하향 조정 (text-base -> text-sm) */}
                           <h3 className={`font-extrabold break-all leading-snug ${
                             isIosDevice ? 'text-sm' : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
@@ -3032,11 +3104,11 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 하단 네비게이션: 메이커스 방식 적용 - 바닥 -1px 밀착 및 100px 하단 매립 가림막 패치 */}
+        {/* ⭕ 하단 네비게이션: iOS 위치 및 Safe Area 오차 완전 보정 (-bottom-[1px]) */}
         <nav 
           className={`fixed -bottom-[1px] left-0 right-0 w-full z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900' : 'bg-white'
-          } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
+          } ${isIosDevice ? 'pb-[env(safe-area-inset-bottom)]' : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
           {/* iOS 전용 하단 100px 매립 가림막 블라인드 패치 (실선/여백 100% 원천 차단) */}
           {isIosDevice && (
@@ -3048,7 +3120,7 @@ export default function App() {
             />
           )}
 
-          <div className="flex justify-around px-2 pt-2.5 pb-1.5 relative z-10">
+          <div className="flex justify-around px-2 pt-2.5 pb-2 relative z-10">
             <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
               <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
               <span className="mt-1">대여</span>
