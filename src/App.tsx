@@ -1970,7 +1970,6 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
-                            {/* [대여 가능] 버튼 분기 처리: 라이트 모드 카카오 노란색 / 다크 모드 밝은 하늘색 */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
@@ -2803,7 +2802,7 @@ export default function App() {
           )}
         </main>
 
-        {/* ⭕ 2. [장바구니] 플로팅 버튼: 라이트모드 다크 슬레이트 / 다크모드 노란색 지정 */}
+        {/* 장바구니 플로팅 버튼 */}
         {activeTab === 'games' && (
           <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-30 transition-all">
             <button
@@ -2853,7 +2852,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 (우측 슬라이딩 + Safe Area 대응) */}
+        {/* ⭕ 3. 설정 드로어 (헤더 노란색 통일 / 아이콘 제거 및 텍스트 수정) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -2895,10 +2894,10 @@ export default function App() {
                 </button>
               </div>
 
-              {/* B. 나의 활동 */}
+              {/* B. 나의 활동 (아이콘 제거) */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Heart size={13} className="text-rose-500" /> 나의 활동
+                  나의 활동
                 </h4>
                 <button
                   onClick={() => setIsFavoritesModalOpen(true)}
@@ -2906,8 +2905,8 @@ export default function App() {
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
-                  <span className="flex items-center gap-1 truncate">
-                    <Heart size={13} className="text-rose-500 fill-rose-500 flex-shrink-0" /> 찜목록 ({userFavorites.length})
+                  <span className="truncate">
+                    찜목록 ({userFavorites.length})
                   </span>
                   <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                 </button>
@@ -2918,17 +2917,17 @@ export default function App() {
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
-                  <span className="flex items-center gap-1 truncate">
-                    <Star size={13} className="text-rose-500 fill-rose-500 flex-shrink-0" /> 내 평점 ({myRatingGamesList.length})
+                  <span className="truncate">
+                    내 평점 ({myRatingGamesList.length})
                   </span>
                   <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
-              {/* C. 고객지원 */}
+              {/* C. 고객지원 (아이콘 제거) */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Siren size={13} /> 고객지원
+                  고객지원
                 </h4>
                 <button
                   onClick={() => {
@@ -2939,42 +2938,42 @@ export default function App() {
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
-                  <span className="flex items-center gap-1 truncate">
-                    <Siren size={14} className="text-rose-500 flex-shrink-0" /> 신고 및 건의
+                  <span className="truncate">
+                    신고 및 건의
                   </span>
                   <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
-              {/* D. 테마 선택 */}
+              {/* D. 테마 선택 (라이트 모드 / 다크 모드 텍스트 변경 및 앞 아이콘 제거) */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Sun size={13} /> 테마 선택
+                  테마 선택
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button
                     onClick={() => setThemeMode('light')}
-                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 text-[11px] ${
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
                       themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <Sun size={12} className="text-amber-500" /> 라이트
+                    라이트 모드
                   </button>
                   <button
                     onClick={() => setThemeMode('dark')}
-                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center gap-1 text-[11px] ${
+                    className={`flex-1 py-2 rounded-lg transition flex items-center justify-center text-[11px] ${
                       themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <Moon size={12} className="text-indigo-400" /> 다크
+                    다크 모드
                   </button>
                 </div>
               </div>
 
-              {/* E. 글자 크기 */}
+              {/* E. 글자 크기 (타이틀 '글자 크기'로 변경) */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Type size={13} /> 본문 글자 크기
+                  글자 크기
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button
@@ -3015,6 +3014,7 @@ export default function App() {
               </div>
             </div>
 
+            {/* ⭕ 4. 닫기 버튼 스타일 통일 */}
             <div 
               style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
               className={`p-4 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}
@@ -3029,7 +3029,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 장바구니 드로어 */}
+        {/* ⭕ 1. 장바구니 드로어 (헤더 아이콘 추가 + 노란색 통일 / 닫기 버튼 통일) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3041,7 +3041,9 @@ export default function App() {
               style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
               className="p-4 bg-[#FEE500] text-slate-900 flex justify-between items-center font-bold text-sm"
             >
-              <span>장바구니 ({cart.length} / 3)</span>
+              <span className="flex items-center gap-1.5">
+                <ShoppingCart size={18} className="text-slate-900" /> 장바구니 ({cart.length} / 3)
+              </span>
               <button onClick={() => setIsCartOpen(false)} className="p-1"><X size={18} /></button>
             </div>
 
@@ -3114,7 +3116,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 공지사항 드로어 */}
+        {/* ⭕ 2. 공지사항 드로어 (헤더 노란색 통일 / 닫기 버튼 통일) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isNoticeDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3143,7 +3145,7 @@ export default function App() {
                     className={`rounded-2xl border transition overflow-hidden max-w-full ${
                       isExpanded
                         ? isDarkMode 
-                          ? 'border-amber-500/80 bg-slate-800' 
+                          ? 'border-sky-500/80 bg-slate-800' 
                           : 'border-amber-400 bg-amber-50/60'
                         : isDarkMode
                         ? 'border-slate-800 bg-slate-800/60 hover:border-slate-700'
@@ -3156,7 +3158,7 @@ export default function App() {
                     >
                       <div className="flex-1 min-w-0 pr-1">
                         <h3 className={`font-bold leading-snug break-all text-xs ${
-                          isExpanded ? (isDarkMode ? 'text-amber-300' : 'text-slate-900') : ''
+                          isExpanded ? (isDarkMode ? 'text-sky-300' : 'text-slate-900') : ''
                         }`}>
                           {notice.title}
                         </h3>
