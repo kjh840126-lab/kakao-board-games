@@ -313,11 +313,21 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ 순수 iOS(아이폰/아이패드) 디바이스 환경 감지
+  // ⭕ iOS(아이폰/아이패드) 감지 및 오직 iOS에서만 Viewport 배율(Scale) 확대 적용
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
     setIsIosDevice(isIos);
+
+    if (isIos) {
+      const viewportMeta = document.querySelector('meta[name="viewport"]');
+      if (viewportMeta) {
+        viewportMeta.setAttribute(
+          'content',
+          'width=device-width, initial-scale=1.15, maximum-scale=1.15, user-scalable=no, viewport-fit=cover'
+        );
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -1627,11 +1637,7 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ 아이폰(iOS)에서만 10% 더 크게(zoom: 1.10) 조정 / 안드로이드는 zoom: 1.0으로 원본 크기 유지
-    <div 
-      style={{ zoom: isIosDevice ? '1.21' : '1.0' }}
-      className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}
-    >
+    <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
