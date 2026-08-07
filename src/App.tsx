@@ -311,19 +311,16 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  // ⭕ iOS(아이폰/아이패드) 감지 및 오직 iOS에서만 Viewport 배율(Scale) 확대 적용
+  // ⭕ iOS(아이폰/아이패드) 기기에서만 이미지, 폰트, 간격, 모달 등 전체 UI 비율 125% 강제 확대
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
     const isIos = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
 
     if (isIos) {
-      const viewportMeta = document.querySelector('meta[name="viewport"]');
-      if (viewportMeta) {
-        viewportMeta.setAttribute(
-          'content',
-          'width=device-width, initial-scale=1.50, maximum-scale=1.50, user-scalable=no, viewport-fit=cover'
-        );
-      }
+      // 125%로 확대 (더 크게 키우고 싶으시다면 '130%', '135%' 등으로 수정)
+      document.documentElement.style.fontSize = '125%';
+    } else {
+      document.documentElement.style.fontSize = '100%';
     }
   }, []);
 
