@@ -359,7 +359,6 @@ export default function App() {
     setIsIosDevice(isIos);
   }, []);
 
-  // ⭕ 안드로이드 새로고침 시 여백 붕 뜸 완벽 방어: iOS 환경에서만 동적 높이 계산 사용
   useLayoutEffect(() => {
     if (!isIosDevice || !headerRef.current) return;
 
@@ -1762,7 +1761,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ 본문 영역: 안드로이드는 순정 패딩 그대로 유지하며 새로고침 시 여백 붕 뜸 완벽 방어 */}
+        {/* 본문 영역 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -2465,44 +2464,44 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5 w-full">
-              {/* 관리자 상단 5개 서브 메뉴탭 영역 */}
-              <div className={`flex items-center gap-1.5 p-1.5 rounded-xl font-bold w-full overflow-x-auto scrollbar-none ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+              {/* ⭕ 관리자 상단 5개 서브 메뉴탭: 가로 스크롤 없이 딱 들어맞게 균등 5분할(grid-cols-5) 배치 */}
+              <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
-                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
+                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'gameAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   게임관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('rentalAdmin')}
-                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
+                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'rentalAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   대여/반납
                 </button>
                 <button
                   onClick={() => setAdminSubTab('siteAdmin')}
-                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
+                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'siteAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   사이트관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('userAdmin')}
-                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
+                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'userAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   회원관리
                 </button>
                 <button
                   onClick={() => setAdminSubTab('noticeAdmin')}
-                  className={`flex-1 min-w-[70px] py-2.5 px-3 rounded-lg transition text-center whitespace-nowrap ${
-                    isLargeFont ? 'text-sm' : 'text-xs font-extrabold'
+                  className={`py-2 px-1 rounded-lg transition text-center whitespace-nowrap ${
+                    isLargeFont ? 'text-[11px]' : 'text-[10px] font-extrabold'
                   } ${adminSubTab === 'noticeAdmin' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   공지사항
@@ -2961,7 +2960,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 3. 하단 네비게이션: 밑의 눈에 가시 같던 회색 구분선을 완전히 차단(border-b-0) 및 깔끔 보정 */}
+        {/* 하단 네비게이션 */}
         <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 flex justify-around px-2 pt-3 z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
