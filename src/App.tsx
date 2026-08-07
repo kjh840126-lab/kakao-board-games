@@ -156,7 +156,7 @@ const IOS_CONFIG = {
   HEADER_USER_TEXT_SIZE: 'text-sm',   
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  
 
-  // 2. 본문 패딩 및 카드 이미지 크기
+  // 2. 본문 패딩 및 카드 이미지 크기 (대여 > 랭킹 > 게임관리 순서)
   MAIN_TEXT_SIZE: 'text-sm',          
   MAIN_TEXT_SIZE_LARGE: 'text-base',  
   MAIN_PADDING_X: 'px-5',             
@@ -178,10 +178,10 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-xs',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  // 3. 하단 네비게이션
+  // 3. 하단 네비게이션 (⭕ iOS 잔선 미침 완벽 차단)
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  NAV_PADDING_BOTTOM: 'pb-[env(safe-area-inset-bottom,0px)]', 
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+8px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -1768,7 +1768,7 @@ export default function App() {
           </div>
         </header>
 
-        {/* ⭕ [독립 스크롤 영역]: overscroll-none 적용으로 오직 본문만 스크롤 */}
+        {/* [독립 스크롤 영역] */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
@@ -2578,7 +2578,6 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                          {/* ⭕ 안드로이드는 w-12 h-12 유지, iOS는 ADMIN_IMAGE_SIZE 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2950,7 +2949,7 @@ export default function App() {
 
         {/* 장바구니 플로팅 버튼 */}
         {activeTab === 'games' && (
-          <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-30 transition-all">
+          <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+80px)] right-4 pointer-events-none z-30 transition-all">
             <button
               onClick={() => setIsCartOpen(true)}
               className={`pointer-events-auto relative p-3.5 rounded-full active:scale-95 transition-all shadow-xl flex items-center justify-center ${
@@ -2970,32 +2969,34 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 하단 네비게이션: iOS Safari 주소창과 밀착되도록 여백 제거 적용 */}
-        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 flex justify-around px-2 pt-2 z-30 shadow-lg transition-colors ${
+        {/* ⭕ 하단 네비게이션: safe-area 레이어를 완벽히 마감하여 컨텐츠 잔선 투과 100% 차단 */}
+        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
-          <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">대여</span>
-          </button>
-          <button onClick={() => handleTabChange('returns')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <PackageCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">반납</span>
-          </button>
-          <button onClick={() => handleTabChange('ranking')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Trophy size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">랭킹</span>
-          </button>
-          <button onClick={() => handleTabChange('sites')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'sites' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Globe size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">사이트</span>
-          </button>
-          {isAdmin && (
-            <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
-              <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-              <span className="mt-1">관리자</span>
+          <div className="flex justify-around px-2 pt-2 pb-1.5">
+            <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+              <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+              <span className="mt-1">대여</span>
             </button>
-          )}
+            <button onClick={() => handleTabChange('returns')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+              <PackageCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+              <span className="mt-1">반납</span>
+            </button>
+            <button onClick={() => handleTabChange('ranking')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+              <Trophy size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+              <span className="mt-1">랭킹</span>
+            </button>
+            <button onClick={() => handleTabChange('sites')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'sites' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+              <Globe size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+              <span className="mt-1">사이트</span>
+            </button>
+            {isAdmin && (
+              <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
+                <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+                <span className="mt-1">관리자</span>
+              </button>
+            )}
+          </div>
         </nav>
 
         {/* 설정 드로어 */}
