@@ -37,6 +37,8 @@ import {
   Award,
   ChevronRight,
   Settings,
+  Sun,
+  Type,
   User,
   Brain,
   Medal,
@@ -2800,7 +2802,7 @@ export default function App() {
           )}
         </main>
 
-        {/* 장바구니 플로팅 버튼 */}
+        {/* [장바구니] 플로팅 버튼 */}
         {activeTab === 'games' && (
           <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] right-4 pointer-events-none z-30 transition-all">
             <button
@@ -2850,7 +2852,7 @@ export default function App() {
           )}
         </nav>
 
-        {/* 설정 드로어 */}
+        {/* ⭕ 설정 드로어 (상위 카테고리 헤더 아이콘 복구 완료) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -2892,10 +2894,10 @@ export default function App() {
                 </button>
               </div>
 
-              {/* B. 나의 활동 */}
+              {/* B. 나의 활동 (상위 카테고리 Heart 아이콘 복구 / 하위 아이콘 지움) */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  나의 활동
+                  <Heart size={13} className="text-rose-500" /> 나의 활동
                 </h4>
                 <button
                   onClick={() => setIsFavoritesModalOpen(true)}
@@ -2922,10 +2924,10 @@ export default function App() {
                 </button>
               </div>
 
-              {/* C. 고객지원 */}
+              {/* C. 고객지원 (상위 카테고리 Siren 아이콘 복구 / 하위 아이콘 지움) */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  고객지원
+                  <Siren size={13} /> 고객지원
                 </h4>
                 <button
                   onClick={() => {
@@ -2943,10 +2945,10 @@ export default function App() {
                 </button>
               </div>
 
-              {/* D. 테마 선택 */}
+              {/* D. 테마 선택 (상위 카테고리 Sun 아이콘 복구 / 라이트 모드, 다크 모드 텍스트) */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  테마 선택
+                  <Sun size={13} /> 테마 선택
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button
@@ -2968,10 +2970,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* E. 글자 크기 */}
+              {/* E. 글자 크기 (상위 카테고리 Type 아이콘 복구 / 타이틀 '글자 크기') */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  글자 크기
+                  <Type size={13} /> 글자 크기
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button
