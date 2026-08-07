@@ -343,6 +343,9 @@ export default function App() {
   const [isIosDevice, setIsIosDevice] = useState(false);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // ⭕ [초기 접속 및 새로고침 전용 셔플 고정 기법 적용]
+  const shuffledGamesRef = useRef<Game[]>([]);
+
   const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -392,12 +395,6 @@ export default function App() {
       }
     });
   }, []);
-
-  useEffect(() => {
-    if (currentUser) {
-      fetchInitialData();
-    }
-  }, [activeTab, adminSubTab]);
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
@@ -470,6 +467,9 @@ export default function App() {
 
   const fetchInitialData = async () => {
     try {
+      // ⭕ 새로고침 시 셔플 레퍼런스를 초기화하여 새로 섞이도록 설정
+      shuffledGamesRef.current = [];
+
       const { data: usersData } = await supabase.from('users').select('*');
       if (usersData) {
         const mappedUsers: UserData[] = await Promise.all(
@@ -1123,7 +1123,7 @@ export default function App() {
         title: editingGame.title,
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
-        play_time: editingGame.playTime,
+        playTime: editingGame.playTime,
         difficulty: formattedDifficulty,
         is_visible: editingGame.isVisible,
         image_url: editingGame.imageUrl,
@@ -1285,29 +1285,34 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
-  const shuffledInitialGames = useMemo(() => {
-    return [...games].sort(() => Math.random() - 0.5);
-  }, [games]);
+  // ⭕ [원하는 기능 구현]: 초기 접속 및 새로고침(fetchInitialData) 시에만 1회 셔플하고, 탭 이동 시에는 고정
+  const filteredGameList = useMemo(() => {
+    if (shuffledGamesRef.current.length === 0 && games.length > 0) {
+      shuffledGamesRef.current = [...games].sort(() => Math.random() - 0.5);
+    }
 
-  const filteredGameList = shuffledInitialGames
-    .filter((g: Game) => g.isVisible === 'Y')
-    .filter((g: Game) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
-    .filter((g: Game) => {
-      if (playerFilter === 0) return true;
-      if (playerFilter === 5) return g.maxPlayers >= 5;
-      return g.minPlayers <= playerFilter && g.maxPlayers >= playerFilter;
-    })
-    .filter((g: Game) => {
-      if (!genreFilter) return true;
-      return g.genres.includes(genreFilter);
-    })
-    .filter((g: Game) => {
-      if (difficultyFilter === 'all') return true;
-      if (difficultyFilter === 'easy') return g.difficulty < 2.3;
-      if (difficultyFilter === 'normal') return g.difficulty >= 2.3 && g.difficulty <= 3.5;
-      if (difficultyFilter === 'hard') return g.difficulty > 3.5;
-      return true;
-    });
+    const baseGames = shuffledGamesRef.current.length > 0 ? shuffledGamesRef.current : games;
+
+    return baseGames
+      .filter((g: Game) => g.isVisible === 'Y')
+      .filter((g: Game) => g.title.toLowerCase().includes(gameListSearch.trim().toLowerCase()))
+      .filter((g: Game) => {
+        if (playerFilter === 0) return true;
+        if (playerFilter === 5) return g.maxPlayers >= 5;
+        return g.minPlayers <= playerFilter && g.maxPlayers >= playerFilter;
+      })
+      .filter((g: Game) => {
+        if (!genreFilter) return true;
+        return g.genres.includes(genreFilter);
+      })
+      .filter((g: Game) => {
+        if (difficultyFilter === 'all') return true;
+        if (difficultyFilter === 'easy') return g.difficulty < 2.3;
+        if (difficultyFilter === 'normal') return g.difficulty >= 2.3 && g.difficulty <= 3.5;
+        if (difficultyFilter === 'hard') return g.difficulty > 3.5;
+        return true;
+      });
+  }, [games, gameListSearch, playerFilter, genreFilter, difficultyFilter]);
 
   const filteredGameAdminList = [...games]
     .filter((g: Game) => g.title.toLowerCase().includes(gameAdminSearch.trim().toLowerCase()))
@@ -3030,7 +3035,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ⭕ 하단 네비게이션: 위치 -bottom-[1px] 밀착 및 하단 100px 블라인드 패치 레이어 내장 */}
+      {/* 하단 네비게이션: 위치 -bottom-[1px] 밀착 및 하단 100px 블라인드 패치 레이어 내장 */}
       <nav 
         className={`fixed -bottom-[1px] left-0 right-0 w-full z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900' : 'bg-white'
