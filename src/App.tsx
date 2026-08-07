@@ -147,28 +147,28 @@ const ALLOWED_EMAIL_DOMAINS = [
 const currentYear = new Date().getFullYear();
 
 // =================================----------------====================
-// ⭕ [iOS 전용 UI 크기 개별 설정 영역 - 앞으로의 모든 수치 요청은 iOS에만 반영됩니다]
+// ⭕ [iOS 전용 UI 크기 개별 설정 영역]
 // =================================----------------====================
 const IOS_CONFIG = {
   // 1. 상단 헤더
-  HEADER_LOGO_HEIGHT: 'h-11',         // 상단 로고 이미지 높이
-  HEADER_ICON_SIZE: 22,               // 상단 설정 / 접수함 아이콘 크기
-  HEADER_USER_TEXT_SIZE: 'text-sm',   // 회원 아이디 폰트 크기
-  HEADER_BADGE_TEXT_SIZE: 'text-xs',  // 패널티 태그 폰트 크기
+  HEADER_LOGO_HEIGHT: 'h-11',         
+  HEADER_ICON_SIZE: 22,               
+  HEADER_USER_TEXT_SIZE: 'text-sm',   
+  HEADER_BADGE_TEXT_SIZE: 'text-xs',  
 
   // 2. 본문 패딩 및 카드 이미지 크기 (대여 > 랭킹 > 게임관리 순서)
-  MAIN_TEXT_SIZE: 'text-sm',          // 본문 전체 기본 폰트 크기 (보통 모드)
-  MAIN_TEXT_SIZE_LARGE: 'text-base',  // 본문 전체 기본 폰트 크기 (크게 모드)
-  MAIN_PADDING_X: 'px-5',             // ↔️ iOS 본문 좌우 여백 수치
+  MAIN_TEXT_SIZE: 'text-sm',          
+  MAIN_TEXT_SIZE_LARGE: 'text-base',  
+  MAIN_PADDING_X: 'px-5',             
 
-  RENTAL_IMAGE_SIZE: 'w-24 h-24',     // [1위] 대여 탭 게임 이미지 (가장 큼)
-  RANKING_IMAGE_SIZE: 'w-18 h-18',    // [2위] 랭킹 탭 게임 이미지 (중간)
-  ADMIN_IMAGE_SIZE: 'w-16 h-16',      // [3위] 게임관리 탭 이미지
+  RENTAL_IMAGE_SIZE: 'w-24 h-24',     
+  RANKING_IMAGE_SIZE: 'w-16 h-16',    
+  ADMIN_IMAGE_SIZE: 'w-16 h-16',      
 
-  GAME_TITLE_SIZE: 'text-sm',         // 보드게임 제목 폰트 크기 (보통 모드)
-  GAME_TITLE_SIZE_LARGE: 'text-base', // 보드게임 제목 폰트 크기 (크게 모드)
+  GAME_TITLE_SIZE: 'text-sm',         
+  GAME_TITLE_SIZE_LARGE: 'text-base', 
 
-  // 🔤 탭별 카드 세부 정보 폰트 크기 (보통 / 크게 모드 지원)
+  // 🔤 탭별 카드 세부 정보 폰트 크기
   RENTAL_INFO_TEXT_SIZE: 'text-[11px]',
   RENTAL_INFO_TEXT_SIZE_LARGE: 'text-xs',
 
@@ -178,10 +178,10 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-xs',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  // 3. 하단 네비게이션
-  NAV_ICON_SIZE: 24,                  // 하단 메뉴 아이콘 크기
-  NAV_TEXT_SIZE: 'text-xs',           // 하단 메뉴 이름 폰트 크기
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+18px)]', // 하단바 바텀 여백
+  // 3. 하단 네비게이션 (⭕ Safari 주소창과의 빈 여백 공간 제거)
+  NAV_ICON_SIZE: 24,                  
+  NAV_TEXT_SIZE: 'text-xs',           
+  NAV_PADDING_BOTTOM: 'pb-[env(safe-area-inset-bottom,0px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -1140,7 +1140,7 @@ export default function App() {
         status: '대여가능',
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
-        play_time: editingGame.playTime,
+        playTime: editingGame.playTime,
         difficulty: formattedDifficulty,
         description: '',
         is_visible: editingGame.isVisible,
@@ -1261,13 +1261,17 @@ export default function App() {
     return 0;
   };
 
+  // ⭕ 랭킹 계산 공식 수정: 회원 평점이 10개 이상인 경우에만 평균 평점 반영, 10개 미만은 0점 집계
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
       const releaseBonus = getReleaseBonus(game.releaseYear);
-      const userRatingScore = (game.userAvgRating || 0) * 0.5;
+      
+      const validUserAvgRating = (game.userRatingCount || 0) >= 10 ? (game.userAvgRating || 0) : 0;
+      const userRatingScore = validUserAvgRating * 0.5;
+      
       const totalScore = Number((recentScore + releaseBonus + game.bggRating + userRatingScore).toFixed(2));
-      return { ...game, totalScore, recentScore, releaseBonus, userRatingScore };
+      return { ...game, totalScore, recentScore, releaseBonus, userRatingScore, validUserAvgRating };
     })
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
@@ -1275,9 +1279,12 @@ export default function App() {
   const hallOfFameRankedGamesList = [...games]
     .map(game => {
       const rentalScore = (game.rentalCount || 0) * 0.1;
-      const userRatingScore = (game.userAvgRating || 0) * 0.5;
+      
+      const validUserAvgRating = (game.userRatingCount || 0) >= 10 ? (game.userAvgRating || 0) : 0;
+      const userRatingScore = validUserAvgRating * 0.5;
+
       const totalScore = Number((rentalScore + game.bggRating + userRatingScore).toFixed(2));
-      return { ...game, totalScore, rentalScore, userRatingScore };
+      return { ...game, totalScore, rentalScore, userRatingScore, validUserAvgRating };
     })
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
@@ -2019,7 +2026,9 @@ export default function App() {
 
                             <div className={`pt-1.5 border-t mt-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
                               {game.genres.map((genre: string) => (
-                                <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-[10px] flex-shrink-0 ${
+                                <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap flex-shrink-0 ${
+                                  isIosDevice ? 'text-[11px]' : 'text-[10px]'
+                                } ${
                                   isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-800'
                                 }`}>
                                   {genre}
@@ -2061,7 +2070,7 @@ export default function App() {
                               <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                             </button>
 
-                            {/* [대여 가능] 버튼: 라이트 모드 카카오 노란색 / 다크 모드 밝은 하늘색 */}
+                            {/* [대여 가능] 버튼 */}
                             {isAvailable ? (
                               <button
                                 onClick={() => toggleCartItem(game)}
@@ -2255,7 +2264,7 @@ export default function App() {
               {rankingTab === 'hot' && (
                 <div className="space-y-2.5 w-full">
                   <p className="text-slate-400 font-medium px-1">
-                    * 최근 30일 대여 횟수 + 신작 가산점 + BGG & 회원 평점 합산 기준
+                    * 최근 30일 대여 횟수 + 신작 가산점 + BGG & 회원 평점(10개 이상만) 합산 기준
                   </p>
                   {hotRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
@@ -2313,7 +2322,7 @@ export default function App() {
                             </div>
                             <div className="whitespace-nowrap flex gap-2">
                               <span>최근 대여: <strong className="text-rose-500 font-bold">{game.recentRentalCount || 0}회</strong></span>
-                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
+                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.validUserAvgRating ? `${game.validUserAvgRating}점` : '0점 (10개 미만)'}</strong></span>
                             </div>
                           </div>
                         </div>
@@ -2332,7 +2341,7 @@ export default function App() {
               {rankingTab === 'hall' && (
                 <div className="space-y-2.5 w-full">
                   <p className="text-slate-400 font-medium px-1">
-                    * 전체 누적 대여 횟수 + BGG & 회원 평점 기준 (스테디셀러)
+                    * 전체 누적 대여 횟수 + BGG & 회원 평점(10개 이상만) 기준 (스테디셀러)
                   </p>
                   {hallOfFameRankedGamesList.map((game: any, index: number) => {
                     const rank = index + 1;
@@ -2390,7 +2399,7 @@ export default function App() {
                             </div>
                             <div className="whitespace-nowrap flex gap-2">
                               <span>총 대여: <strong className="text-amber-500 font-bold">{game.rentalCount || 0}회</strong></span>
-                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.userAvgRating ? `${game.userAvgRating}점` : '평가없음'}</strong></span>
+                              <span>회원 평점: <strong className="text-amber-500 font-bold">{game.validUserAvgRating ? `${game.validUserAvgRating}점` : '0점 (10개 미만)'}</strong></span>
                             </div>
                           </div>
                         </div>
@@ -2464,7 +2473,7 @@ export default function App() {
           {/* 5. 관리자 통합 페이지 */}
           {activeTab === 'admin' && isAdmin && (
             <div className="space-y-4 mt-0.5 w-full">
-              {/* ⭕ 관리자 상단 5개 서브 메뉴탭: 가로 스크롤 없이 딱 들어맞게 균등 5분할(grid-cols-5) 배치 */}
+              {/* 관리자 상단 5개 서브 메뉴탭 영역 */}
               <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   onClick={() => setAdminSubTab('gameAdmin')}
@@ -2569,11 +2578,12 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          {/* ⭕ 안드로이드 단독 수정: 안드로이드 게임관리 이미지 크기 약간 축소 (w-12 h-12) / iOS는 기존 w-16 h-16 보존 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
                             className={`object-cover rounded-xl bg-slate-100 border border-slate-200/50 dark:border-slate-700 flex-shrink-0 ${
-                              isIosDevice ? IOS_CONFIG.ADMIN_IMAGE_SIZE : 'w-16 h-16'
+                              isIosDevice ? IOS_CONFIG.ADMIN_IMAGE_SIZE : 'w-12 h-12'
                             }`}
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300'; }}
                           />
@@ -2960,8 +2970,8 @@ export default function App() {
           </div>
         )}
 
-        {/* 하단 네비게이션 */}
-        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 flex justify-around px-2 pt-3 z-30 shadow-lg transition-colors ${
+        {/* 하단 네비게이션 (⭕ iOS 주소창 밀착 적용) */}
+        <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 flex justify-around px-2 pt-2 z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
           <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
