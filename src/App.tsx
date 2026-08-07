@@ -156,7 +156,7 @@ const IOS_CONFIG = {
   HEADER_USER_TEXT_SIZE: 'text-sm',   
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  
 
-  // 2. 본문 패딩 및 카드 이미지 크기 (대여 > 랭킹 > 게임관리 순서)
+  // 2. 본문 패딩 및 카드 이미지 크기
   MAIN_TEXT_SIZE: 'text-sm',          
   MAIN_TEXT_SIZE_LARGE: 'text-base',  
   MAIN_PADDING_X: 'px-5',             
@@ -178,7 +178,7 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-xs',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-sm', 
 
-  // 3. 하단 네비게이션 (⭕ Safari 주소창과의 빈 여백 공간 제거)
+  // 3. 하단 네비게이션
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
   NAV_PADDING_BOTTOM: 'pb-[env(safe-area-inset-bottom,0px)]', 
@@ -1140,7 +1140,7 @@ export default function App() {
         status: '대여가능',
         min_players: editingGame.minPlayers,
         max_players: editingGame.maxPlayers,
-        playTime: editingGame.playTime,
+        play_time: editingGame.playTime,
         difficulty: formattedDifficulty,
         description: '',
         is_visible: editingGame.isVisible,
@@ -1261,7 +1261,6 @@ export default function App() {
     return 0;
   };
 
-  // ⭕ 랭킹 계산 공식 수정: 회원 평점이 10개 이상인 경우에만 평균 평점 반영, 10개 미만은 0점 집계
   const hotRankedGamesList = [...games]
     .map(game => {
       const recentScore = (game.recentRentalCount || 0) * 0.5;
@@ -1698,8 +1697,9 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    <div className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
-      <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
+    // ⭕ [iOS 고정 완벽 방어]: h-screen, overflow-hidden, touch-action 적용으로 전체 화면 덜컹거림 차단
+    <div className={`h-screen w-full flex justify-center overflow-hidden touch-none select-none transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+      <div className={`w-full h-full flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
         
         {/* 고정 상단 헤더 */}
         <header 
@@ -1768,12 +1768,12 @@ export default function App() {
           </div>
         </header>
 
-        {/* 본문 영역 */}
+        {/* ⭕ [독립 스크롤 영역]: overscroll-none 적용으로 오직 본문만 스크롤 */}
         <main 
           ref={mainScrollRef}
           onScroll={handleScroll}
           style={{ paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)' }} 
-          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-28 overflow-y-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+          className={`flex-1 w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} pb-28 overflow-y-auto overscroll-none touch-auto transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
             isLargeFont 
               ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
               : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
@@ -2578,7 +2578,7 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                          {/* ⭕ 안드로이드 단독 수정: 안드로이드 게임관리 이미지 크기 약간 축소 (w-12 h-12) / iOS는 기존 w-16 h-16 보존 */}
+                          {/* ⭕ 안드로이드는 w-12 h-12 유지, iOS는 ADMIN_IMAGE_SIZE 적용 */}
                           <img 
                             src={game.imageUrl} 
                             alt={game.title} 
@@ -2970,7 +2970,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 하단 네비게이션 (⭕ iOS 주소창 밀착 적용) */}
+        {/* ⭕ 하단 네비게이션: iOS Safari 주소창과 밀착되도록 여백 제거 적용 */}
         <nav className={`fixed bottom-0 left-0 right-0 w-full border-t border-b-0 flex justify-around px-2 pt-2 z-30 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}>
