@@ -168,8 +168,9 @@ const IOS_CONFIG = {
   GAME_TITLE_SIZE: 'text-base',        
   GAME_TITLE_SIZE_LARGE: 'text-lg',   
 
-  RENTAL_INFO_TEXT_SIZE: 'text-xs',    
-  RENTAL_INFO_TEXT_SIZE_LARGE: 'text-sm', 
+  // ⭕ 5. 대여 세부 정보 (인원/시간/난이도/BGG) 폰트 1pt 상향
+  RENTAL_INFO_TEXT_SIZE: 'text-sm',    
+  RENTAL_INFO_TEXT_SIZE_LARGE: 'text-base', 
 
   RANKING_INFO_TEXT_SIZE: 'text-xs', 
   RANKING_INFO_TEXT_SIZE_LARGE: 'text-sm', 
@@ -177,10 +178,10 @@ const IOS_CONFIG = {
   ADMIN_INFO_TEXT_SIZE: 'text-sm',    
   ADMIN_INFO_TEXT_SIZE_LARGE: 'text-base', 
 
-  // 3. 하단 네비게이션
+  // ⭕ 6. 하단 네비게이션 위치 1~2px 내림 조율
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
-  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]', 
+  NAV_PADDING_BOTTOM: 'pb-[calc(env(safe-area-inset-bottom,0px)+10px)]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -2030,7 +2031,7 @@ export default function App() {
                                 }`}>{game.gameId}</span>
                               </div>
                               
-                              {/* iOS 세부 정보 (인원/시간/난이도/BGG) 폰트 상향 */}
+                              {/* ⭕ 5. iOS 세부 정보 (인원/시간/난이도/BGG) 폰트 1pt 상향 */}
                               <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${
                                 isLargeFont
                                   ? isIosDevice ? IOS_CONFIG.RENTAL_INFO_TEXT_SIZE_LARGE : 'text-xs'
@@ -2618,7 +2619,7 @@ export default function App() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="font-bold leading-snug break-keep mb-0.5">
-                              {/* ⭕ 4. 게임명 폰트는 지시대로 변동 없이 기존 유지 */}
+                              {/* ⭕ 게임명 폰트는 지시대로 변동 없이 기존 유지 */}
                               <span className={`text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</span>
                               <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap text-xs">({game.gameId})</span>
                               <span className="inline-flex items-center ml-1.5 align-middle">
@@ -2630,7 +2631,7 @@ export default function App() {
                               </span>
                             </div>
                             
-                            {/* ⭕ 4. 게임명 외 서브 정보 폰트 크기 상향 */}
+                            {/* ⭕ 게임명 외 서브 정보 폰트 크기 상향 */}
                             <p className={`text-slate-400 mt-1 font-medium ${
                               isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-xs'
                             }`}>{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
@@ -2672,7 +2673,7 @@ export default function App() {
                     </h2>
                   </div>
 
-                  {/* ⭕ 4. 세그먼트 버튼 폰트 상향 */}
+                  {/* ⭕ 세그먼트 버튼 폰트 상향 */}
                   <div className={`flex p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                     <button
                       onClick={() => setAdminRentalTab('active')}
@@ -2716,13 +2717,13 @@ export default function App() {
                           }`}>
                             <div className="flex justify-between items-start">
                               <div>
-                                {/* ⭕ 3, 4. 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
+                                {/* ⭕ 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
                                 <span className={`text-slate-500 font-semibold block mb-0.5 ${
                                   isIosDevice ? 'text-xs' : 'text-[11px]'
                                 }`}>
                                   대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
                                 </span>
-                                {/* ⭕ 4. 게임명은 기존 폰트 크기(text-xs) 유지 */}
+                                {/* ⭕ 게임명은 기존 폰트 크기(text-xs) 유지 */}
                                 <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <span>{rental.gameTitle}</span>
                                   <span className="text-slate-400 font-bold ml-1 text-xs">({rental.gameId})</span>
@@ -2734,7 +2735,7 @@ export default function App() {
                                 </span>
                               )}
                             </div>
-                            {/* ⭕ 4. 대여일 / 반납예정일 폰트 상향 */}
+                            {/* ⭕ 대여일 / 반납예정일 폰트 상향 */}
                             <div className={`mt-3 pt-2 border-t flex justify-between font-medium ${
                               isIosDevice ? 'text-xs' : 'text-[11px]'
                             } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
@@ -2758,13 +2759,13 @@ export default function App() {
                           }`}>
                             <div className="flex justify-between items-start">
                               <div>
-                                {/* ⭕ 3, 4. 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
+                                {/* ⭕ 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
                                 <span className={`text-slate-500 font-semibold block mb-0.5 ${
                                   isIosDevice ? 'text-xs' : 'text-[11px]'
                                 }`}>
                                   대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
                                 </span>
-                                {/* ⭕ 4. 게임명은 기존 폰트 크기(text-xs) 유지 */}
+                                {/* ⭕ 게임명은 기존 폰트 크기(text-xs) 유지 */}
                                 <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                   <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
                                   <span>{rental.gameTitle}</span>
@@ -2772,7 +2773,7 @@ export default function App() {
                                 </h3>
                               </div>
                             </div>
-                            {/* ⭕ 4. 대여일 / 반납일 폰트 상향 */}
+                            {/* ⭕ 대여일 / 반납일 폰트 상향 */}
                             <div className={`mt-2 pt-2 border-t flex justify-between font-medium ${
                               isIosDevice ? 'text-xs' : 'text-[11px]'
                             } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
@@ -2969,9 +2970,9 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                       }`}>
                         <div className="flex justify-between items-start gap-2">
-                          {/* ⭕ 4. 공지사항 관리 하단 노출 공지 제목 폰트 상향 (text-sm -> text-base) */}
+                          {/* ⭕ 4. 공지사항 관리 하단 노출 공지 제목 폰트 1pt 하향 조정 (text-base -> text-sm) */}
                           <h3 className={`font-extrabold break-all leading-snug ${
-                            isIosDevice ? 'text-base' : 'text-sm'
+                            isIosDevice ? 'text-sm' : 'text-xs'
                           } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
@@ -2995,7 +2996,7 @@ export default function App() {
                         <p className={`whitespace-pre-wrap break-all leading-relaxed font-medium ${
                           isIosDevice ? 'text-sm' : 'text-xs'
                         } ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
-                        {/* ⭕ 4. 공지 작성일 폰트 상향 (text-[11px] -> text-xs/text-sm) */}
+                        {/* ⭕ 4. 공지 작성일 폰트 상향 */}
                         <span className={`text-slate-400 block pt-1 font-mono ${
                           isIosDevice ? 'text-xs' : 'text-[11px]'
                         }`}>{n.createdAt} 작성</span>
@@ -3031,13 +3032,13 @@ export default function App() {
           </div>
         )}
 
-        {/* ⭕ 1. 하단 네비게이션: border-t 및 하단 50px 완벽 가림막 패치 적용 (iOS 실선/여백 100% 원천 차단) */}
+        {/* ⭕ 1, 2. 하단 네비게이션: 하단 가림막 레이어 밀착 연장 및 1~2px 미세 내림 조정 적용 */}
         <nav 
           className={`fixed bottom-0 left-0 right-0 w-full z-30 shadow-lg transition-colors ${
             isDarkMode ? 'bg-slate-900' : 'bg-white'
           } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
         >
-          {/* ⭕ 1. iOS 전용 하단 50px 매립 가림막 블라인드 패치 (실선/여백 완벽 가림) */}
+          {/* ⭕ iOS 전용 하단 50px 매립 가림막 블라인드 패치 (실선/여백 완벽 차단) */}
           {isIosDevice && (
             <div 
               aria-hidden="true"
@@ -3080,7 +3081,7 @@ export default function App() {
           </div>
         </nav>
 
-        {/* ⭕ 1. 설정 드로어 (폰트 1pt씩 상향) */}
+        {/* ⭕ 1. 설정 드로어 (세부 폰트 및 아이콘 크기 재조율 반영) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isSettingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3101,9 +3102,11 @@ export default function App() {
             <div className="flex-1 p-4 overflow-y-auto space-y-5">
               {/* A. 계정 설정 */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <User size={13} /> 계정 설정
+                {/* ⭕ 1. 섹션 헤더 타이틀 및 아이콘 1pt 상향 (text-xs, Icon 15) */}
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <User size={15} /> 계정 설정
                 </h4>
+                {/* ⭕ 1. 주요 메뉴명 1pt 하향 (text-sm) */}
                 <button
                   onClick={() => {
                     if (currentUser) {
@@ -3114,25 +3117,27 @@ export default function App() {
                     }
                   }}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-base' : 'text-sm'
+                    isIosDevice ? 'text-sm' : 'text-xs'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   <span className="truncate pr-1">내 정보 / 비밀번호</span>
-                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
               {/* B. 나의 활동 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Heart size={13} className="text-rose-500" /> 나의 활동
+                {/* ⭕ 1. 섹션 헤더 타이틀 및 아이콘 1pt 상향 */}
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <Heart size={15} className="text-rose-500" /> 나의 활동
                 </h4>
+                {/* ⭕ 1. 주요 메뉴명 1pt 하향 (text-sm) */}
                 <button
                   onClick={() => setIsFavoritesModalOpen(true)}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-base' : 'text-sm'
+                    isIosDevice ? 'text-sm' : 'text-xs'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
@@ -3140,13 +3145,13 @@ export default function App() {
                   <span className="truncate">
                     찜목록 ({userFavorites.length})
                   </span>
-                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
 
                 <button
                   onClick={() => setIsMyRatingsModalOpen(true)}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-base' : 'text-sm'
+                    isIosDevice ? 'text-sm' : 'text-xs'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
@@ -3154,22 +3159,24 @@ export default function App() {
                   <span className="truncate">
                     내 평점 ({myRatingGamesList.length})
                   </span>
-                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
               {/* C. 고객지원 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Siren size={13} /> 고객지원
+                {/* ⭕ 1. 섹션 헤더 타이틀 및 아이콘 1pt 상향 */}
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <Siren size={15} /> 고객지원
                 </h4>
+                {/* ⭕ 1. 주요 메뉴명 1pt 하향 (text-sm) */}
                 <button
                   onClick={() => {
                     setReportForm({ title: '', content: '', category: '' });
                     setIsReportModalOpen(true);
                   }}
                   className={`w-full p-2.5 rounded-xl border text-left font-bold flex justify-between items-center transition ${
-                    isIosDevice ? 'text-base' : 'text-sm'
+                    isIosDevice ? 'text-sm' : 'text-xs'
                   } ${
                     isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
                   }`}
@@ -3177,20 +3184,22 @@ export default function App() {
                   <span className="truncate">
                     신고 및 건의
                   </span>
-                  <ChevronRight size={16} className="text-slate-400 flex-shrink-0" />
+                  <ChevronRight size={15} className="text-slate-400 flex-shrink-0" />
                 </button>
               </div>
 
               {/* D. 테마 선택 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Sun size={13} /> 테마 선택
+                {/* ⭕ 1. 섹션 헤더 타이틀 및 아이콘 1pt 상향 */}
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <Sun size={15} /> 테마 선택
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                  {/* ⭕ 1. 선택 버튼 폰트 1pt 상향 (text-sm) */}
                   <button
                     onClick={() => setThemeMode('light')}
                     className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                      isIosDevice ? 'text-sm' : 'text-[11px]'
                     } ${
                       themeMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-200'
                     }`}
@@ -3200,7 +3209,7 @@ export default function App() {
                   <button
                     onClick={() => setThemeMode('dark')}
                     className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                      isIosDevice ? 'text-sm' : 'text-[11px]'
                     } ${
                       themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
                     }`}
@@ -3212,14 +3221,16 @@ export default function App() {
 
               {/* E. 글자 크기 */}
               <div className="space-y-2 pt-2 border-t border-slate-200/20">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Type size={13} /> 글자 크기
+                {/* ⭕ 1. 섹션 헤더 타이틀 및 아이콘 1pt 상향 */}
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <Type size={15} /> 글자 크기
                 </h4>
                 <div className={`flex p-1 rounded-xl font-bold ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                  {/* ⭕ 1. 선택 버튼 폰트 1pt 상향 (text-sm) */}
                   <button
                     onClick={() => setFontSize('normal')}
                     className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                      isIosDevice ? 'text-sm' : 'text-[11px]'
                     } ${
                       fontSize === 'normal' 
                         ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
@@ -3231,7 +3242,7 @@ export default function App() {
                   <button
                     onClick={() => setFontSize('large')}
                     className={`flex-1 py-2 rounded-lg transition flex items-center justify-center ${
-                      isIosDevice ? 'text-xs' : 'text-[11px]'
+                      isIosDevice ? 'text-sm' : 'text-[11px]'
                     } ${
                       fontSize === 'large' 
                         ? isDarkMode ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
@@ -3375,7 +3386,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 공지사항 드로어 */}
+        {/* ⭕ 3. 공지사항 목록 드로어 (타이틀 "전체 공지 목록" 폰트 1pt 상향 반영) */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isNoticeDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -3394,7 +3405,8 @@ export default function App() {
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto space-y-3 overflow-x-hidden">
-              <h4 className="font-bold text-slate-400 px-0.5 text-xs">전체 공지 목록 ({notices.length})</h4>
+              {/* ⭕ 3. 메뉴 타이틀 폰트 1pt 상향 (text-xs -> text-sm) */}
+              <h4 className={`font-bold text-slate-400 px-0.5 ${isIosDevice ? 'text-sm' : 'text-xs'}`}>전체 공지 목록 ({notices.length})</h4>
               {notices.map((notice: Notice) => {
                 const isExpanded = expandedNoticeId === notice.noticeId;
 
@@ -3463,7 +3475,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* ⭕ 1. 관리자용 접수함 드로어 (폰트 1pt씩 상향) */}
+        {/* 관리자용 접수함 드로어 */}
         <div className={`fixed inset-0 z-50 transition-all duration-300 ${
           isAdminReportDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
