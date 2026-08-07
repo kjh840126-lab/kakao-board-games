@@ -1130,7 +1130,7 @@ export default function App() {
       }]);
 
       if (error) alert('공지사항 등록 실패: ' + error.message);
-      else alert('공지사항이 등록되었습니다 me.');
+      else alert('공지사항이 등록되었습니다.');
     }
 
     await fetchInitialData();
@@ -1627,9 +1627,9 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ isIosDevice 변수를 style에 연결하여 아이폰에만 1.08배 보정 줌 부여 (안드로이드는 0.001%도 영향을 받지 않음)
+    // ⭕ 아이폰(iOS)에서만 10% 더 크게(zoom: 1.10) 조정 / 안드로이드는 zoom: 1.0으로 원본 크기 유지
     <div 
-      style={{ zoom: isIosDevice ? '1.08' : '1.0' }}
+      style={{ zoom: isIosDevice ? '1.10' : '1.0' }}
       className={`min-h-screen w-full flex justify-center transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}
     >
       <div className={`w-full min-h-screen flex flex-col relative transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'}`}>
@@ -4039,7 +4039,7 @@ export default function App() {
                   ></textarea>
                 </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-2 pt-2">
                   <button type="button" onClick={() => setIsNoticeModalOpen(false)} className="flex-1 bg-slate-100 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-200 transition text-xs">취소</button>
                   <button type="submit" className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-bold hover:bg-slate-800 transition text-xs">저장</button>
                 </div>
