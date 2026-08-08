@@ -10,76 +10,15 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
     />
     
-    <!-- iOS PWA (홈 화면에 추가) 전용 메타 태그 -->
+    <!-- iOS PWA 전용 메타 태그 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="카카오 보드게임" />
     
-    <!-- 브라우저 테마 색상 (상단 노치/헤더 배경 동기화) -->
-    <meta name="theme-color" content="#FEE500" />
-    
     <title>카카오 보드게임 대여 서비스</title>
-
-    <style>
-      /* ⭕ 브라우저가 HTML을 읽는 즉시 적용되는 인라인 고정 CSS */
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        background-color: #ffffff;
-        -webkit-tap-highlight-color: transparent;
-        overflow-x: hidden;
-      }
-
-      /* 상단 헤더 영역 사전 고정 (새로고침 시 1px도 안 움직임) */
-      #preload-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 64px;
-        background-color: #FEE500;
-        border-bottom: 1px solid rgba(252, 211, 77, 0.4);
-        padding-top: env(safe-area-inset-top, 0px);
-        z-index: 9999;
-        box-sizing: border-box;
-      }
-
-      /* 하단 네비게이션 영역 사전 고정 */
-      #preload-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 56px;
-        background-color: #ffffff;
-        border-top: 1px solid #e2e8f0;
-        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-        z-index: 9999;
-        box-sizing: border-box;
-      }
-    </style>
   </head>
   <body class="antialiased">
-    <!-- ⭕ React가 로드되기 전 미리 고정시켜두는 정적 틀 -->
-    <div id="preload-header"></div>
-    <div id="preload-nav"></div>
-
     <div id="root"></div>
-
     <script type="module" src="/src/main.tsx"></script>
-
-    <script>
-      // ⭕ React 앱이 완전히 그려지면 사전 고정 틀을 조용히 제거
-      window.addEventListener('DOMContentLoaded', () => {
-        const header = document.getElementById('preload-header');
-        const nav = document.getElementById('preload-nav');
-        setTimeout(() => {
-          if (header) header.style.display = 'none';
-          if (nav) nav.style.display = 'none';
-        }, 300);
-      });
-    </script>
   </body>
 </html>
