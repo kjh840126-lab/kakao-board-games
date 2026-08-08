@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// 상단 헤더 독립 컴포넌트
+// ⭕ 상단 헤더 정적 배치
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -233,12 +233,10 @@ const FixedHeader = memo(({
   today, 
   unreadReportsCount, 
   setIsAdminReportDrawerOpen, 
-  setIsSettingsOpen,
-  headerRef
+  setIsSettingsOpen
 }: any) => {
   return (
     <header 
-      ref={headerRef}
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
       className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
         isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
@@ -305,7 +303,7 @@ const FixedHeader = memo(({
   );
 });
 
-// 하단 네비게이션 독립 컴포넌트
+// ⭕ 하단 네비게이션 정적 배치
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -320,15 +318,6 @@ const FixedBottomNav = memo(({
         isDarkMode ? 'bg-slate-900' : 'bg-white'
       } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
     >
-      {isIosDevice && (
-        <div 
-          aria-hidden="true"
-          className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
-            isDarkMode ? 'bg-slate-900' : 'bg-white'
-          }`} 
-        />
-      )}
-
       <div className="flex justify-around px-2 pt-2.5 pb-2 relative z-10">
         <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
           <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
@@ -489,10 +478,6 @@ export default function App() {
 
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
 
-  // ⭕ TS2304 에러 복구: headerHeight 및 headerRef를 App 컴포넌트에 올바르게 정의
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
-  const headerRef = useRef<HTMLElement | null>(null); 
-
   const isHeaderAdminTheme = activeTab === 'admin';
   const isDarkMode = themeMode === 'dark';
   const isLargeFont = fontSize === 'large';
@@ -510,38 +495,6 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-  useLayoutEffect(() => {
-    if (!isIosDevice || !headerRef.current) return;
-
-    const updateHeaderHeight = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.getBoundingClientRect().height;
-        if (height > 50) {
-          setHeaderHeight(height);
-        }
-      }
-    };
-
-    updateHeaderHeight();
-
-    const observer = new ResizeObserver(() => {
-      updateHeaderHeight();
-    });
-
-    observer.observe(headerRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isIosDevice]);
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.style.backgroundColor = isDarkMode ? '#0f172a' : '#FEE500';
-      document.body.style.backgroundColor = isDarkMode ? '#0f172a' : '#ffffff';
-    }
-  }, [isDarkMode]);
 
   useEffect(() => {
     fetchInitialData();
@@ -4299,8 +4252,8 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   >
-                    <Option value="Y">노출</Option>
-                    <Option value="N">숨김</Option>
+                    <option value="Y">노출</option>
+                    <option value="N">숨김</option>
                   </select>
                 </div>
               </div>
