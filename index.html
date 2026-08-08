@@ -17,29 +17,37 @@
     
     <title>카카오 보드게임 대여 서비스</title>
 
+    <!-- React 마운트 전 다크모드 동기 적용 (새로고침 시 흰색/노란색 번쩍임 방지) -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('kakao_bg_theme');
+          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.add('light');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <style>
-      /* 라이트모드 기본 상태바/바깥 배경 (노란색) */
-      html,
-      body {
+      html, body {
         width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
-        background-color: #FEE500;
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* 다크모드 상태바/바깥 배경 (#0f172a) */
-      html.dark,
-      html.dark body {
-        background-color: #0f172a;
+      /* 라이트모드 기본 본문/하단 배경 (흰색) */
+      html, body {
+        background-color: #ffffff;
       }
 
-      @media (prefers-color-scheme: dark) {
-        html:not(.light),
-        html:not(.light) body {
-          background-color: #0f172a;
-        }
+      /* 다크모드 기본 본문/상하단 배경 (#0f172a) */
+      html.dark, html.dark body {
+        background-color: #0f172a;
       }
 
       #root {
