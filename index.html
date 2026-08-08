@@ -17,13 +17,14 @@
     
     <title>카카오 보드게임 대여 서비스</title>
 
-    <!-- FOUC 및 테마 지연 완벽 차단: React 로드 전 0.001초 만에 배경색 결정 -->
+    <!-- [핵심] 새로고침 시 흰색 번쩍임 원천 차단: React 실행 전 테마 동기 결정 -->
     <script>
       (function() {
         try {
           var savedTheme = localStorage.getItem('kakao_bg_theme');
           var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
           var docEl = document.documentElement;
+          
           if (isDark) {
             docEl.classList.add('dark');
             docEl.style.backgroundColor = '#0f172a';
@@ -36,7 +37,7 @@
     </script>
 
     <style>
-      /* 최상위 요소 배경을 투명하지 않게 꽉 채워 하단 Safe Area 딜레이 제거 */
+      /* 최상위 html, body의 기본 배경을 투명하지 않게 설정하여 하단 유격 차단 */
       html {
         width: 100%;
         height: 100%;

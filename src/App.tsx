@@ -509,7 +509,7 @@ export default function App() {
     if (!isIosDevice || !headerRef.current) return;
   }, [isIosDevice]);
 
-  // 테마 변경 버튼 클릭 시 하단 Safe Area 배경색 지연 없이 0초 만에 즉시 전환
+  // [핵심] 테마 변경 시 하단 Safe Area 영역 딜레이 0초 즉시 전환
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
