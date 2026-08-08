@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -145,9 +145,12 @@ const ALLOWED_EMAIL_DOMAINS = [
 
 const currentYear = new Date().getFullYear();
 
-// =================================----------------====================
-// ⭕ [iOS 전용 UI 크기 개별 설정 영역]
-// =================================----------------====================
+const checkIsIosDevice = () => {
+  if (typeof window === 'undefined') return false;
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+  return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+};
+
 const IOS_CONFIG = {
   HEADER_LOGO_HEIGHT: 'h-11',         
   HEADER_ICON_SIZE: 22,               
@@ -156,7 +159,7 @@ const IOS_CONFIG = {
 
   MAIN_TEXT_SIZE: 'text-sm',          
   MAIN_TEXT_SIZE_LARGE: 'text-base',  
-  MAIN_PADDING_X: 'px-5',             
+  MAIN_PADDING_X: 'px-5',
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     
   RANKING_IMAGE_SIZE: 'w-16 h-16',    
@@ -222,10 +225,146 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
+// ⭕ [핵심 해결 1]: 상단 헤더를 독립 컴포넌트(memo)로 고정하여 본문 재렌더링 시 깜빡임 차단
+const FixedHeader = memo(({ 
+  isHeaderAdminTheme, 
+  isIosDevice, 
+  currentUser, 
+  today, 
+  unreadReportsCount, 
+  setIsAdminReportDrawerOpen, 
+  setIsSettingsOpen 
+}: any) => {
+  return (
+    <header 
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
+      className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center h-[68px] ${
+        isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
+      }`}
+    >
+      <div className="w-full flex justify-between items-center h-full">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <img 
+              src="/header_logo.png" 
+              alt="kakao board games" 
+              className={`w-auto object-contain drop-shadow-sm ${isIosDevice ? IOS_CONFIG.HEADER_LOGO_HEIGHT : 'h-9'}`}
+              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+            />
+          </div>
+
+          <div className={`flex flex-wrap items-center gap-1.5 font-bold text-slate-900 ${isIosDevice ? IOS_CONFIG.HEADER_USER_TEXT_SIZE : 'text-xs'}`}>
+            <div className="flex items-center gap-1">
+              <UserCheck size={14} className="text-slate-900" />
+              <span>{currentUser?.userId}</span>
+            </div>
+
+            {currentUser?.penaltyEndDate && currentUser.penaltyEndDate >= today && (
+              <div className="flex items-center gap-1">
+                <span className={`bg-rose-600 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 font-extrabold shadow-sm ${
+                  isIosDevice ? IOS_CONFIG.HEADER_BADGE_TEXT_SIZE : 'text-[10px]'
+                }`}>
+                  <AlertCircle size={10} /> 패널티 {currentUser.penaltyPoints}점
+                </span>
+                <span className={`text-rose-700 font-extrabold bg-rose-100 px-1.5 py-0.5 rounded-md border border-rose-200 ${
+                  isIosDevice ? IOS_CONFIG.HEADER_BADGE_TEXT_SIZE : 'text-[10px]'
+                }`}>
+                  (~{currentUser.penaltyEndDate} 대여불가)
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {isHeaderAdminTheme ? (
+          <button
+            onClick={() => setIsAdminReportDrawerOpen(true)}
+            title="신고/건의 확인"
+            className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-sky-300 hover:bg-sky-200 text-slate-900 relative"
+          >
+            <Siren size={isIosDevice ? IOS_CONFIG.HEADER_ICON_SIZE : 18} />
+            {unreadReportsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm">
+                N
+              </span>
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            title="설정"
+            className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-amber-400/80 hover:bg-amber-400 text-slate-900"
+          >
+            <Settings size={isIosDevice ? IOS_CONFIG.HEADER_ICON_SIZE : 18} />
+          </button>
+        )}
+      </div>
+    </header>
+  );
+});
+
+// ⭕ [핵심 해결 2]: 하단 네비게이션을 독립 컴포넌트(memo)로 고정
+const FixedBottomNav = memo(({ 
+  isDarkMode, 
+  isIosDevice, 
+  activeTab, 
+  isAdmin, 
+  unreadReportsCount, 
+  handleTabChange 
+}: any) => {
+  return (
+    <nav 
+      className={`fixed -bottom-[1px] left-0 right-0 w-full z-40 shadow-lg ${
+        isDarkMode ? 'bg-slate-900' : 'bg-white'
+      } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
+    >
+      {isIosDevice && (
+        <div 
+          aria-hidden="true"
+          className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
+            isDarkMode ? 'bg-slate-900' : 'bg-white'
+          }`} 
+        />
+      )}
+
+      <div className="flex justify-around px-2 pt-2.5 pb-2 relative z-10">
+        <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+          <span className="mt-1">대여</span>
+        </button>
+        <button onClick={() => handleTabChange('returns')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <PackageCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+          <span className="mt-1">반납</span>
+        </button>
+        <button onClick={() => handleTabChange('ranking')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <Trophy size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+          <span className="mt-1">랭킹</span>
+        </button>
+        <button onClick={() => handleTabChange('sites')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'sites' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
+          <Globe size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+          <span className="mt-1">사이트</span>
+        </button>
+        {isAdmin && (
+          <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold relative ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
+            <div className="relative">
+              <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
+              {unreadReportsCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-rose-600 text-white font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm">
+                  N
+                </span>
+              )}
+            </div>
+            <span className="mt-1">관리자</span>
+          </button>
+        )}
+      </div>
+    </nav>
+  );
+});
+
 export default function App() {
   const [users, setUsers] = useState<UserData[]>([]);
   
-  // ⭕ 로컬 캐시를 읽어와서 새로고침 시에도 기존 게임 카드를 즉시 유지
   const [games, setGames] = useState<Game[]>(() => {
     try {
       const saved = localStorage.getItem('kakao_bg_games_cache');
@@ -345,14 +484,7 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
-  // ⭕ iOS 기기 여부를 즉시 동기화 판별하여 새로고침 시 레이아웃 흔들림 방지
-  const [isIosDevice] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
-  });
-
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
 
   // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
@@ -360,7 +492,6 @@ export default function App() {
   // 대여 탭 전용 스크롤 위치 기억 Ref
   const gamesTabScrollPosRef = useRef<number>(0);
 
-  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -368,32 +499,6 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-  // ⭕ 새로고침 시 헤더 높이가 뒤늦게 재계산되어 본문이 덜컹거리는 현상을 막기 위해 높이 고정 관찰 적용
-  useLayoutEffect(() => {
-    if (!isIosDevice || !headerRef.current) return;
-
-    const updateHeaderHeight = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.getBoundingClientRect().height;
-        if (height > 50) {
-          setHeaderHeight(height);
-        }
-      }
-    };
-
-    updateHeaderHeight();
-
-    const observer = new ResizeObserver(() => {
-      updateHeaderHeight();
-    });
-
-    observer.observe(headerRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isIosDevice]);
 
   useEffect(() => {
     fetchInitialData();
@@ -1726,77 +1831,20 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // Safari 주소창 반응형 Window 스크롤 구조
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
-      {/* ⭕ 1. 고정 상단 헤더: 원본 헤더 높이 및 패딩을 그대로 적용하되, 레이아웃 고정을 통해 새로고침시 덜컹거림 제거 */}
-      <header 
-        ref={headerRef}
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-        className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
-          isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
-        }`}
-      >
-        <div className="w-full flex justify-between items-center">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <img 
-                src="/header_logo.png" 
-                alt="kakao board games" 
-                className={`w-auto object-contain drop-shadow-sm ${isIosDevice ? IOS_CONFIG.HEADER_LOGO_HEIGHT : 'h-9'}`}
-                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-              />
-            </div>
+      {/* ⭕ 1. 고정 상단 헤더: memo 컴포넌트로 재렌더링 단절 */}
+      <FixedHeader 
+        isHeaderAdminTheme={isHeaderAdminTheme}
+        isIosDevice={isIosDevice}
+        currentUser={currentUser}
+        today={today}
+        unreadReportsCount={unreadReportsCount}
+        setIsAdminReportDrawerOpen={setIsAdminReportDrawerOpen}
+        setIsSettingsOpen={setIsSettingsOpen}
+      />
 
-            <div className={`flex flex-wrap items-center gap-1.5 font-bold text-slate-900 ${isIosDevice ? IOS_CONFIG.HEADER_USER_TEXT_SIZE : 'text-xs'}`}>
-              <div className="flex items-center gap-1">
-                <UserCheck size={14} className="text-slate-900" />
-                <span>{currentUser.userId}</span>
-              </div>
-
-              {currentUser.penaltyEndDate && currentUser.penaltyEndDate >= today && (
-                <div className="flex items-center gap-1">
-                  <span className={`bg-rose-600 text-white px-1.5 py-0.5 rounded-md flex items-center gap-0.5 font-extrabold shadow-sm ${
-                    isIosDevice ? IOS_CONFIG.HEADER_BADGE_TEXT_SIZE : 'text-[10px]'
-                  }`}>
-                    <AlertCircle size={10} /> 패널티 {currentUser.penaltyPoints}점
-                  </span>
-                  <span className={`text-rose-700 font-extrabold bg-rose-100 px-1.5 py-0.5 rounded-md border border-rose-200 ${
-                    isIosDevice ? IOS_CONFIG.HEADER_BADGE_TEXT_SIZE : 'text-[10px]'
-                  }`}>
-                    (~{currentUser.penaltyEndDate} 대여불가)
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {isHeaderAdminTheme ? (
-            <button
-              onClick={() => setIsAdminReportDrawerOpen(true)}
-              title="신고/건의 확인"
-              className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-sky-300 hover:bg-sky-200 text-slate-900 relative"
-            >
-              <Siren size={isIosDevice ? IOS_CONFIG.HEADER_ICON_SIZE : 18} />
-              {unreadReportsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-extrabold w-4 h-4 rounded-full flex items-center justify-center text-[9px] border-2 border-sky-400 shadow-sm">
-                  N
-                </span>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              title="설정"
-              className="p-2 rounded-xl font-bold transition flex items-center justify-center shadow-sm bg-amber-400/80 hover:bg-amber-400 text-slate-900"
-            >
-              <Settings size={isIosDevice ? IOS_CONFIG.HEADER_ICON_SIZE : 18} />
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* 2. 메인 본문 영역 (Window 스크롤 지원) */}
+      {/* 2. 메인 본문 영역 */}
       <main 
         ref={mainScrollRef}
         onScroll={handleScroll}
@@ -3059,54 +3107,15 @@ export default function App() {
         </div>
       )}
 
-      {/* ⭕ 하단 네비게이션: 위치 -bottom-[1px] 밀착 및 z-40 레이어로 고정 */}
-      <nav 
-        className={`fixed -bottom-[1px] left-0 right-0 w-full z-40 shadow-lg transition-colors ${
-          isDarkMode ? 'bg-slate-900' : 'bg-white'
-        } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
-      >
-        {/* iOS 전용 하단 100px 매립 가림막 블라인드 패치 */}
-        {isIosDevice && (
-          <div 
-            aria-hidden="true"
-            className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
-              isDarkMode ? 'bg-slate-900' : 'bg-white'
-            }`} 
-          />
-        )}
-
-        <div className="flex justify-around px-2 pt-2.5 pb-2 relative z-10">
-          <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">대여</span>
-          </button>
-          <button onClick={() => handleTabChange('returns')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <PackageCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">반납</span>
-          </button>
-          <button onClick={() => handleTabChange('ranking')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Trophy size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">랭킹</span>
-          </button>
-          <button onClick={() => handleTabChange('sites')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'sites' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
-            <Globe size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-            <span className="mt-1">사이트</span>
-          </button>
-          {isAdmin && (
-            <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold relative ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
-              <div className="relative">
-                <ShieldCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-                {unreadReportsCount > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-rose-600 text-white font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] border border-white shadow-sm">
-                    N
-                  </span>
-                )}
-              </div>
-              <span className="mt-1">관리자</span>
-            </button>
-          )}
-        </div>
-      </nav>
+      {/* ⭕ 2. 고정 하단 네비게이션: memo 컴포넌트로 재렌더링 단절 */}
+      <FixedBottomNav 
+        isDarkMode={isDarkMode}
+        isIosDevice={isIosDevice}
+        activeTab={activeTab}
+        isAdmin={isAdmin}
+        unreadReportsCount={unreadReportsCount}
+        handleTabChange={handleTabChange}
+      />
 
       {/* 설정 드로어 */}
       <div className={`fixed inset-0 z-50 transition-all duration-300 ${
