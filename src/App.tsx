@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, memo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// ⭕ [핵심 해결 1]: 상단 헤더를 독립 컴포넌트(memo)로 고정하여 본문 재렌더링 시 깜빡임 차단
+// 상단 헤더 독립 컴포넌트
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -233,16 +233,18 @@ const FixedHeader = memo(({
   today, 
   unreadReportsCount, 
   setIsAdminReportDrawerOpen, 
-  setIsSettingsOpen 
+  setIsSettingsOpen,
+  headerRef
 }: any) => {
   return (
     <header 
+      ref={headerRef}
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-      className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center h-[68px] ${
+      className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
         isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
       }`}
     >
-      <div className="w-full flex justify-between items-center h-full">
+      <div className="w-full flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <img 
@@ -303,7 +305,7 @@ const FixedHeader = memo(({
   );
 });
 
-// ⭕ [핵심 해결 2]: 하단 네비게이션을 독립 컴포넌트(memo)로 고정
+// 하단 네비게이션 독립 컴포넌트
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -314,7 +316,7 @@ const FixedBottomNav = memo(({
 }: any) => {
   return (
     <nav 
-      className={`fixed -bottom-[1px] left-0 right-0 w-full z-40 shadow-lg ${
+      className={`fixed -bottom-[1px] left-0 right-0 w-full z-40 shadow-lg transition-colors ${
         isDarkMode ? 'bg-slate-900' : 'bg-white'
       } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
     >
@@ -486,12 +488,16 @@ export default function App() {
 
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
 
+  // ⭕ TS2304 복구: headerHeight 선언부 재작성
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
+
   // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
 
   // 대여 탭 전용 스크롤 위치 기억 Ref
   const gamesTabScrollPosRef = useRef<number>(0);
 
+  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -499,6 +505,31 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+  useLayoutEffect(() => {
+    if (!isIosDevice || !headerRef.current) return;
+
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.getBoundingClientRect().height;
+        if (height > 50) {
+          setHeaderHeight(height);
+        }
+      }
+    };
+
+    updateHeaderHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+
+    observer.observe(headerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isIosDevice]);
 
   useEffect(() => {
     fetchInitialData();
@@ -1842,9 +1873,10 @@ export default function App() {
         unreadReportsCount={unreadReportsCount}
         setIsAdminReportDrawerOpen={setIsAdminReportDrawerOpen}
         setIsSettingsOpen={setIsSettingsOpen}
+        headerRef={headerRef}
       />
 
-      {/* 2. 메인 본문 영역 */}
+      {/* 2. 메인 본문 영역 (Window 스크롤 지원) */}
       <main 
         ref={mainScrollRef}
         onScroll={handleScroll}
