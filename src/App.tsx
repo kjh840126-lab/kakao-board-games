@@ -509,11 +509,20 @@ export default function App() {
     if (!isIosDevice || !headerRef.current) return;
   }, [isIosDevice]);
 
+  // 테마 변경 버튼 클릭 시 하단 Safe Area 배경색 지연 없이 0초 만에 즉시 전환
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
       document.documentElement.style.backgroundColor = bgColor;
       document.body.style.backgroundColor = bgColor;
+
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      }
     }
   }, [isDarkMode]);
 
@@ -535,14 +544,6 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
-    
-    if (themeMode === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    }
   }, [themeMode]);
 
   useEffect(() => {

@@ -17,37 +17,45 @@
     
     <title>카카오 보드게임 대여 서비스</title>
 
-    <!-- React 마운트 전 다크모드 동기 적용 (새로고침 시 흰색/노란색 번쩍임 방지) -->
+    <!-- FOUC 및 테마 지연 완벽 차단: React 로드 전 0.001초 만에 배경색 결정 -->
     <script>
       (function() {
         try {
-          var theme = localStorage.getItem('kakao_bg_theme');
-          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
+          var savedTheme = localStorage.getItem('kakao_bg_theme');
+          var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var docEl = document.documentElement;
+          if (isDark) {
+            docEl.classList.add('dark');
+            docEl.style.backgroundColor = '#0f172a';
           } else {
-            document.documentElement.classList.add('light');
+            docEl.classList.add('light');
+            docEl.style.backgroundColor = '#ffffff';
           }
         } catch (e) {}
       })();
     </script>
 
     <style>
-      html, body {
+      /* 최상위 요소 배경을 투명하지 않게 꽉 채워 하단 Safe Area 딜레이 제거 */
+      html {
         width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
+        background-color: #ffffff;
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* 라이트모드 기본 본문/하단 배경 (흰색) */
-      html, body {
-        background-color: #ffffff;
+      html.dark {
+        background-color: #0f172a !important;
       }
 
-      /* 다크모드 기본 본문/상하단 배경 (#0f172a) */
-      html.dark, html.dark body {
-        background-color: #0f172a;
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: inherit;
       }
 
       #root {
