@@ -515,25 +515,26 @@ export default function App() {
     if (!isIosDevice || !headerRef.current) return;
   }, [isIosDevice]);
 
-  // [핵심 해결 1] 테마 모드 변경 시 iOS Safari 전용 메타 태그(theme-color) 및 배경색 동시 강제 업데이트
+  // [침하하 핵심 구현] 테마 변경 시 CSS 변수(--bg-main, --bg-header) 및 iOS 메타 태그(theme-color) 0ms 즉시 동기화
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      const targetColor = isDarkMode ? '#0f172a' : '#ffffff';
-      
-      document.documentElement.style.backgroundColor = targetColor;
-      document.body.style.backgroundColor = targetColor;
-
-      const metaThemeColor = document.getElementById('theme-color-meta');
-      if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', targetColor);
-      }
+      const root = document.documentElement;
+      const metaTheme = document.getElementById('theme-color-meta');
 
       if (isDarkMode) {
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
+        root.classList.add('dark');
+        root.classList.remove('light');
+        root.style.setProperty('--bg-main', '#0f172a');
+        root.style.setProperty('--bg-header', '#0f172a');
+        document.body.style.backgroundColor = '#0f172a';
+        if (metaTheme) metaTheme.setAttribute('content', '#0f172a');
       } else {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.classList.add('light');
+        root.classList.remove('dark');
+        root.classList.add('light');
+        root.style.setProperty('--bg-main', '#ffffff');
+        root.style.setProperty('--bg-header', '#FEE500');
+        document.body.style.backgroundColor = '#ffffff';
+        if (metaTheme) metaTheme.setAttribute('content', '#FEE500');
       }
     }
   }, [isDarkMode]);

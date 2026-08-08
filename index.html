@@ -4,51 +4,55 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     
+    <!-- iOS Safe Area 확장 및 Full Screen Viewport 설정 -->
     <meta 
       name="viewport" 
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
     />
     
-    <!-- [핵심 1] iOS 상/하단 브라우저 영역 전용 theme-color 메타 태그 추가 -->
+    <!-- [핵심 1] iOS 상/하단 브라우저 Safe Area 영역 전용 theme-color 메타 태그 -->
     <meta name="theme-color" id="theme-color-meta" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="카카오 보드게임" />
     
     <title>카카오 보드게임 대여 서비스</title>
 
-    <!-- [핵심 2] HTML 로드 0.001초 만에 theme-color 메타 태그 및 background를 동기 적용 -->
+    <!-- [핵심 2] 침하하 방식: React 로딩 전(0.001초) 브라우저가 화면을 그리는 순간 CSS 변수 및 Meta 태그 즉시 반영 -->
     <script>
       (function() {
         try {
-          var savedTheme = localStorage.getItem('kakao_bg_theme');
-          var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          var metaElem = document.getElementById('theme-color-meta');
+          var saved = localStorage.getItem('kakao_bg_theme');
+          var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          var meta = document.getElementById('theme-color-meta');
           
           if (isDark) {
-            document.documentElement.classList.add('dark');
-            document.documentElement.style.backgroundColor = '#0f172a';
-            if (metaElem) metaElem.setAttribute('content', '#0f172a');
+            root.classList.add('dark');
+            root.classList.remove('light');
+            root.style.setProperty('--bg-main', '#0f172a');
+            root.style.setProperty('--bg-header', '#0f172a');
+            if (meta) meta.setAttribute('content', '#0f172a');
           } else {
-            document.documentElement.classList.add('light');
-            document.documentElement.style.backgroundColor = '#ffffff';
-            if (metaElem) metaElem.setAttribute('content', '#ffffff');
+            root.classList.remove('dark');
+            root.classList.add('light');
+            root.style.setProperty('--bg-main', '#ffffff');
+            root.style.setProperty('--bg-header', '#FEE500');
+            if (meta) meta.setAttribute('content', '#FEE500');
           }
         } catch (e) {}
       })();
     </script>
 
     <style>
-      html, body {
+      /* [핵심 3] CSS 변수를 활용하여 최상위 레이어부터 하단 Safe Area까지 여백 유격 완전 차단 */
+      html {
         width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
+        background-color: var(--bg-main, #ffffff);
         -webkit-tap-highlight-color: transparent;
-      }
-
-      html {
-        background-color: #ffffff;
       }
 
       html.dark {
@@ -56,6 +60,10 @@
       }
 
       body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
         background-color: inherit;
       }
 
