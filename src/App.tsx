@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, memo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -152,8 +152,8 @@ const checkIsIosDevice = () => {
 };
 
 const IOS_CONFIG = {
-  HEADER_LOGO_HEIGHT: 'h-9',         
-  HEADER_ICON_SIZE: 22,                
+  HEADER_LOGO_HEIGHT: 'h-11',         
+  HEADER_ICON_SIZE: 22,               
   HEADER_USER_TEXT_SIZE: 'text-sm',   
   HEADER_BADGE_TEXT_SIZE: 'text-xs',  
 
@@ -179,6 +179,7 @@ const IOS_CONFIG = {
 
   NAV_ICON_SIZE: 24,                  
   NAV_TEXT_SIZE: 'text-xs',           
+  NAV_PADDING_BOTTOM: 'pb-[max(12px,env(safe-area-inset-bottom))]', 
 };
 
 const BggIcon = ({ size = 12, className = "" }: { size?: number; className?: string }) => (
@@ -224,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// ⭕ [개선 1]: CSS 순수 고정 레이아웃 헤더 컴포넌트
+// 상단 헤더 독립 컴포넌트
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -233,24 +234,23 @@ const FixedHeader = memo(({
   unreadReportsCount, 
   setIsAdminReportDrawerOpen, 
   setIsSettingsOpen,
+  headerRef
 }: any) => {
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 w-full z-40 shadow-sm flex flex-col justify-end transition-colors ${
+      ref={headerRef}
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
+      className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
         isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
       }`}
-      style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        height: 'calc(env(safe-area-inset-top, 0px) + 64px)'
-      }}
     >
-      <div className="w-full h-14 px-4 pb-2 flex justify-between items-center">
+      <div className="w-full flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <img 
               src="/header_logo.png" 
               alt="kakao board games" 
-              className={`w-auto object-contain drop-shadow-sm ${isIosDevice ? IOS_CONFIG.HEADER_LOGO_HEIGHT : 'h-8'}`}
+              className={`w-auto object-contain drop-shadow-sm ${isIosDevice ? IOS_CONFIG.HEADER_LOGO_HEIGHT : 'h-9'}`}
               onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
             />
           </div>
@@ -305,7 +305,7 @@ const FixedHeader = memo(({
   );
 });
 
-// ⭕ [개선 2]: CSS 순수 고정 레이아웃 하단 네비게이션
+// 하단 네비게이션 독립 컴포넌트
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -316,29 +316,35 @@ const FixedBottomNav = memo(({
 }: any) => {
   return (
     <nav 
-      className={`fixed bottom-0 left-0 right-0 w-full z-40 shadow-lg transition-colors ${
+      className={`fixed -bottom-[1px] left-0 right-0 w-full z-40 shadow-lg transition-colors ${
         isDarkMode ? 'bg-slate-900' : 'bg-white'
-      }`}
-      style={{
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}
+      } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
     >
-      <div className="flex justify-around items-center h-14 px-2 relative z-10">
+      {isIosDevice && (
+        <div 
+          aria-hidden="true"
+          className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
+            isDarkMode ? 'bg-slate-900' : 'bg-white'
+          }`} 
+        />
+      )}
+
+      <div className="flex justify-around px-2 pt-2.5 pb-2 relative z-10">
         <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
           <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-          <span className="mt-0.5">대여</span>
+          <span className="mt-1">대여</span>
         </button>
         <button onClick={() => handleTabChange('returns')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'returns' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
           <PackageCheck size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-          <span className="mt-0.5">반납</span>
+          <span className="mt-1">반납</span>
         </button>
         <button onClick={() => handleTabChange('ranking')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'ranking' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
           <Trophy size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-          <span className="mt-0.5">랭킹</span>
+          <span className="mt-1">랭킹</span>
         </button>
         <button onClick={() => handleTabChange('sites')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'sites' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
           <Globe size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
-          <span className="mt-0.5">사이트</span>
+          <span className="mt-1">사이트</span>
         </button>
         {isAdmin && (
           <button onClick={() => handleTabChange('admin')} className={`flex flex-col items-center font-bold relative ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'admin' ? 'text-sky-500' : 'text-slate-400'}`}>
@@ -350,7 +356,7 @@ const FixedBottomNav = memo(({
                 </span>
               )}
             </div>
-            <span className="mt-0.5">관리자</span>
+            <span className="mt-1">관리자</span>
           </button>
         )}
       </div>
@@ -482,13 +488,20 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // ⭕ [TS2448 / TS2454 에러 수정]: isDarkMode 변수를 useEffect보다 상단에 선언
   const isHeaderAdminTheme = activeTab === 'admin';
   const isDarkMode = themeMode === 'dark';
   const isLargeFont = fontSize === 'large';
 
+  // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
+
+  // 대여 탭 전용 스크롤 위치 기억 Ref
   const gamesTabScrollPosRef = useRef<number>(0);
+
+  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -496,6 +509,31 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+  useLayoutEffect(() => {
+    if (!isIosDevice || !headerRef.current) return;
+
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.getBoundingClientRect().height;
+        if (height > 50) {
+          setHeaderHeight(height);
+        }
+      }
+    };
+
+    updateHeaderHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+
+    observer.observe(headerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isIosDevice]);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -546,6 +584,7 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
+  // 실시간 스크롤 위치 기록
   useEffect(() => {
     const handleWindowScroll = () => {
       if (activeTab === 'games') {
@@ -557,6 +596,7 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleWindowScroll);
   }, [activeTab]);
 
+  // 탭 이동 처리
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     if (activeTab === 'games') {
       gamesTabScrollPosRef.current = window.scrollY;
@@ -1435,6 +1475,7 @@ export default function App() {
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 30);
 
+  // 탭 오갈 때 순서 완벽 유지 (shuffledGamesRef가 비어있을 때만 1회 셔플)
   const filteredGameList = useMemo(() => {
     if (shuffledGamesRef.current.length === 0 && games.length > 0) {
       shuffledGamesRef.current = [...games].sort(() => Math.random() - 0.5);
@@ -1536,6 +1577,9 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
+  // -------------------------------------------------------------
+  // [A] 비로그인 화면 (로그인 / 회원가입)
+  // -------------------------------------------------------------
   if (!currentUser) {
     const hasEnteredPasswordConfirm = signupForm.passwordConfirm.length > 0;
     const isPasswordMatching = 
@@ -1821,10 +1865,13 @@ export default function App() {
     );
   }
 
+  // -------------------------------------------------------------
+  // [B] 메인 서비스 화면
+  // -------------------------------------------------------------
   return (
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
-      {/* 1. 고정 상단 헤더 */}
+      {/* ⭕ 1. 고정 상단 헤더: memo 컴포넌트로 재렌더링 단절 */}
       <FixedHeader 
         isHeaderAdminTheme={isHeaderAdminTheme}
         isIosDevice={isIosDevice}
@@ -1833,15 +1880,16 @@ export default function App() {
         unreadReportsCount={unreadReportsCount}
         setIsAdminReportDrawerOpen={setIsAdminReportDrawerOpen}
         setIsSettingsOpen={setIsSettingsOpen}
+        headerRef={headerRef}
       />
 
-      {/* ⭕ [개선 3]: 고정 높이 바운더리로 메인 패딩 수식 통일 */}
+      {/* 2. 메인 본문 영역 (Window 스크롤 지원) */}
       <main 
         ref={mainScrollRef}
         onScroll={handleScroll}
         style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 72px)',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)'
+          paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)'
         }} 
         className={`w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
           isLargeFont 
@@ -1933,6 +1981,7 @@ export default function App() {
               </button>
             </div>
 
+            {/* iOS 대여 필터 영역 폰트 1pt 확대 */}
             {isFilterOpen && (
               <div className={`w-full p-3.5 rounded-2xl border space-y-2.5 shadow-sm transition ${
                 isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-200'
@@ -1949,6 +1998,7 @@ export default function App() {
                   )}
                 </div>
 
+                {/* 1) 인원수 인라인 필터 */}
                 <div className="flex items-center gap-2">
                   <span className={`font-bold text-slate-400 w-11 flex-shrink-0 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>인원수</span>
                   <div className="flex flex-wrap gap-1 flex-1">
@@ -1972,6 +2022,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* 2) 장르 인라인 필터 */}
                 <div className="flex items-center gap-2">
                   <span className={`font-bold text-slate-400 w-11 flex-shrink-0 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>장르</span>
                   <div className="flex flex-wrap gap-1 flex-1 max-h-20 overflow-y-auto scrollbar-none">
@@ -2009,6 +2060,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* 3) 난이도 인라인 필터 */}
                 <div className="flex items-center gap-2">
                   <span className={`font-bold text-slate-400 w-11 flex-shrink-0 ${isIosDevice ? 'text-xs' : 'text-[11px]'}`}>난이도</span>
                   <div className="flex flex-wrap gap-1 flex-1">
@@ -2061,6 +2113,7 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800/80 border-slate-700/80' : 'bg-white border-slate-200/80 hover:border-slate-300'
                     }`}>
                       
+                      {/* 상단 2열 영역: [이미지] + [정보 영역] */}
                       <div className="flex gap-3.5 items-start w-full">
                         <img 
                           src={game.imageUrl} 
@@ -2074,21 +2127,25 @@ export default function App() {
                         <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
                           <div>
                             <div className="flex justify-between items-start gap-1">
+                              {/* iOS 게임 제목 폰트 상향 */}
                               <h3 className={`font-bold leading-snug break-keep ${
                                 isLargeFont
                                   ? isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE_LARGE : 'text-sm'
                                   : isIosDevice ? IOS_CONFIG.GAME_TITLE_SIZE : 'text-xs'
                               } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                 <span>{game.title}</span>
+                                {/* iOS 출시년도 폰트 상향 */}
                                 <span className={`text-slate-400 font-mono font-normal whitespace-nowrap ml-1 ${
                                   isIosDevice ? 'text-xs' : 'text-[11px]'
                                 }`}>({game.releaseYear}년)</span>
                               </h3>
+                              {/* iOS 게임 ID 폰트 상향 */}
                               <span className={`text-slate-400 font-mono flex-shrink-0 ml-1 ${
                                 isIosDevice ? 'text-[11px]' : 'text-[10px]'
                               }`}>{game.gameId}</span>
                             </div>
                             
+                            {/* iOS 세부 정보 (인원/시간/난이도/BGG) 폰트 1pt 상향 */}
                             <div className={`flex flex-wrap gap-x-2 gap-y-0.5 font-semibold mt-1.5 ${
                               isLargeFont
                                 ? isIosDevice ? IOS_CONFIG.RENTAL_INFO_TEXT_SIZE_LARGE : 'text-xs'
@@ -2101,6 +2158,7 @@ export default function App() {
                             </div>
                           </div>
 
+                          {/* iOS 장르 태그 폰트 상향 */}
                           <div className={`pt-1.5 border-t mt-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none ${isDarkMode ? 'border-slate-700/80' : 'border-slate-100'}`}>
                             {game.genres.map((genre: string) => (
                               <span key={genre} className={`px-2 py-0.5 rounded-md font-bold whitespace-nowrap flex-shrink-0 ${
@@ -2115,8 +2173,10 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* 카드 맨 하단 영역 */}
                       <div className="flex justify-between items-center gap-2 pt-1 w-full">
                         
+                        {/* iOS 나의 평점 텍스트 상향 */}
                         <div 
                           onClick={() => {
                             setSelectedScore(userRating ? userRating.score : 5.0);
@@ -2148,6 +2208,7 @@ export default function App() {
                             <Heart size={16} className={isFav ? "fill-rose-500 text-rose-500" : "text-slate-400 dark:text-slate-500"} />
                           </button>
 
+                          {/* iOS 대여가능 버튼 텍스트 상향 */}
                           {isAvailable ? (
                             <button
                               onClick={() => toggleCartItem(game)}
@@ -2343,6 +2404,7 @@ export default function App() {
               </button>
             </div>
 
+            {/* 요즘 핫한 게임 */}
             {rankingTab === 'hot' && (
               <div className="space-y-2.5 w-full">
                 <p className="text-slate-400 font-medium px-1">
@@ -2419,6 +2481,7 @@ export default function App() {
               </div>
             )}
 
+            {/* 명예의 전당 */}
             {rankingTab === 'hall' && (
               <div className="space-y-2.5 w-full">
                 <p className="text-slate-400 font-medium px-1">
@@ -2497,7 +2560,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. 보드게임 추천 사이트 탭 */}
+        {/* 보드게임 추천 사이트 탭 */}
         {activeTab === 'sites' && (
           <div className="space-y-4 mt-0.5 w-full">
             <div className={`pb-2 border-b flex justify-between items-end w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
@@ -2554,6 +2617,7 @@ export default function App() {
         {/* 5. 관리자 통합 페이지 */}
         {activeTab === 'admin' && isAdmin && (
           <div className="space-y-4 mt-0.5 w-full">
+            {/* 관리자 상단 5개 서브 메뉴탭 영역 */}
             <div className={`grid grid-cols-5 gap-1 p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
               <button
                 onClick={() => setAdminSubTab('gameAdmin')}
@@ -2600,6 +2664,7 @@ export default function App() {
             {/* A. 게임 관리 */}
             {adminSubTab === 'gameAdmin' && (
               <div className="space-y-4 w-full">
+                {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                 <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                   <div>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2668,6 +2733,7 @@ export default function App() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="font-bold leading-snug break-keep mb-0.5">
+                            {/* 게임명 폰트는 지시대로 변동 없이 기존 유지 */}
                             <span className={`text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{game.title}</span>
                             <span className="text-slate-400 font-mono font-normal ml-1 whitespace-nowrap text-xs">({game.gameId})</span>
                             <span className="inline-flex items-center ml-1.5 align-middle">
@@ -2679,6 +2745,7 @@ export default function App() {
                             </span>
                           </div>
                           
+                          {/* 게임명 외 서브 정보 폰트 크기 상향 */}
                           <p className={`text-slate-400 mt-1 font-medium ${
                             isIosDevice ? IOS_CONFIG.ADMIN_INFO_TEXT_SIZE : 'text-xs'
                           }`}>{game.releaseYear}년 | BGG {game.bggRating} | 난이도 {Number(game.difficulty).toFixed(2)}</p>
@@ -2712,6 +2779,7 @@ export default function App() {
             {/* B. 대여/반납 현황 */}
             {adminSubTab === 'rentalAdmin' && (
               <div className="space-y-4 w-full">
+                {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                 <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                   <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                     <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2719,6 +2787,7 @@ export default function App() {
                   </h2>
                 </div>
 
+                {/* 세그먼트 버튼 폰트 상향 */}
                 <div className={`flex p-1 rounded-xl font-bold w-full ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <button
                     onClick={() => setAdminRentalTab('active')}
@@ -2762,11 +2831,13 @@ export default function App() {
                         }`}>
                           <div className="flex justify-between items-start">
                             <div>
+                              {/* 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
                               <span className={`text-slate-500 font-semibold block mb-0.5 ${
                                 isIosDevice ? 'text-xs' : 'text-[11px]'
                               }`}>
                                 대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
                               </span>
+                              {/* 게임명은 기존 폰트 크기(text-xs) 유지 */}
                               <h3 className={`font-bold mt-0.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                 <span>{rental.gameTitle}</span>
                                 <span className="text-slate-400 font-bold ml-1 text-xs">({rental.gameId})</span>
@@ -2778,6 +2849,7 @@ export default function App() {
                               </span>
                             )}
                           </div>
+                          {/* 대여일 / 반납예정일 폰트 상향 */}
                           <div className={`mt-3 pt-2 border-t flex justify-between font-medium ${
                             isIosDevice ? 'text-xs' : 'text-[11px]'
                           } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
@@ -2801,11 +2873,13 @@ export default function App() {
                         }`}>
                           <div className="flex justify-between items-start">
                             <div>
+                              {/* 대여회원 폰트 변경: font-mono 제거 및 폰트 1pt 확대 */}
                               <span className={`text-slate-500 font-semibold block mb-0.5 ${
                                 isIosDevice ? 'text-xs' : 'text-[11px]'
                               }`}>
                                 대여회원: <strong className="text-slate-800 dark:text-slate-200 font-bold">{rental.userId}</strong>
                               </span>
+                              {/* 게임명은 기존 폰트 크기(text-xs) 유지 */}
                               <h3 className={`font-bold mt-0.5 flex items-center gap-1.5 break-keep text-xs ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                                 <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
                                 <span>{rental.gameTitle}</span>
@@ -2813,6 +2887,7 @@ export default function App() {
                               </h3>
                             </div>
                           </div>
+                          {/* 대여일 / 반납일 폰트 상향 */}
                           <div className={`mt-2 pt-2 border-t flex justify-between font-medium ${
                             isIosDevice ? 'text-xs' : 'text-[11px]'
                           } ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
@@ -2830,6 +2905,7 @@ export default function App() {
             {/* C. 추천 사이트 관리 */}
             {adminSubTab === 'siteAdmin' && (
               <div className="space-y-4 w-full">
+                {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                 <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                   <div>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2899,6 +2975,7 @@ export default function App() {
             {/* D. 회원 관리 */}
             {adminSubTab === 'userAdmin' && (
               <div className="space-y-4 w-full">
+                {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                 <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                   <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                     <span className="w-2 h-4 bg-sky-400 rounded-sm inline-block border border-sky-500"></span>
@@ -2982,6 +3059,7 @@ export default function App() {
             {/* E. 공지사항 관리 */}
             {adminSubTab === 'noticeAdmin' && (
               <div className="space-y-4 w-full">
+                {/* 상단 헤더 컨테이너 높이 및 여백 일관화 (`min-h-[44px] mb-2`) */}
                 <div className={`flex justify-between items-center pb-2 border-b min-h-[44px] mb-2 w-full ${isDarkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
                   <div>
                     <h2 className={`font-black tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -3006,6 +3084,7 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200/80'
                     }`}>
                       <div className="flex justify-between items-start gap-2">
+                        {/* 공지사항 관리 하단 노출 공지 제목 폰트 1pt 하향 조정 (text-base -> text-sm) */}
                         <h3 className={`font-extrabold break-all leading-snug ${
                           isIosDevice ? 'text-sm' : 'text-xs'
                         } ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{n.title}</h3>
@@ -3027,9 +3106,11 @@ export default function App() {
                           </button>
                         </div>
                       </div>
+                      {/* 공지사항 상세 내용 폰트 상향 (text-xs -> text-sm) */}
                       <p className={`whitespace-pre-wrap break-all leading-relaxed font-medium ${
                         isIosDevice ? 'text-sm' : 'text-xs'
                       } ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{n.content}</p>
+                      {/* 공지 작성일 폰트 상향 */}
                       <span className={`text-slate-400 block pt-1 font-mono ${
                         isIosDevice ? 'text-xs' : 'text-[11px]'
                       }`}>{n.createdAt} 작성</span>
@@ -3045,7 +3126,7 @@ export default function App() {
 
       {/* 장바구니 플로팅 버튼 */}
       {activeTab === 'games' && (
-        <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+68px)] right-4 pointer-events-none z-30 transition-all">
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+80px)] right-4 pointer-events-none z-30 transition-all">
           <button
             onClick={() => setIsCartOpen(true)}
             className={`pointer-events-auto relative p-3.5 rounded-full active:scale-95 transition-all shadow-xl flex items-center justify-center ${
@@ -3065,7 +3146,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 2. 고정 하단 네비게이션 */}
+      {/* ⭕ 2. 고정 하단 네비게이션: memo 컴포넌트로 재렌더링 단절 */}
       <FixedBottomNav 
         isDarkMode={isDarkMode}
         isIosDevice={isIosDevice}
@@ -3094,6 +3175,7 @@ export default function App() {
           </div>
 
           <div className="flex-1 p-4 overflow-y-auto space-y-5">
+            {/* A. 계정 설정 */}
             <div className="space-y-2">
               <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                 isIosDevice ? 'text-sm' : 'text-[11px]'
@@ -3120,6 +3202,7 @@ export default function App() {
               </button>
             </div>
 
+            {/* B. 나의 활동 */}
             <div className="space-y-2 pt-2 border-t border-slate-200/20">
               <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                 isIosDevice ? 'text-sm' : 'text-[11px]'
@@ -3155,6 +3238,7 @@ export default function App() {
               </button>
             </div>
 
+            {/* C. 고객지원 */}
             <div className="space-y-2 pt-2 border-t border-slate-200/20">
               <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                 isIosDevice ? 'text-sm' : 'text-[11px]'
@@ -3179,6 +3263,7 @@ export default function App() {
               </button>
             </div>
 
+            {/* D. 테마 선택 */}
             <div className="space-y-2 pt-2 border-t border-slate-200/20">
               <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                 isIosDevice ? 'text-sm' : 'text-[11px]'
@@ -3209,6 +3294,7 @@ export default function App() {
               </div>
             </div>
 
+            {/* E. 글자 크기 */}
             <div className="space-y-2 pt-2 border-t border-slate-200/20">
               <h4 className={`font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 ${
                 isIosDevice ? 'text-sm' : 'text-[11px]'
@@ -3243,6 +3329,7 @@ export default function App() {
               </div>
             </div>
 
+            {/* 로그아웃 버튼 */}
             <div className="pt-2 border-t border-slate-200/20">
               <button
                 onClick={handleLogout}
@@ -3481,12 +3568,14 @@ export default function App() {
           </div>
 
           <div className="p-3 bg-slate-100 dark:bg-slate-800/80 flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-700">
+            {/* iOS 접수함: 안읽음 텍스트 폰트 1pt 상향 (text-sm) */}
             <span className={`text-slate-500 dark:text-slate-400 font-semibold ${
               isIosDevice ? 'text-sm' : 'text-xs'
             }`}>
               안읽음: <strong className="text-rose-500 font-extrabold">{unreadReportsCount}</strong>건
             </span>
             {unreadReportsCount > 0 && (
+              /* iOS 접수함: 모두 읽음 버튼 폰트 1pt 상향 (text-xs) */
               <button 
                 onClick={handleMarkAllReportsAsRead}
                 className={`font-bold bg-slate-900 text-white px-2 py-1 rounded-md hover:bg-slate-800 transition ${
@@ -3522,6 +3611,7 @@ export default function App() {
             )}
 
             <div className="space-y-2 pt-1">
+              {/* iOS 접수함: 전체 목록 텍스트 폰트 1pt 상향 (text-sm) */}
               <h4 className={`font-bold text-slate-400 px-0.5 ${
                 isIosDevice ? 'text-sm' : 'text-xs'
               }`}>전체 목록 ({reports.length})</h4>
