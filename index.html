@@ -10,42 +10,25 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
     />
     
-    <!-- iOS PWA 전용 메타 태그 (검은색 투명 겹침으로 인한 깜빡임 방지 설정) -->
+    <!-- iOS PWA (홈 화면에 추가) 전용 메타 태그 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="카카오 보드게임" />
     
     <title>카카오 보드게임 대여 서비스</title>
-
     <style>
-      /* 최상위 뷰포트를 100dvh로 완전 고정하여 새로고침 시 화면 출렁임 및 검은 영역 노출 원천 차단 */
-      html,
-      body,
+      /* 새로고침 시 바깥 뷰포트 튕김 방지 및 상단 상태바 배경색 일치 */
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #FEE500;
+        -webkit-tap-highlight-color: transparent;
+      }
       #root {
         width: 100%;
         height: 100%;
-        height: 100dvh;
-        margin: 0;
-        padding: 0;
-        overflow: hidden !important;
-        position: fixed;
-        left: 0;
-        top: 0;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
-
-      body {
-        background-color: #ffffff;
-      }
-
-      html.dark body {
-        background-color: #0f172a;
       }
     </style>
   </head>
