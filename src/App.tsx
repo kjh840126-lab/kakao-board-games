@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// 상단 헤더 고정 컴포넌트
+// 상단 헤더 독립 컴포넌트
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -305,7 +305,7 @@ const FixedHeader = memo(({
   );
 });
 
-// 하단 네비게이션 고정 컴포넌트
+// 하단 네비게이션 독립 컴포넌트
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -490,6 +490,7 @@ export default function App() {
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // ⭕ [TS2448 / TS2454 에러 수정]: isDarkMode 변수를 useEffect보다 상단에 선언
   const isHeaderAdminTheme = activeTab === 'admin';
   const isDarkMode = themeMode === 'dark';
   const isLargeFont = fontSize === 'large';
@@ -1870,7 +1871,7 @@ export default function App() {
   return (
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
-      {/* ⭕ 1. 고정 상단 헤더 */}
+      {/* ⭕ 1. 고정 상단 헤더: memo 컴포넌트로 재렌더링 단절 */}
       <FixedHeader 
         isHeaderAdminTheme={isHeaderAdminTheme}
         isIosDevice={isIosDevice}
