@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// ⭕ 상단 헤더 컴포넌트 고정
+// 상단 헤더 독립 컴포넌트
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -305,7 +305,7 @@ const FixedHeader = memo(({
   );
 });
 
-// ⭕ 하단 네비게이션 컴포넌트 고정
+// 하단 네비게이션 독립 컴포넌트
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -414,7 +414,6 @@ export default function App() {
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
   const [expandedNoticeId, setExpandedNoticeId] = useState<number | null>(null);
 
-  // ⭕ [핵심 1]: currentUser를 초기 상태부터 localStorage로 동기 복원하여 새로고침 시 깜빡임 차단
   const [currentUser, setCurrentUser] = useState<UserData | null>(() => {
     if (typeof window === 'undefined') return null;
     const savedUser = localStorage.getItem('kakao_boardgame_user');
@@ -491,6 +490,11 @@ export default function App() {
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // ⭕ [TS2448 / TS2454 에러 수정]: isDarkMode 변수를 useEffect보다 상단에 선언
+  const isHeaderAdminTheme = activeTab === 'admin';
+  const isDarkMode = themeMode === 'dark';
+  const isLargeFont = fontSize === 'large';
+
   // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
 
@@ -531,7 +535,6 @@ export default function App() {
     };
   }, [isIosDevice]);
 
-  // ⭕ [핵심 2]: iOS 사파리 새로고침 시 상/하단 검은색 박스 노출 차단 (body 배경색 고정)
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.style.backgroundColor = isDarkMode ? '#0f172a' : '#FEE500';
@@ -1865,10 +1868,6 @@ export default function App() {
   // -------------------------------------------------------------
   // [B] 메인 서비스 화면
   // -------------------------------------------------------------
-  const isHeaderAdminTheme = activeTab === 'admin';
-  const isDarkMode = themeMode === 'dark';
-  const isLargeFont = fontSize === 'large';
-
   return (
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
