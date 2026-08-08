@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// 상단 헤더 정적 배치
+// ⭕ 상단 헤더 컴포넌트
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -258,7 +258,7 @@ const FixedHeader = memo(({
           <div className={`flex flex-wrap items-center gap-1.5 font-bold text-slate-900 ${isIosDevice ? IOS_CONFIG.HEADER_USER_TEXT_SIZE : 'text-xs'}`}>
             <div className="flex items-center gap-1">
               <UserCheck size={14} className="text-slate-900" />
-              <span>{currentUser?.userId}</span>
+              <span>{currentUser ? currentUser.userId : '방문자'}</span>
             </div>
 
             {currentUser?.penaltyEndDate && currentUser.penaltyEndDate >= today && (
@@ -305,7 +305,7 @@ const FixedHeader = memo(({
   );
 });
 
-// 하단 네비게이션 정적 배치
+// ⭕ 하단 네비게이션 컴포넌트
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -367,6 +367,7 @@ const FixedBottomNav = memo(({
 export default function App() {
   const [users, setUsers] = useState<UserData[]>([]);
   
+  // ⭕ 로컬 스토리지 캐시 동기화
   const [games, setGames] = useState<Game[]>(() => {
     try {
       const saved = localStorage.getItem('kakao_bg_games_cache');
@@ -414,6 +415,7 @@ export default function App() {
   const [isNoticeDrawerOpen, setIsNoticeDrawerOpen] = useState(false);
   const [expandedNoticeId, setExpandedNoticeId] = useState<number | null>(null);
 
+  // ⭕ 유저 정보를 렌더링 시작부터 동기 복원하여 새로고침 시 헤더 지연 차단
   const [currentUser, setCurrentUser] = useState<UserData | null>(() => {
     if (typeof window === 'undefined') return null;
     const savedUser = localStorage.getItem('kakao_boardgame_user');
@@ -583,7 +585,6 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // 실시간 스크롤 위치 기록
   useEffect(() => {
     const handleWindowScroll = () => {
       if (activeTab === 'games') {
@@ -595,7 +596,6 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleWindowScroll);
   }, [activeTab]);
 
-  // 탭 이동 처리
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     if (activeTab === 'games') {
       gamesTabScrollPosRef.current = window.scrollY;
@@ -2276,10 +2276,10 @@ export default function App() {
                 <span className="w-1.5 h-3.5 bg-slate-900 dark:bg-sky-400 rounded-full inline-block"></span>
                 대여중인 게임
               </h3>
-              {rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').length === 0 ? (
+              {rentals.filter((r: Rental) => r.userId === currentUser?.userId && r.status === '대여중').length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl w-full">대여 중인 보드게임이 없습니다.</div>
               ) : (
-                rentals.filter((r: Rental) => r.userId === currentUser.userId && r.status === '대여중').map((rental: Rental) => {
+                rentals.filter((r: Rental) => r.userId === currentUser?.userId && r.status === '대여중').map((rental: Rental) => {
                   const isOverdue = today > rental.endDate;
                   const overdueDays = isOverdue ? getDaysDifference(today, rental.endDate) : 0;
 
