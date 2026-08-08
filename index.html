@@ -4,39 +4,41 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     
-    <!-- iOS Safe Area 확장 및 Full Screen Viewport 설정 -->
     <meta 
       name="viewport" 
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
     />
     
-    <!-- iOS PWA 전용 메타 태그 -->
+    <!-- [핵심 1] iOS 상/하단 브라우저 영역 전용 theme-color 메타 태그 추가 -->
+    <meta name="theme-color" id="theme-color-meta" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="카카오 보드게임" />
     
     <title>카카오 보드게임 대여 서비스</title>
 
-    <!-- [FOUC 완벽 차단] HTML이 로드되는 순간 동기적으로 배경색과 dark 클래스를 박아버립니다 -->
+    <!-- [핵심 2] HTML 로드 0.001초 만에 theme-color 메타 태그 및 background를 동기 적용 -->
     <script>
       (function() {
         try {
           var savedTheme = localStorage.getItem('kakao_bg_theme');
           var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          var docEl = document.documentElement;
+          var metaElem = document.getElementById('theme-color-meta');
+          
           if (isDark) {
-            docEl.classList.add('dark');
-            docEl.style.backgroundColor = '#0f172a';
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.backgroundColor = '#0f172a';
+            if (metaElem) metaElem.setAttribute('content', '#0f172a');
           } else {
-            docEl.classList.remove('dark');
-            docEl.style.backgroundColor = '#ffffff';
+            document.documentElement.classList.add('light');
+            document.documentElement.style.backgroundColor = '#ffffff';
+            if (metaElem) metaElem.setAttribute('content', '#ffffff');
           }
         } catch (e) {}
       })();
     </script>
 
     <style>
-      /* 최상위 루트 및 body 고정 */
       html, body {
         width: 100%;
         height: 100%;
@@ -45,7 +47,6 @@
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* 배경색을 CSS 변수로 제어하여 딜레이 전무 처리 */
       html {
         background-color: #ffffff;
       }

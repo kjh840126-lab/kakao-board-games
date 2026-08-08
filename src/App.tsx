@@ -390,7 +390,6 @@ export default function App() {
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
   const [isMyRatingsModalOpen, setIsMyRatingsModalOpen] = useState(false);
 
-  // 초기 themeMode 상태 설정 시 localStorage 기준 완벽 일치
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('kakao_bg_theme');
@@ -516,13 +515,18 @@ export default function App() {
     if (!isIosDevice || !headerRef.current) return;
   }, [isIosDevice]);
 
-  // [핵심] 테마 모드 변경 시 HTML, Body, Safe Area 색상 딜레이 0ms 동기화
+  // [핵심 해결 1] 테마 모드 변경 시 iOS Safari 전용 메타 태그(theme-color) 및 배경색 동시 강제 업데이트
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const targetColor = isDarkMode ? '#0f172a' : '#ffffff';
       
       document.documentElement.style.backgroundColor = targetColor;
       document.body.style.backgroundColor = targetColor;
+
+      const metaThemeColor = document.getElementById('theme-color-meta');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', targetColor);
+      }
 
       if (isDarkMode) {
         document.documentElement.classList.add('dark');
