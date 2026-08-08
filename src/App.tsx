@@ -222,7 +222,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// ⭕ [스켈레톤 UI 컴포넌트]: 데이터 로딩 중 빈 화면 방지용 카드 스켈레톤
+// 스켈레톤 UI 컴포넌트
 const CardSkeleton = ({ isDarkMode, isIosDevice }: { isDarkMode: boolean; isIosDevice: boolean }) => (
   <div className={`w-full border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm animate-pulse ${
     isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100/70 border-slate-200/60'
@@ -252,7 +252,6 @@ export default function App() {
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
   
-  // ⭕ 데이터 로딩 로컬 상태
   const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
@@ -384,6 +383,7 @@ export default function App() {
     setIsIosDevice(isIos);
   }, []);
 
+  // ⭕ [수정]: 헤더 깜빡임 방지를 위해 의존성 배열 최소화 (isIosDevice만 판별)
   useLayoutEffect(() => {
     if (!isIosDevice || !headerRef.current) return;
 
@@ -407,7 +407,7 @@ export default function App() {
     return () => {
       observer.disconnect();
     };
-  }, [currentUser, isIosDevice, fontSize, activeTab]);
+  }, [isIosDevice]);
 
   useEffect(() => {
     fetchInitialData();
@@ -510,7 +510,6 @@ export default function App() {
     }
   }, [noticeIndex, recentNoticesList.length]);
 
-  // ⭕ 스케줄러 및 데이터 조용한 부분 갱신 로직
   const fetchInitialData = async (..._args: any[]) => {
     try {
       const { data: usersData } = await supabase.from('users').select('*');
@@ -1737,14 +1736,14 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // Safari 주소창 반응형 Window 스크롤 구조
+    // ⭕ [수정]: 최상위 레이아웃을 고정하고 z-index 계층구조를 명확히 적용하여 화면 튀김 방지
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
-      {/* 1. 고정 상단 헤더 (fixed top-0): 항시 고정하여 화면 깜빡임 원천 차단 */}
+      {/* ⭕ 1. 고정 상단 헤더: z-40 레이어로 고정하여 절대 깜빡이지 않음 */}
       <header 
         ref={headerRef}
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-        className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-30 shadow-sm flex justify-between items-center transition-colors ${
+        className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
           isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
         }`}
       >
@@ -3077,13 +3076,13 @@ export default function App() {
         </div>
       )}
 
-      {/* 하단 네비게이션: 위치 -bottom-[1px] 밀착 및 하단 100px 블라인드 패치 레이어 내장 */}
+      {/* ⭕ 하단 네비게이션: z-40 고정 및 바텀 레이아웃 이격 고정 */}
       <nav 
-        className={`fixed -bottom-[1px] left-0 right-0 w-full z-30 shadow-lg transition-colors ${
+        className={`fixed -bottom-[1px] left-0 right-0 w-full z-40 shadow-lg transition-colors ${
           isDarkMode ? 'bg-slate-900' : 'bg-white'
         } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
       >
-        {/* iOS 전용 하단 100px 매립 가림막 블라인드 패치 (실선/여백 100% 원천 차단) */}
+        {/* iOS 전용 하단 100px 매립 가림막 블라인드 패치 */}
         {isIosDevice && (
           <div 
             aria-hidden="true"
