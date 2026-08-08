@@ -222,6 +222,28 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
+// ⭕ [스켈레톤 UI 컴포넌트]: 데이터 로딩 중 빈 화면 방지용 카드 스켈레톤
+const CardSkeleton = ({ isDarkMode, isIosDevice }: { isDarkMode: boolean; isIosDevice: boolean }) => (
+  <div className={`w-full border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm animate-pulse ${
+    isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100/70 border-slate-200/60'
+  }`}>
+    <div className="flex gap-3.5 items-start w-full">
+      <div className={`rounded-xl bg-slate-300 dark:bg-slate-700 flex-shrink-0 ${
+        isIosDevice ? IOS_CONFIG.RENTAL_IMAGE_SIZE : 'w-20 h-20'
+      }`} />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded w-3/4" />
+        <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/2" />
+        <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-2/3" />
+      </div>
+    </div>
+    <div className="flex justify-between items-center pt-2">
+      <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/3" />
+      <div className="h-8 bg-slate-300 dark:bg-slate-700 rounded-xl w-20" />
+    </div>
+  </div>
+);
+
 export default function App() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [games, setGames] = useState<Game[]>([]);
@@ -229,6 +251,9 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
+  
+  // ⭕ 데이터 로딩 로컬 상태
+  const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -485,7 +510,7 @@ export default function App() {
     }
   }, [noticeIndex, recentNoticesList.length]);
 
-  // ⭕ 전면 로딩 없이 백그라운드에서 조용히 데이터를 가져와 갱신하는 부분 업데이트 로직
+  // ⭕ 스케줄러 및 데이터 조용한 부분 갱신 로직
   const fetchInitialData = async (..._args: any[]) => {
     try {
       const { data: usersData } = await supabase.from('users').select('*');
@@ -673,6 +698,8 @@ export default function App() {
 
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -1713,7 +1740,7 @@ export default function App() {
     // Safari 주소창 반응형 Window 스크롤 구조
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
-      {/* 1. 고정 상단 헤더 (fixed top-0) */}
+      {/* 1. 고정 상단 헤더 (fixed top-0): 항시 고정하여 화면 깜빡임 원천 차단 */}
       <header 
         ref={headerRef}
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
@@ -1990,7 +2017,14 @@ export default function App() {
 
             {/* 게임 리스트 카드 영역 */}
             <div className="grid gap-3 w-full">
-              {filteredGameList.length === 0 ? (
+              {/* ⭕ 데이터 로딩 중일 때는 빈 화면 대신 스켈레톤 카드를 조용히 노출 */}
+              {isDataLoading && games.length === 0 ? (
+                <>
+                  <CardSkeleton isDarkMode={isDarkMode} isIosDevice={isIosDevice} />
+                  <CardSkeleton isDarkMode={isDarkMode} isIosDevice={isIosDevice} />
+                  <CardSkeleton isDarkMode={isDarkMode} isIosDevice={isIosDevice} />
+                </>
+              ) : filteredGameList.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-slate-300/40 text-slate-400 rounded-2xl w-full">
                   검색 조건에 해당되는 보드게임이 없습니다.
                 </div>
