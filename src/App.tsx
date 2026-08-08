@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// 상단 헤더 독립 컴포넌트 (완전 고정 flexShrink: 0)
+// 상단 헤더 독립 컴포넌트
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -233,12 +233,10 @@ const FixedHeader = memo(({
   today, 
   unreadReportsCount, 
   setIsAdminReportDrawerOpen, 
-  setIsSettingsOpen,
-  headerRef
+  setIsSettingsOpen
 }: any) => {
   return (
     <header 
-      ref={headerRef}
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
       className={`flex-shrink-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
         isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
@@ -305,7 +303,7 @@ const FixedHeader = memo(({
   );
 });
 
-// 하단 네비게이션 독립 컴포넌트 (완전 고정 flexShrink: 0)
+// 하단 네비게이션 독립 컴포넌트
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -488,7 +486,6 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
 
   const isHeaderAdminTheme = activeTab === 'admin';
   const isDarkMode = themeMode === 'dark';
@@ -496,8 +493,6 @@ export default function App() {
 
   const shuffledGamesRef = useRef<Game[]>([]);
   const gamesTabScrollPosRef = useRef<number>(0);
-
-  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -505,31 +500,6 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-  useLayoutEffect(() => {
-    if (!isIosDevice || !headerRef.current) return;
-
-    const updateHeaderHeight = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.getBoundingClientRect().height;
-        if (height > 50) {
-          setHeaderHeight(height);
-        }
-      }
-    };
-
-    updateHeaderHeight();
-
-    const observer = new ResizeObserver(() => {
-      updateHeaderHeight();
-    });
-
-    observer.observe(headerRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isIosDevice]);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -580,14 +550,12 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  // 실시간 독립 중앙 영역 스크롤 위치 기록
   const handleMainScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (activeTab === 'games') {
       gamesTabScrollPosRef.current = e.currentTarget.scrollTop;
     }
   };
 
-  // 탭 이동 처리
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
     if (activeTab === 'games' && mainScrollRef.current) {
       gamesTabScrollPosRef.current = mainScrollRef.current.scrollTop;
@@ -1854,7 +1822,7 @@ export default function App() {
   }
 
   // -------------------------------------------------------------
-  // [B] 메인 서비스 화면 (Pure CSS Flexbox 수직 완전 고정)
+  // [B] 메인 서비스 화면
   // -------------------------------------------------------------
   return (
     <div className={`h-full w-full flex flex-col overflow-hidden relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
@@ -1868,10 +1836,9 @@ export default function App() {
         unreadReportsCount={unreadReportsCount}
         setIsAdminReportDrawerOpen={setIsAdminReportDrawerOpen}
         setIsSettingsOpen={setIsSettingsOpen}
-        headerRef={headerRef}
       />
 
-      {/* 2. 중앙 메인 본문 영역 (독립 스크롤 영역 flex: 1) */}
+      {/* 2. 중앙 메인 본문 영역 */}
       <main 
         ref={mainScrollRef}
         onScroll={handleMainScroll}
