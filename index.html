@@ -4,21 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     
-    <!-- iOS Safe Area 확장 및 Full Screen을 위한 Viewport 설정 -->
+    <!-- iOS Safe Area 확장 및 Full Screen Viewport 설정 -->
     <meta 
       name="viewport" 
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
     />
     
-    <!-- iOS PWA (홈 화면에 추가) 전용 메타 태그 -->
+    <!-- iOS PWA 전용 메타 태그 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="카카오 보드게임" />
     
     <title>카카오 보드게임 대여 서비스</title>
+
     <style>
-      /* 새로고침 시 바깥 뷰포트 튕김 방지 및 상단 상태바 배경색 일치 */
-      html, body {
+      /* 라이트모드 기본 상태바/바깥 배경 (노란색) */
+      html,
+      body {
         width: 100%;
         height: 100%;
         margin: 0;
@@ -26,9 +28,29 @@
         background-color: #FEE500;
         -webkit-tap-highlight-color: transparent;
       }
+
+      /* 다크모드 상태바/바깥 배경 (#0f172a) */
+      html.dark,
+      html.dark body {
+        background-color: #0f172a;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        html:not(.light),
+        html:not(.light) body {
+          background-color: #0f172a;
+        }
+      }
+
       #root {
         width: 100%;
         height: 100%;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
       }
     </style>
   </head>
