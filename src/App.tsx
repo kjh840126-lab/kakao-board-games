@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, memo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// ⭕ 상단 헤더 정적 배치
+// 상단 헤더 고정 컴포넌트
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -233,10 +233,12 @@ const FixedHeader = memo(({
   today, 
   unreadReportsCount, 
   setIsAdminReportDrawerOpen, 
-  setIsSettingsOpen
+  setIsSettingsOpen,
+  headerRef
 }: any) => {
   return (
     <header 
+      ref={headerRef}
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
       className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
         isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
@@ -303,7 +305,7 @@ const FixedHeader = memo(({
   );
 });
 
-// ⭕ 하단 네비게이션 정적 배치
+// 하단 네비게이션 고정 컴포넌트
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -318,6 +320,15 @@ const FixedBottomNav = memo(({
         isDarkMode ? 'bg-slate-900' : 'bg-white'
       } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
     >
+      {isIosDevice && (
+        <div 
+          aria-hidden="true"
+          className={`absolute left-0 right-0 -bottom-[100px] h-[100px] pointer-events-none z-0 ${
+            isDarkMode ? 'bg-slate-900' : 'bg-white'
+          }`} 
+        />
+      )}
+
       <div className="flex justify-around px-2 pt-2.5 pb-2 relative z-10">
         <button onClick={() => handleTabChange('games')} className={`flex flex-col items-center font-bold ${isIosDevice ? IOS_CONFIG.NAV_TEXT_SIZE : 'text-[10px]'} ${activeTab === 'games' ? isDarkMode ? 'text-white' : 'text-slate-900' : 'text-slate-400'}`}>
           <Boxes size={isIosDevice ? IOS_CONFIG.NAV_ICON_SIZE : 20} />
@@ -477,6 +488,7 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
 
   const isHeaderAdminTheme = activeTab === 'admin';
   const isDarkMode = themeMode === 'dark';
@@ -488,6 +500,7 @@ export default function App() {
   // 대여 탭 전용 스크롤 위치 기억 Ref
   const gamesTabScrollPosRef = useRef<number>(0);
 
+  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -495,6 +508,38 @@ export default function App() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+  useLayoutEffect(() => {
+    if (!isIosDevice || !headerRef.current) return;
+
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.getBoundingClientRect().height;
+        if (height > 50) {
+          setHeaderHeight(height);
+        }
+      }
+    };
+
+    updateHeaderHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+
+    observer.observe(headerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isIosDevice]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.backgroundColor = isDarkMode ? '#0f172a' : '#FEE500';
+      document.body.style.backgroundColor = isDarkMode ? '#0f172a' : '#ffffff';
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     fetchInitialData();
@@ -3100,7 +3145,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ⭕ 2. 고정 하단 네비게이션 */}
+      {/* ⭕ 2. 고정 하단 네비게이션: memo 컴포넌트로 재렌더링 단절 */}
       <FixedBottomNav 
         isDarkMode={isDarkMode}
         isIosDevice={isIosDevice}
