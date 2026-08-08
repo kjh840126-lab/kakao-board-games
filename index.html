@@ -2,23 +2,60 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    
-    <!-- iOS Safe Area 확장 및 Full Screen을 위한 Viewport 설정 -->
-    <meta 
-      name="viewport" 
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
-    />
-    
-    <!-- iOS PWA (홈 화면에 추가) 전용 메타 태그 -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="카카오 보드게임" />
-    
-    <title>카카오 보드게임 대여 서비스</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>KAKAO BOARD GAMES</title>
+    <!-- iOS 사파리 상단바/하단바 배경색 고정 -->
+    <meta name="theme-color" content="#FEE500" />
+    <style>
+      /* React가 로드되기 전 사파리가 읽는 기본 CSS (흰 화면/깜빡임 완전 차단) */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      /* 헤더 고정 정적 스타일 */
+      .initial-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background-color: #FEE500;
+        border-bottom: 1px solid rgba(252, 211, 77, 0.4);
+        padding-top: env(safe-area-inset-top, 0px);
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 16px;
+        padding-right: 16px;
+        box-sizing: border-box;
+      }
+      /* 하단바 고정 정적 스타일 */
+      .initial-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background-color: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        z-index: 40;
+      }
+    </style>
   </head>
-  <body class="antialiased">
-    <div id="root"></div>
+  <body>
+    <div id="root">
+      <!-- ⭕ [핵심]: React 스크립트가 실행되기 전 iOS가 먼저 화면에 띄울 정적 상/하단바 -->
+      <header class="initial-header">
+        <div style="font-weight: 900; font-size: 14px; color: #0f172a;">
+          KAKAO BOARD GAMES
+        </div>
+      </header>
+      <nav class="initial-nav"></nav>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
