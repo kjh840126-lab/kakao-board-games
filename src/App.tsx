@@ -225,7 +225,7 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// 상단 헤더 독립 컴포넌트
+// 상단 헤더 정적 배치
 const FixedHeader = memo(({ 
   isHeaderAdminTheme, 
   isIosDevice, 
@@ -305,7 +305,7 @@ const FixedHeader = memo(({
   );
 });
 
-// 하단 네비게이션 독립 컴포넌트
+// 하단 네비게이션 정적 배치
 const FixedBottomNav = memo(({ 
   isDarkMode, 
   isIosDevice, 
@@ -488,10 +488,7 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
-
-  // ⭕ TS2304 에러 복구: headerHeight 및 headerRef를 App 컴포넌트에 올바르게 정의
   const [headerHeight, setHeaderHeight] = useState<number>(0);
-  const headerRef = useRef<HTMLElement | null>(null); 
 
   const isHeaderAdminTheme = activeTab === 'admin';
   const isDarkMode = themeMode === 'dark';
@@ -503,6 +500,7 @@ export default function App() {
   // 대여 탭 전용 스크롤 위치 기억 Ref
   const gamesTabScrollPosRef = useRef<number>(0);
 
+  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -4299,8 +4297,8 @@ export default function App() {
                       isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50/50 border-slate-300 text-slate-900'
                     }`}
                   >
-                    <Option value="Y">노출</Option>
-                    <Option value="N">숨김</Option>
+                    <option value="Y">노출</option>
+                    <option value="N">숨김</option>
                   </select>
                 </div>
               </div>
