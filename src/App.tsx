@@ -240,7 +240,7 @@ const FixedHeader = memo(({
     <header 
       ref={headerRef}
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-      className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
+      className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors border-0 outline-none ${
         isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
       }`}
     >
@@ -509,10 +509,9 @@ export default function App() {
     if (!isIosDevice || !headerRef.current) return;
   }, [isIosDevice]);
 
-  // 다크모드/라이트모드 변경 시 브라우저 최상단 HTML/Body 배경색을 동적으로 교체하여 새로고침 상태바 노란색/어두운색 매칭
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      const bgColor = isDarkMode ? '#0f172a' : '#FEE500';
+      const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
       document.documentElement.style.backgroundColor = bgColor;
       document.body.style.backgroundColor = bgColor;
     }
