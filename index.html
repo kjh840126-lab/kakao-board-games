@@ -17,19 +17,18 @@
     
     <title>카카오 보드게임 대여 서비스</title>
 
-    <!-- [핵심] 새로고침 시 흰색 번쩍임 원천 차단: React 실행 전 테마 동기 결정 -->
+    <!-- [FOUC 완벽 차단] HTML이 로드되는 순간 동기적으로 배경색과 dark 클래스를 박아버립니다 -->
     <script>
       (function() {
         try {
           var savedTheme = localStorage.getItem('kakao_bg_theme');
           var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
           var docEl = document.documentElement;
-          
           if (isDark) {
             docEl.classList.add('dark');
             docEl.style.backgroundColor = '#0f172a';
           } else {
-            docEl.classList.add('light');
+            docEl.classList.remove('dark');
             docEl.style.backgroundColor = '#ffffff';
           }
         } catch (e) {}
@@ -37,14 +36,18 @@
     </script>
 
     <style>
-      /* 최상위 html, body의 기본 배경을 투명하지 않게 설정하여 하단 유격 차단 */
-      html {
+      /* 최상위 루트 및 body 고정 */
+      html, body {
         width: 100%;
         height: 100%;
         margin: 0;
         padding: 0;
-        background-color: #ffffff;
         -webkit-tap-highlight-color: transparent;
+      }
+
+      /* 배경색을 CSS 변수로 제어하여 딜레이 전무 처리 */
+      html {
+        background-color: #ffffff;
       }
 
       html.dark {
@@ -52,10 +55,6 @@
       }
 
       body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
         background-color: inherit;
       }
 

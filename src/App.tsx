@@ -390,9 +390,16 @@ export default function App() {
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
   const [isMyRatingsModalOpen, setIsMyRatingsModalOpen] = useState(false);
 
+  // 초기 themeMode 상태 설정 시 localStorage 기준 완벽 일치
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('kakao_bg_theme') as 'light' | 'dark') || 'light';
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('kakao_bg_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
   });
+
   const [fontSize, setFontSize] = useState<'normal' | 'large'>(() => {
     return (localStorage.getItem('kakao_bg_fontSize') as 'normal' | 'large') || 'normal';
   });
@@ -509,12 +516,13 @@ export default function App() {
     if (!isIosDevice || !headerRef.current) return;
   }, [isIosDevice]);
 
-  // [핵심] 테마 변경 시 하단 Safe Area 영역 딜레이 0초 즉시 전환
+  // [핵심] 테마 모드 변경 시 HTML, Body, Safe Area 색상 딜레이 0ms 동기화
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      const bgColor = isDarkMode ? '#0f172a' : '#ffffff';
-      document.documentElement.style.backgroundColor = bgColor;
-      document.body.style.backgroundColor = bgColor;
+      const targetColor = isDarkMode ? '#0f172a' : '#ffffff';
+      
+      document.documentElement.style.backgroundColor = targetColor;
+      document.body.style.backgroundColor = targetColor;
 
       if (isDarkMode) {
         document.documentElement.classList.add('dark');
