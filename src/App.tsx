@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, memo } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Boxes,
@@ -233,12 +233,14 @@ const FixedHeader = memo(({
   today, 
   unreadReportsCount, 
   setIsAdminReportDrawerOpen, 
-  setIsSettingsOpen
+  setIsSettingsOpen,
+  headerRef
 }: any) => {
   return (
     <header 
+      ref={headerRef}
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-      className={`flex-shrink-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
+      className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
         isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
       }`}
     >
@@ -314,7 +316,7 @@ const FixedBottomNav = memo(({
 }: any) => {
   return (
     <nav 
-      className={`flex-shrink-0 w-full z-40 shadow-lg transition-colors relative ${
+      className={`fixed -bottom-[1px] left-0 right-0 w-full z-40 shadow-lg transition-colors ${
         isDarkMode ? 'bg-slate-900' : 'bg-white'
       } ${isIosDevice ? IOS_CONFIG.NAV_PADDING_BOTTOM : 'pb-[calc(env(safe-area-inset-bottom,0px)+12px)]'}`}
     >
@@ -493,6 +495,8 @@ export default function App() {
 
   const shuffledGamesRef = useRef<Game[]>([]);
   const gamesTabScrollPosRef = useRef<number>(0);
+
+  const headerRef = useRef<HTMLElement | null>(null); 
   const mainScrollRef = useRef<HTMLDivElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -501,10 +505,16 @@ export default function App() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
+  useLayoutEffect(() => {
+    if (!isIosDevice || !headerRef.current) return;
+  }, [isIosDevice]);
+
+  // 다크모드/라이트모드 변경 시 브라우저 최상단 HTML/Body 배경색을 동적으로 교체하여 새로고침 상태바 노란색/어두운색 매칭
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      document.documentElement.style.backgroundColor = isDarkMode ? '#0f172a' : '#FEE500';
-      document.body.style.backgroundColor = isDarkMode ? '#0f172a' : '#ffffff';
+      const bgColor = isDarkMode ? '#0f172a' : '#FEE500';
+      document.documentElement.style.backgroundColor = bgColor;
+      document.body.style.backgroundColor = bgColor;
     }
   }, [isDarkMode]);
 
@@ -529,12 +539,10 @@ export default function App() {
     
     if (themeMode === 'dark') {
       document.documentElement.classList.add('dark');
-      document.documentElement.style.backgroundColor = '#0f172a';
-      document.body.style.backgroundColor = '#0f172a';
+      document.documentElement.classList.remove('light');
     } else {
       document.documentElement.classList.remove('dark');
-      document.documentElement.style.backgroundColor = '#ffffff';
-      document.body.style.backgroundColor = '#ffffff';
+      document.documentElement.classList.add('light');
     }
   }, [themeMode]);
 
@@ -550,29 +558,36 @@ export default function App() {
     localStorage.setItem('kakao_bg_adminSubTab', adminSubTab);
   }, [adminSubTab]);
 
-  const handleMainScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (activeTab === 'games') {
-      gamesTabScrollPosRef.current = e.currentTarget.scrollTop;
-    }
-  };
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (activeTab === 'games') {
+        gamesTabScrollPosRef.current = window.scrollY;
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [activeTab]);
 
   const handleTabChange = (newTab: 'games' | 'returns' | 'ranking' | 'sites' | 'admin') => {
-    if (activeTab === 'games' && mainScrollRef.current) {
-      gamesTabScrollPosRef.current = mainScrollRef.current.scrollTop;
+    if (activeTab === 'games') {
+      gamesTabScrollPosRef.current = window.scrollY;
     }
 
     setActiveTab(newTab);
     
     requestAnimationFrame(() => {
-      if (mainScrollRef.current) {
-        if (newTab === 'games') {
-          mainScrollRef.current.scrollTop = gamesTabScrollPosRef.current;
-        } else {
-          mainScrollRef.current.scrollTop = 0;
-        }
+      if (newTab === 'games') {
+        window.scrollTo(0, gamesTabScrollPosRef.current);
+      } else {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
       }
     });
   };
+
+  const handleScroll = () => {};
 
   const recentNoticesList = notices.slice(0, 5);
 
@@ -1542,8 +1557,8 @@ export default function App() {
       hasEnteredPasswordConfirm && signupForm.password === signupForm.passwordConfirm;
 
     return (
-      <div className="h-full w-full bg-slate-50 flex justify-center items-center p-4 overflow-y-auto">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200/80 my-auto">
+      <div className="min-h-screen bg-slate-50 flex justify-center items-center p-4">
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200/80 -mt-12">
           
           <div className="bg-[#FEE500] px-6 py-8 text-center border-b border-amber-300/40 flex items-center justify-center">
             <img 
@@ -1825,7 +1840,7 @@ export default function App() {
   // [B] 메인 서비스 화면
   // -------------------------------------------------------------
   return (
-    <div className={`h-full w-full flex flex-col overflow-hidden relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+    <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
       {/* 1. 상단 고정 헤더 */}
       <FixedHeader 
@@ -1836,13 +1851,18 @@ export default function App() {
         unreadReportsCount={unreadReportsCount}
         setIsAdminReportDrawerOpen={setIsAdminReportDrawerOpen}
         setIsSettingsOpen={setIsSettingsOpen}
+        headerRef={headerRef}
       />
 
-      {/* 2. 중앙 메인 본문 영역 */}
+      {/* 2. 메인 본문 영역 */}
       <main 
         ref={mainScrollRef}
-        onScroll={handleMainScroll}
-        className={`flex-1 w-full overflow-y-auto overflow-x-hidden py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
+        onScroll={handleScroll}
+        style={{ 
+          paddingTop: isIosDevice ? '104px' : 'calc(env(safe-area-inset-top, 0px) + 92px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)'
+        }} 
+        className={`w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
           isLargeFont 
             ? isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE_LARGE : 'text-sm' 
             : isIosDevice ? IOS_CONFIG.MAIN_TEXT_SIZE : 'text-xs'
@@ -3043,7 +3063,7 @@ export default function App() {
 
       {/* 장바구니 플로팅 버튼 */}
       {activeTab === 'games' && (
-        <div className="absolute bottom-20 right-4 pointer-events-none z-30 transition-all">
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+80px)] right-4 pointer-events-none z-30 transition-all">
           <button
             onClick={() => setIsCartOpen(true)}
             className={`pointer-events-auto relative p-3.5 rounded-full active:scale-95 transition-all shadow-xl flex items-center justify-center ${
