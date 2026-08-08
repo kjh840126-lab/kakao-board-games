@@ -44,7 +44,6 @@ import {
   Medal,
   Users as PlayerIcon,
   RotateCcw,
-  Loader2,
   Globe,
   ExternalLink,
   Filter,
@@ -230,11 +229,6 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
-  
-  // ⭕ SessionStorage를 활용해 웹 앱 최초 1회 접속 시에만 로딩 상태 활성화 (새로고침 시 재노출 완전 차단)
-  const [loading, setLoading] = useState<boolean>(() => {
-    return !sessionStorage.getItem('kakao_bg_loaded');
-  });
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -409,21 +403,16 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('kakao_bg_theme', themeMode);
     
-    if (loading) {
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
       document.documentElement.style.backgroundColor = '#0f172a';
       document.body.style.backgroundColor = '#0f172a';
     } else {
-      if (themeMode === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.style.backgroundColor = '#0f172a';
-        document.body.style.backgroundColor = '#0f172a';
-      } else {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.style.backgroundColor = '#ffffff';
-        document.body.style.backgroundColor = '#ffffff';
-      }
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.backgroundColor = '#ffffff';
+      document.body.style.backgroundColor = '#ffffff';
     }
-  }, [themeMode, loading]);
+  }, [themeMode]);
 
   useEffect(() => {
     localStorage.setItem('kakao_bg_fontSize', fontSize);
@@ -496,6 +485,7 @@ export default function App() {
     }
   }, [noticeIndex, recentNoticesList.length]);
 
+  // ⭕ 전면 로딩 없이 백그라운드에서 조용히 데이터를 가져와 갱신하는 부분 업데이트 로직
   const fetchInitialData = async (..._args: any[]) => {
     try {
       const { data: usersData } = await supabase.from('users').select('*');
@@ -683,10 +673,6 @@ export default function App() {
 
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
-    } finally {
-      // ⭕ 브라우저 접속 최초 1회만 스피너 해제 후 SessionStorage 기록
-      sessionStorage.setItem('kakao_bg_loaded', 'true');
-      setLoading(false);
     }
   };
 
@@ -1427,22 +1413,6 @@ export default function App() {
 
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
-
-  // ⭕ 최초 진입 시에만 로딩 스피너 표시
-  if (loading) {
-    return (
-      <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
-        <div className="relative w-16 h-20 flex items-center justify-center">
-          <div className="absolute w-12 h-16 bg-[#FEE500] rounded-xl border-2 border-amber-300 shadow-lg animate-[ping_1.8s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30"></div>
-          <div className="absolute w-12 h-16 bg-sky-400 rounded-xl border-2 border-sky-300 shadow-md animate-bounce -translate-x-3 -rotate-12"></div>
-          <div className="absolute w-12 h-16 bg-rose-500 rounded-xl border-2 border-rose-300 shadow-md animate-bounce delay-150 translate-x-3 rotate-12"></div>
-          <div className="absolute w-12 h-16 bg-[#FEE500] rounded-xl border-2 border-amber-300 shadow-xl flex items-center justify-center text-slate-900 font-extrabold text-sm z-10">
-            <Loader2 size={22} className="animate-spin text-slate-900" />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // -------------------------------------------------------------
   // [A] 비로그인 화면 (로그인 / 회원가입)
