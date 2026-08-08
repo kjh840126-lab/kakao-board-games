@@ -146,9 +146,6 @@ const ALLOWED_EMAIL_DOMAINS = [
 
 const currentYear = new Date().getFullYear();
 
-// ⭕ [핵심]: 브라우저 최초 접속 시에만 1회만 로딩을 띄우기 위한 글로벌 플래그
-let hasInitialLoadedGlobal = false;
-
 // =================================----------------====================
 // ⭕ [iOS 전용 UI 크기 개별 설정 영역]
 // =================================----------------====================
@@ -234,8 +231,10 @@ export default function App() {
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
   
-  // ⭕ 최초 접속 시에만 로딩 스피너 활성화
-  const [loading, setLoading] = useState<boolean>(!hasInitialLoadedGlobal);
+  // ⭕ SessionStorage를 활용해 웹 앱 최초 1회 접속 시에만 로딩 상태 활성화 (새로고침 시 재노출 완전 차단)
+  const [loading, setLoading] = useState<boolean>(() => {
+    return !sessionStorage.getItem('kakao_bg_loaded');
+  });
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -685,11 +684,9 @@ export default function App() {
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
     } finally {
-      // ⭕ 접속 완료 후 단 1번만 로딩 화면을 닫고, 재호출 시에는 로딩을 띄우지 않음
-      if (!hasInitialLoadedGlobal) {
-        hasInitialLoadedGlobal = true;
-        setLoading(false);
-      }
+      // ⭕ 브라우저 접속 최초 1회만 스피너 해제 후 SessionStorage 기록
+      sessionStorage.setItem('kakao_bg_loaded', 'true');
+      setLoading(false);
     }
   };
 
@@ -1431,7 +1428,7 @@ export default function App() {
   const isAdmin = currentUser?.role === '관리자';
   const unreadReportsCount = reports.filter((r: ReportData) => !r.isRead).length;
 
-  // ⭕ 브라우저 접속/새로고침 시 딱 1회만 로딩 화면 노출
+  // ⭕ 최초 진입 시에만 로딩 스피너 표시
   if (loading) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-slate-900 z-50 flex flex-col items-center justify-center p-4">
