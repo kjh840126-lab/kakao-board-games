@@ -156,6 +156,7 @@ const IOS_CONFIG = {
 
   MAIN_TEXT_SIZE: 'text-sm',          
   MAIN_TEXT_SIZE_LARGE: 'text-base',  
+  MAIN_PADDING_X: 'px-5', // ⭕ TS2339 복구      
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     
   RANKING_IMAGE_SIZE: 'w-16 h-16',    
@@ -221,10 +222,32 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
+// ⭕ 스켈레톤 UI 컴포넌트 선언 (TS2304 복구)
+const CardSkeleton = ({ isDarkMode, isIosDevice }: { isDarkMode: boolean; isIosDevice: boolean }) => (
+  <div className={`w-full border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm animate-pulse ${
+    isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100/70 border-slate-200/60'
+  }`}>
+    <div className="flex gap-3.5 items-start w-full">
+      <div className={`rounded-xl bg-slate-300 dark:bg-slate-700 flex-shrink-0 ${
+        isIosDevice ? IOS_CONFIG.RENTAL_IMAGE_SIZE : 'w-20 h-20'
+      }`} />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded w-3/4" />
+        <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/2" />
+        <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-2/3" />
+      </div>
+    </div>
+    <div className="flex justify-between items-center pt-2">
+      <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/3" />
+      <div className="h-8 bg-slate-300 dark:bg-slate-700 rounded-xl w-20" />
+    </div>
+  </div>
+);
+
 export default function App() {
   const [users, setUsers] = useState<UserData[]>([]);
   
-  // ⭕ [추천 핵심 1]: 게임 목록 LocalStorage 캐시 기반 즉시 복원 (새로고침 시 빈 화면 제거)
+  // ⭕ 게임 목록 LocalStorage 캐시 기반 즉시 복원
   const [games, setGames] = useState<Game[]>(() => {
     try {
       const saved = localStorage.getItem('kakao_bg_games_cache');
@@ -238,6 +261,9 @@ export default function App() {
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
+
+  // ⭕ 데이터 로딩 상태 선언 (TS2304 복구)
+  const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -346,7 +372,7 @@ export default function App() {
 
   const [isIosDevice, setIsIosDevice] = useState(false);
 
-  // ⭕ [추천 핵심 2]: 헤더 기본 고정 높이를 주어 ResizeObserver 리플로우 및 떨림 방지
+  // 헤더 기본 고정 높이 지정
   const [headerHeight, setHeaderHeight] = useState<number>(64);
 
   // 게임 셔플 고정용 Ref
@@ -645,7 +671,7 @@ export default function App() {
 
         setGames(newGameList);
         
-        // ⭕ [추천 핵심 1]: 불러온 최신 게임 데이터를 로컬 스토리지에 캐싱하여 다음 새로고침 시 깜빡임 차단
+        // ⭕ 불러온 최신 게임 데이터를 로컬 스토리지에 캐싱하여 다음 새로고침 시 깜빡임 차단
         try {
           localStorage.setItem('kakao_bg_games_cache', JSON.stringify(newGameList));
         } catch (e) {
@@ -690,6 +716,8 @@ export default function App() {
 
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
