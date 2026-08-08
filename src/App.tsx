@@ -156,7 +156,6 @@ const IOS_CONFIG = {
 
   MAIN_TEXT_SIZE: 'text-sm',          
   MAIN_TEXT_SIZE_LARGE: 'text-base',  
-  MAIN_PADDING_X: 'px-5',             
 
   RENTAL_IMAGE_SIZE: 'w-24 h-24',     
   RANKING_IMAGE_SIZE: 'w-16 h-16',    
@@ -222,37 +221,23 @@ const StarRating = ({ rating, size = 12, colorClass = "text-rose-500" }: { ratin
   );
 };
 
-// 스켈레톤 UI 컴포넌트
-const CardSkeleton = ({ isDarkMode, isIosDevice }: { isDarkMode: boolean; isIosDevice: boolean }) => (
-  <div className={`w-full border rounded-2xl p-3.5 flex flex-col justify-between gap-2.5 shadow-sm animate-pulse ${
-    isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100/70 border-slate-200/60'
-  }`}>
-    <div className="flex gap-3.5 items-start w-full">
-      <div className={`rounded-xl bg-slate-300 dark:bg-slate-700 flex-shrink-0 ${
-        isIosDevice ? IOS_CONFIG.RENTAL_IMAGE_SIZE : 'w-20 h-20'
-      }`} />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded w-3/4" />
-        <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/2" />
-        <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-2/3" />
-      </div>
-    </div>
-    <div className="flex justify-between items-center pt-2">
-      <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/3" />
-      <div className="h-8 bg-slate-300 dark:bg-slate-700 rounded-xl w-20" />
-    </div>
-  </div>
-);
-
 export default function App() {
   const [users, setUsers] = useState<UserData[]>([]);
-  const [games, setGames] = useState<Game[]>([]);
+  
+  // ⭕ [추천 핵심 1]: 게임 목록 LocalStorage 캐시 기반 즉시 복원 (새로고침 시 빈 화면 제거)
+  const [games, setGames] = useState<Game[]>(() => {
+    try {
+      const saved = localStorage.getItem('kakao_bg_games_cache');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [notices, setNoticeList] = useState<Notice[]>([]);
   const [reports, setReportList] = useState<ReportData[]>([]);
   const [sites, setSiteList] = useState<BoardSite[]>([]);
-  
-  const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
 
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<UserRating[]>([]);
@@ -360,7 +345,9 @@ export default function App() {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
   const [isIosDevice, setIsIosDevice] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
+
+  // ⭕ [추천 핵심 2]: 헤더 기본 고정 높이를 주어 ResizeObserver 리플로우 및 떨림 방지
+  const [headerHeight, setHeaderHeight] = useState<number>(64);
 
   // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
@@ -383,14 +370,13 @@ export default function App() {
     setIsIosDevice(isIos);
   }, []);
 
-  // ⭕ [수정]: 헤더 깜빡임 방지를 위해 의존성 배열 최소화 (isIosDevice만 판별)
   useLayoutEffect(() => {
     if (!isIosDevice || !headerRef.current) return;
 
     const updateHeaderHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.getBoundingClientRect().height;
-        if (height > 50) {
+        if (height > 40) {
           setHeaderHeight(height);
         }
       }
@@ -658,6 +644,13 @@ export default function App() {
         }
 
         setGames(newGameList);
+        
+        // ⭕ [추천 핵심 1]: 불러온 최신 게임 데이터를 로컬 스토리지에 캐싱하여 다음 새로고침 시 깜빡임 차단
+        try {
+          localStorage.setItem('kakao_bg_games_cache', JSON.stringify(newGameList));
+        } catch (e) {
+          console.error(e);
+        }
       }
 
       const { data: noticeData } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
@@ -697,8 +690,6 @@ export default function App() {
 
     } catch (err) {
       console.error('Supabase 데이터 로딩 실패:', err);
-    } finally {
-      setIsDataLoading(false);
     }
   };
 
@@ -1736,18 +1727,18 @@ export default function App() {
   const isLargeFont = fontSize === 'large';
 
   return (
-    // ⭕ [수정]: 최상위 레이아웃을 고정하고 z-index 계층구조를 명확히 적용하여 화면 튀김 방지
+    // Safari 주소창 반응형 Window 스크롤 구조
     <div className={`min-h-screen w-full relative transition-colors ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
       
-      {/* ⭕ 1. 고정 상단 헤더: z-40 레이어로 고정하여 절대 깜빡이지 않음 */}
+      {/* ⭕ 1. 고정 상단 헤더: z-40 고정 및 기본 min-height 지정으로 높이 들쑥날쑥 방지 */}
       <header 
         ref={headerRef}
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }} 
-        className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors ${
+        className={`fixed top-0 left-0 right-0 w-full px-4 pb-2.5 z-40 shadow-sm flex justify-between items-center transition-colors min-h-[64px] ${
           isHeaderAdminTheme ? 'bg-sky-400 border-b border-sky-500/40 text-slate-900' : 'bg-[#FEE500] border-b border-amber-300/40 text-slate-900'
         }`}
       >
-        <div className="w-full flex justify-between items-center">
+        <div className="w-full flex justify-between items-center min-h-[40px]">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <img 
@@ -1758,7 +1749,7 @@ export default function App() {
               />
             </div>
 
-            <div className={`flex flex-wrap items-center gap-1.5 font-bold text-slate-900 ${isIosDevice ? IOS_CONFIG.HEADER_USER_TEXT_SIZE : 'text-xs'}`}>
+            <div className={`flex flex-wrap items-center gap-1.5 font-bold text-slate-900 min-h-[18px] ${isIosDevice ? IOS_CONFIG.HEADER_USER_TEXT_SIZE : 'text-xs'}`}>
               <div className="flex items-center gap-1">
                 <UserCheck size={14} className="text-slate-900" />
                 <span>{currentUser.userId}</span>
@@ -1811,7 +1802,7 @@ export default function App() {
         ref={mainScrollRef}
         onScroll={handleScroll}
         style={{ 
-          paddingTop: isIosDevice ? (headerHeight > 0 ? `${headerHeight + 12}px` : '104px') : 'calc(env(safe-area-inset-top, 0px) + 92px)',
+          paddingTop: isIosDevice ? `${headerHeight + 12}px` : 'calc(env(safe-area-inset-top, 0px) + 92px)',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)'
         }} 
         className={`w-full py-4 ${isIosDevice ? IOS_CONFIG.MAIN_PADDING_X : 'px-4'} transition-colors ${isDarkMode ? 'bg-[#0f172a]' : 'bg-white'} ${
@@ -2016,7 +2007,7 @@ export default function App() {
 
             {/* 게임 리스트 카드 영역 */}
             <div className="grid gap-3 w-full">
-              {/* ⭕ 데이터 로딩 중일 때는 빈 화면 대신 스켈레톤 카드를 조용히 노출 */}
+              {/* 데이터 받아오기 전 캐시가 완전히 비어있을 때만 스켈레톤 노출 */}
               {isDataLoading && games.length === 0 ? (
                 <>
                   <CardSkeleton isDarkMode={isDarkMode} isIosDevice={isIosDevice} />
