@@ -371,8 +371,10 @@ export default function App() {
   const [genreFilter, setGenreFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'normal' | 'hard'>('all');
 
-  // ⭕ [핵심]: iOS 여부를 첫 렌더링 시점에 즉시 동기적 판단 (새로고침시 상태 재계산에 의한 깜빡임 차단)
   const [isIosDevice] = useState<boolean>(() => checkIsIosDevice());
+
+  // ⭕ TS2304 복구: headerHeight 선언부 추가
+  const [headerHeight] = useState<number>(64);
 
   // 게임 셔플 고정용 Ref
   const shuffledGamesRef = useRef<Game[]>([]);
